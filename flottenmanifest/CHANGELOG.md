@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.16.2 – 2026-10-16
+- Fan site notice required by the RSI Fankit and Fandom FAQ in the footer and README, with a link to the official site.
+- README: ship images are not part of the repository; public releases are built with `--no-images`.
+
 ## 2.16.1 – 2026-10-16
 - Security: the insurance column of an imported file was inserted into the page unescaped, so a crafted CSV could inject script that ran again on every visit (it stayed in `localStorage`). `insuranceText()` now escapes, and every importer's output goes through `sanitizeItem()`, which only keeps "LTI" or a number of months as insurance.
 - Security: all values read from `localStorage` are validated on load (types, allowed values, lengths); editor overrides are checked field by field (`sanitizeOverride()`). `loopName()` escapes unknown loop IDs.

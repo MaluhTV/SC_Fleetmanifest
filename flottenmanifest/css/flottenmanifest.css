@@ -247,6 +247,7 @@
 .chip[aria-pressed="true"] { color: var(--panel); background: var(--prim); border-color: var(--prim); }
 .ship-meta { font: 12px var(--f-mono); color: var(--muted); }
 .ship-meta > span { white-space: nowrap; }
+.fm-fan-notice { margin-top: 6px; }
 .fc-label { font-size: 12px; }
 .ship-tile .ship-meta { display: grid; line-height: 1.35; }
 .ship-tile .ship-meta .sep { display: none; }

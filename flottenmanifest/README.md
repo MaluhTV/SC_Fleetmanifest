@@ -88,3 +88,11 @@ docs/
 Dimensions, SCU, crew and status come from the [Star Citizen Wiki (starcitizen.tools)](https://starcitizen.tools). The loop assignment is an editorial assessment. Star Citizen® is a trademark of Cloud Imperium Games. This is a fan project and is not affiliated with CIG.
 
 Die Dateien in data/ (ships.json, loops.json) stehen unter CC BY 4.0.
+
+## Legal
+
+This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imperium group of companies. All content on this site not authored by its host or users are property of their respective owners.
+
+Star Citizen®, Squadron 42®, Roberts Space Industries® and Cloud Imperium® are registered trademarks of Cloud Imperium Rights LLC. Official site: https://robertsspaceindustries.com
+
+Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content). For a public release build the standalone file with `node tools/build-standalone.mjs --no-images`.

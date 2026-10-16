@@ -3,6 +3,8 @@
 ## 2.17.0 – 2026-10-16
 - Ship images can be shown straight from RSI instead of being stored: `tools/fetch-ship-images.mjs` writes `data/image-urls.json` (links only, `--urls-only` skips the download). A missing local image falls back to its RSI link.
 - `build-standalone.mjs --remote-images` builds a release file with linked instead of embedded images; `tools/build-release.cmd` / `.sh` run both steps. Without local images the default build links them as well.
+- `data/image-urls.json` with 220 RSI links is part of the repository (links only, no image files).
+- Fixed: image matching prefers a ship's own name over aliases and prefix matches (e.g. Idris-P no longer got the Idris-M image).
 
 ## 2.16.2 – 2026-10-16
 - Fan site notice required by the RSI Fankit and Fandom FAQ in the footer and README, with a link to the official site.

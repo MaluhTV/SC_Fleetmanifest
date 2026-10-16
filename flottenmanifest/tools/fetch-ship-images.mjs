@@ -81,9 +81,12 @@ function imageOf(entry) {
 const urls = new Map(); // ship name -> remote URL
 // a URL set by hand wins over the ship matrix
 for (const s of shipsDoc.ships) if (s.image && /^https:/.test(s.image)) urls.set(s.name, s.image);
-// exact name/alias matches before prefix matches, so "Aurora Mk I MR" is not overwritten by a looser match
-const exactKeys = new Set(shipsDoc.ships.flatMap((s) => [s.name, ...(s.aliases || [])].map(normalizeName)));
-const sorted = [...entries].sort((a, b) => exactKeys.has(normalizeName(b.name)) - exactKeys.has(normalizeName(a.name)));
+// best match first: the ship's own name, then an alias, then a prefix match ("Avenger Titan Renegade" → Avenger Titan).
+// Otherwise e.g. "Idris-M" (an alias of Idris-P) or "Carrack" would take the image of the exact variant.
+const mainNames = new Set(shipsDoc.ships.map((s) => normalizeName(s.name)));
+const aliasNames = new Set(shipsDoc.ships.flatMap((s) => (s.aliases || []).map(normalizeName)));
+const rank = (e) => (mainNames.has(normalizeName(e.name)) ? 2 : aliasNames.has(normalizeName(e.name)) ? 1 : 0);
+const sorted = [...entries].sort((a, b) => rank(b) - rank(a));
 const unmatched = [];
 for (const entry of sorted) {
   const hit = db.match(entry.name);

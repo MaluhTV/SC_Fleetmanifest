@@ -74,7 +74,10 @@ for (const s of data["ships.json"].ships) {
 }
 
 let html = read(join(ROOT, "index.html"));
-html = html.replace(/<link rel="stylesheet" href="css\/flottenmanifest\.css">/, () => `<style>\n${safe(read(join(ROOT, "css", "flottenmanifest.css")))}\n</style>`);
+// fonts referenced as url(../fonts/x.woff2) are embedded as data: URIs, so the file loads nothing from outside
+const css = read(join(ROOT, "css", "flottenmanifest.css")).replace(/url\(\.\.\/fonts\/([\w.-]+\.woff2)\)/g,
+  (_, f) => `url(data:font/woff2;base64,${readFileSync(join(ROOT, "fonts", f)).toString("base64")})`);
+html = html.replace(/<link rel="stylesheet" href="css\/flottenmanifest\.css">/, () => `<style>\n${safe(css)}\n</style>`);
 html = html.replace(/<script type="module" src="js\/main\.js"><\/script>/, () =>
   `<script>globalThis.FM_DATA = ${safe(JSON.stringify(data))};</script>\n<script type="module">\n${safe(bundle)}\n</script>`);
 html = html.replace(/<script>\s*\/\* file-protocol-hint[\s\S]*?<\/script>\s*/, ""); // hint is not needed in the standalone file

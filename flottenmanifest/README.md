@@ -12,7 +12,7 @@ Imported data stays in the visitor's browser (`localStorage`). Only ship name, q
 
 ## Quick start
 
-**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts and ship data inlined) and works without a server. Only the web fonts need an internet connection, otherwise system fonts are used.
+**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts and ship data inlined) and works without a server. It works fully offline and makes no external requests (fonts and images are embedded).
 
 **Developing?** Run the source version through a local web server:
 

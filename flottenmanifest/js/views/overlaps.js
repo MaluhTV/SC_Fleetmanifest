@@ -13,6 +13,9 @@ const ALSO_MAX = 3;
 const alsoList = (ships, toButton) =>
   ships.slice(0, ALSO_MAX).map(toButton).join(", ") + (ships.length > ALSO_MAX ? ` +${ships.length - ALSO_MAX}` : "");
 
+/** With images, candidate rows show up to this many further substitutes as tiles, then "+n". */
+const ALSO_TILES = 6;
+
 const list = (items) => `<ul>${items.map((x) => `<li>${x}</li>`).join("")}</ul>`;
 
 /**
@@ -94,8 +97,25 @@ export function renderOverlaps(el, { db, fleet, state }) {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(pics ? tile(s) : mark(s, shipWithMelt(s) + meta(s)));
     });
+    // With images: one grid row per candidate – ship | arrow + label | substitute | further substitutes,
+    // every ship as a tile (image above the name), so the columns line up across all rows.
+    const subTile = (s, c, extra = "") =>
+      markable(s, `<span class="ship-tile">${thumb(s)}<span>${shipLabel(s, { lock: false })}${extra}</span>${meta(s)}</span>`, sel, c.ship.name);
+    const candidateRow = (c) => {
+      const from = `<div class="cand-from">${tile(c.ship)}</div>`;
+      if (!c.replacement) return `<div class="cand-row">${from}<div class="cand-arrow">→</div><div class="cand-none bad">${t("ov_no_substitute")}</div></div>`;
+      const label = t(c.chosen ? "ov_replaced_by" : "ov_covered_by", { o: "" }).trim();
+      const alts = c.alternatives.slice(0, ALSO_TILES).map((a) => subTile(a, c)).join("") +
+        (c.alternatives.length > ALSO_TILES ? `<span class="cand-more muted">+${c.alternatives.length - ALSO_TILES}</span>` : "");
+      return `<div class="cand-row">${from}
+        <div class="cand-arrow">→<small class="muted">${label}</small></div>
+        <div class="cand-to">${subTile(c.replacement, c, lostHint(c, db))}</div>
+        ${c.alternatives.length ? `<div class="cand-also"><small class="muted">${t("ov_also", { x: "" }).trim()}</small><div class="tiles">${alts}</div></div>` : ""}
+      </div>`;
+    };
+    // Without images: one text line per candidate.
     // Candidate first with its melt status (melt or only upgrade), then the substitute (stays, so no melt icon)
-    const candidates = o.candidates.map((c) => {
+    const candidates = pics ? o.candidates.map(candidateRow) : o.candidates.map((c) => {
       const who = mark(c.ship, small(c.ship) + shipWithMelt(c.ship) + meta(c.ship));
       if (!c.replacement) return `${who} → <span class="bad">${t("ov_no_substitute")}</span>`;
       // substitute and alternatives are clickable: picking one marks it green and the candidate red
@@ -111,7 +131,7 @@ export function renderOverlaps(el, { db, fleet, state }) {
         ? `<div class="size-groups">${[...groups].map(([size, tiles]) => `<div class="size-group"><b>${size}</b><div class="tiles">${tiles.join("")}</div></div>`).join("")}</div>`
         : list([...groups].map(([size, names]) => `<b>${size}</b>: ${names.join(", ")}`))}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
-      <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${candidates.length ? list(candidates) : ""}
+      <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}
     </article>`);
   }
 

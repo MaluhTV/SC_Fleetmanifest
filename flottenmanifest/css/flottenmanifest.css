@@ -338,10 +338,27 @@ tr.row--planned td { color: var(--fut); }
 /* Overlaps tab with images: size groups as tiles (image above the name) */
 .size-groups { display: grid; gap: 10px; }
 .size-group { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: start; }
-.tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.tiles { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; } /* tops aligned, also for two-line names */
 .ship-tile { display: grid; justify-items: center; gap: 4px; width: 120px; text-align: center; font-size: 13px; line-height: 1.3; }
 .ship-mark:has(.ship-tile) { padding: 4px; }
 .cards ul li .ship-mark { vertical-align: middle; }
+
+/* Overlap candidates with images: fixed columns, so ship, substitute and alternatives line up in every row */
+.cand-rows { display: grid; gap: 6px; }
+.cand-row { display: grid; grid-template-columns: 130px 110px 130px 1fr; gap: 10px; align-items: start; padding: 6px 0; border-top: 1px solid var(--line); }
+.cand-row:first-child { border-top: 0; }
+.cand-arrow { display: grid; justify-items: center; align-content: start; padding-top: 22px; font-size: 22px; line-height: 1; color: var(--muted); }
+.cand-arrow small { font-size: 12px; margin-top: 4px; text-align: center; }
+.cand-none { padding-top: 26px; grid-column: 3 / -1; }
+.cand-also { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+.cand-also > small { font-size: 12px; padding-top: 26px; } /* "also:" beside the tiles, level with the arrow label */
+.cand-also .ship-mark { opacity: .8; }
+.cand-also .ship-mark:hover, .cand-also .ship-mark.is-chosen { opacity: 1; }
+.cand-more { align-self: center; font-size: 13px; padding: 0 6px; }
+@media (max-width: 860px) {
+  .cand-row { grid-template-columns: 130px 70px 130px; }
+  .cand-also { grid-column: 1 / -1; }
+}
 .thumb--broken { visibility: hidden; }
 .loop-card td.thumb-cell { padding-right: 0; }
 .loop-card td.ship-name { white-space: normal; overflow-wrap: anywhere; width: 100%; }

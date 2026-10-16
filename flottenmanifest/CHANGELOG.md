@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.18.0 – 2026-10-17
+- Overlaps tab: with images, "Candidates to review" is a grid – ship | arrow and "covered by" | substitute | further substitutes – with every ship as a tile (image above the name). Columns line up in every row; up to `ALSO_TILES` (6) further substitutes are shown, then "+n". Without images the text list stays.
+- Tiles in a row are aligned at the top, also when a name wraps to two lines.
+
 ## 2.17.0 – 2026-10-16
 - Ship images can be shown straight from RSI instead of being stored: `tools/fetch-ship-images.mjs` writes `data/image-urls.json` (links only, `--urls-only` skips the download). A missing local image falls back to its RSI link.
 - `build-standalone.mjs --remote-images` builds a release file with linked instead of embedded images; `tools/build-release.cmd` / `.sh` run both steps. Without local images the default build links them as well.

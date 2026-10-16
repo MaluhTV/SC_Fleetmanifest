@@ -141,7 +141,7 @@ export function insuranceText(ship) {
   const label = (v) => (/^lti$/i.test(v) ? "LTI" : /^\d+$/.test(v) ? `${v} ${t("months")}` : v);
   return [...ship.insurance]
     .sort((a, b) => /lti/i.test(b) - /lti/i.test(a) || +b - +a)
-    .map(label)
+    .map((v) => esc(label(v)))
     .join(", ");
 }
 

@@ -86,3 +86,5 @@ docs/
 ## Data source
 
 Dimensions, SCU, crew and status come from the [Star Citizen Wiki (starcitizen.tools)](https://starcitizen.tools). The loop assignment is an editorial assessment. Star Citizen® is a trademark of Cloud Imperium Games. This is a fan project and is not affiliated with CIG.
+
+Die Dateien in data/ (ships.json, loops.json) stehen unter CC BY 4.0.

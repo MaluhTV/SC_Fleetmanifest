@@ -15,6 +15,7 @@
  * Order matters – the first format whose detect() returns true wins.
  * See also docs/IMPORT-FORMATS.md.
  */
+import { sanitizeItem } from "./state.js";
 
 /* ---------- Shared helpers ---------- */
 
@@ -204,7 +205,8 @@ export function importFile(text, db) {
   });
   if (!importer) return null;
   const result = importer.parse(clean, ctx);
-  return { format: importer.label, ...result };
+  // every importer's output goes through the same check: allowed fields, insurance only "LTI" or months
+  return { format: importer.label, ...result, items: result.items.map(sanitizeItem).filter((i) => i.name) };
 }
 
 /** Pasted list: one ship per line, optionally "2x Name" or "2 × Name". */
@@ -215,6 +217,6 @@ export function importTextList(text) {
     .filter(Boolean)
     .map((line) => {
       const m = line.match(/^(\d+)\s*[x×]\s*(.+)$/i);
-      return m ? { name: m[2].trim(), qty: +m[1] } : { name: line, qty: 1 };
+      return sanitizeItem(m ? { name: m[2].trim(), qty: +m[1] } : { name: line, qty: 1 });
     });
 }

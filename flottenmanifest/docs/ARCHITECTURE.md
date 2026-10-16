@@ -21,7 +21,10 @@ file / text box ── importers.importFile() ──► items [{ name, qty, insu
 
 - **`state`** (`js/state.js`) holds everything the user sets: language, name, fleet, compare selection, active tab and sorting. Every change goes through `save.*()` and is followed by a re-render.
 - **Views** (`js/views/*.js`) are pure functions. They take an element and `{ db, fleet, state }` and set `innerHTML`. They don't bind events. `main.js` does that via event delegation (`data-compare`, `data-remove`, `data-sort`).
-- **Values from files** are always escaped with `esc()` (`js/util.js`) before output.
+- **Security:** everything from import files and from `localStorage` is untrusted.
+  - Output: every value that ends up in `innerHTML` goes through `esc()` (`js/util.js`). New view code must do the same; only translation texts from `i18n.js` and fixed markup are inserted unescaped.
+  - Input: `sanitizeItem()` (`js/state.js`) checks every imported and stored fleet entry (insurance only `LTI` or a number of months); `loadState()` validates all other stored values, and `sanitizeOverride()` (`js/shipdb.js`) checks editor overrides field by field.
+  - The page makes no external requests: fonts are in `fonts/`, images in `images/ships/`.
 
 ## Where do I change what?
 

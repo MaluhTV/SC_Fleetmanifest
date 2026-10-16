@@ -60,6 +60,35 @@ export const EDITABLE_FIELDS = ["size", "length", "beam", "height", "crewMin", "
 export const FIGHTER_CLASSES = ["snub", "light", "medium", "heavy", "interceptor", "stealth", "interdiction", "bomber"];
 export const FIGHTER_LADDER = { snub: 0, light: 1, medium: 2, heavy: 3 };
 
+export const SIZE_PATTERN = /^(S[1-6] (Snub|Small|Medium|Large|Capital)|Snub|Small|Medium|Large|Capital|Ground vehicle)$/;
+const STATUSES = Object.values(STATUS);
+const ROLES = Object.values(ROLE);
+const isCount = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0;
+
+/**
+ * Validates one override object field by field and drops everything that is not a valid value.
+ * Overrides come from localStorage, which anyone with access to the browser can edit, so they are
+ * treated like import data: never trusted.
+ */
+export function sanitizeOverride(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const out = {};
+  if (typeof o.size === "string" && SIZE_PATTERN.test(o.size)) out.size = o.size;
+  for (const f of ["length", "beam", "height"]) if (f in o && (o[f] === null || isCount(o[f]))) out[f] = o[f];
+  if (isCount(o.scu)) out.scu = o.scu;
+  if (Number.isInteger(o.crewMin) && Number.isInteger(o.crewMax) && o.crewMin >= 1 && o.crewMin <= o.crewMax) {
+    out.crewMin = o.crewMin; out.crewMax = o.crewMax;
+  }
+  if (STATUSES.includes(o.status)) out.status = o.status;
+  if (o.loops && typeof o.loops === "object" && !Array.isArray(o.loops)) {
+    const loops = Object.fromEntries(Object.entries(o.loops).filter(([k, r]) => /^[a-z-]{1,40}$/.test(k) && ROLES.includes(r)));
+    if (Object.keys(loops).length) out.loops = loops;
+  }
+  if ("fighterClass" in o && (o.fighterClass === null || FIGHTER_CLASSES.includes(o.fighterClass))) out.fighterClass = o.fighterClass;
+  if (o.note && typeof o.note.de === "string" && typeof o.note.en === "string") out.note = { de: o.note.de.slice(0, 300), en: o.note.en.slice(0, 300) };
+  return Object.keys(out).length ? out : null;
+}
+
 /** Returns a copy of shipsDoc with the overrides applied (unknown ship names are ignored). */
 export function applyOverrides(shipsDoc, overrides) {
   const doc = JSON.parse(JSON.stringify(shipsDoc));

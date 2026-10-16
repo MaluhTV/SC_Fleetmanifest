@@ -5,7 +5,7 @@ import { esc } from "../util.js";
 /** Loop name in the current language (falls back to German). */
 export function loopName(db, loopId) {
   const loop = db.loops.find((l) => l.id === loopId);
-  return loop ? loop[getLang()] || loop.de : loopId;
+  return loop ? esc(loop[getLang()] || loop.de) : esc(loopId);
 }
 
 /** Size class for display ("Ground vehicle" is translated). */
@@ -141,7 +141,7 @@ export function insuranceText(ship) {
   const label = (v) => (/^lti$/i.test(v) ? "LTI" : /^\d+$/.test(v) ? `${v} ${t("months")}` : v);
   return [...ship.insurance]
     .sort((a, b) => /lti/i.test(b) - /lti/i.test(a) || +b - +a)
-    .map((v) => esc(label(v)))
+    .map((v) => esc(label(v))) // values come from import files – always escape
     .join(", ");
 }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.16.1 – 2026-10-16
+- Security: the insurance column of an imported file was inserted into the page unescaped, so a crafted CSV could inject script that ran again on every visit (it stayed in `localStorage`). `insuranceText()` now escapes, and every importer's output goes through `sanitizeItem()`, which only keeps "LTI" or a number of months as insurance.
+- Security: all values read from `localStorage` are validated on load (types, allowed values, lengths); editor overrides are checked field by field (`sanitizeOverride()`). `loopName()` escapes unknown loop IDs.
+- Privacy: the fonts (Saira Condensed, IBM Plex Sans/Mono, SIL Open Font License) are stored in `fonts/` instead of loaded from Google Fonts; the standalone file embeds them. The page now makes no external requests.
+- Tested with crafted CSV and `localStorage` payloads in every field and all tabs: no script runs.
+
 ## 2.16.0 – 2026-10-16
 - New field `fighterClass` for all 60 ships with a fighter role, taken from the RSI role on starcitizen.tools (light / medium / heavy fighter, snub fighter, interceptor, stealth fighter, interdiction, fighter-bomber). Pathfinders, Starter and freight ships with a secondary fighter role have none.
 - Shown in the fighter loop card (below the size), the overlaps fighter card (next to every ship), the ship list (column) and the compare tab (row); editable in the ship editor.

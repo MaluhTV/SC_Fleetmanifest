@@ -305,7 +305,13 @@ function wireEvents() {
   });
 
   // Thumbnails that fail to load (offline, blocked) are hidden but keep their space
-  document.addEventListener("error", (e) => { if (e.target.classList && e.target.classList.contains("thumb")) e.target.classList.add("thumb--broken"); }, true);
+  // broken thumbnail: try the RSI link once (data-fallback, see thumb()), otherwise hide it
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (!img.classList || !img.classList.contains("thumb")) return;
+    if (img.dataset.fallback) { img.src = img.dataset.fallback; delete img.dataset.fallback; return; }
+    img.classList.add("thumb--broken");
+  }, true);
 
   el.langButtons.forEach((b) => b.addEventListener("click", () => {
     state.lang = b.dataset.lang;

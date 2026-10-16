@@ -28,10 +28,12 @@ async function loadJson(file) {
  * @returns {Promise<ShipDb>}
  */
 export async function loadShipDb() {
-  const [shipsDoc, loopsDoc, example] = await Promise.all([
+  const [shipsDoc, loopsDoc, example, imageUrls] = await Promise.all([
     loadJson("ships.json"),
     loadJson("loops.json"),
     loadJson("example-fleet.json"),
+    // optional: links to the RSI store images (tools/fetch-ship-images.mjs); missing file = no fallback
+    loadJson("image-urls.json").catch(() => ({ urls: {} })),
   ]);
   // untouched copy for the editor export (js/views/editor.js) – keeps the relative image paths
   const rawShipsDoc = JSON.parse(JSON.stringify(shipsDoc));
@@ -39,6 +41,11 @@ export async function loadShipDb() {
   // so they also work when the page is embedded elsewhere. URLs and embedded data: URIs stay as they are.
   for (const s of shipsDoc.ships) {
     if (s.image && !/^(https?:|data:)/.test(s.image)) s.image = new URL(`../${s.image}`, import.meta.url).href;
+    // remote fallback: shown when the local file is missing (thumb() → data-fallback, handled in main.js)
+    const remote = imageUrls?.urls?.[s.name];
+    if (typeof remote === "string" && /^https:\/\/[\w.-]*robertsspaceindustries\.com\//.test(remote)) {
+      if (s.image) s.imageFallback = remote; else s.image = remote;
+    }
   }
   const db = createShipDb(shipsDoc, loopsDoc, example);
   db.source = { shipsDoc, rawShipsDoc, loopsDoc, example };

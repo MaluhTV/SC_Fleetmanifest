@@ -110,9 +110,12 @@ node tools/validate-ships.mjs --format
 node tools/build-standalone.mjs           # embeds the images into dist/flottenmanifest.html (--no-images skips them)
 ```
 
+**Linking instead of storing:** every run of `fetch-ship-images.mjs` also writes `data/image-urls.json` (ship name → RSI image URL). The page uses it when a local file is missing (`data-fallback` on the thumbnail), and `build-standalone.mjs --remote-images` builds a file that links all images instead of embedding them – this is what `tools/build-release.cmd` / `.sh` do for public releases. Only `https://…robertsspaceindustries.com/` URLs are accepted.
+
 Options for `fetch-ship-images.mjs`:
 - `ship-matrix.json`: use a copy saved in the browser from https://robertsspaceindustries.com/ship-matrix/index if the download is blocked
 - `--overwrite`: download again even if the file exists
+- `--urls-only`: only write `data/image-urls.json`, download nothing
 - `--dry-run`: only report
 
 How it works:

@@ -7,6 +7,11 @@
  *   node tools/fetch-ship-images.mjs ship-matrix.json   use a saved copy of the ship matrix instead
  *   ... --overwrite                                     download again even if a file already exists
  *   ... --dry-run                                       only report, don't download or write
+ *   ... --urls-only                                     don't download, only write data/image-urls.json
+ *
+ * Every run also writes data/image-urls.json ({ ship name: RSI image URL }). The page uses it to show
+ * the image straight from RSI when there is no local file (e.g. a repository without images/), and
+ * `node tools/build-standalone.mjs --remote-images` builds a file that links the images instead of embedding them.
  *
  * Where the image URLs come from:
  *   1. the RSI ship matrix  https://robertsspaceindustries.com/ship-matrix/index
@@ -37,6 +42,8 @@ const HEADERS = { "user-agent": "Mozilla/5.0 (fleet-manifest image fetcher)", ac
 const args = process.argv.slice(2);
 const overwrite = args.includes("--overwrite");
 const dryRun = args.includes("--dry-run");
+const urlsOnly = args.includes("--urls-only");
+const URLS_FILE = join(ROOT, "data", "image-urls.json");
 const file = args.find((a) => !a.startsWith("--"));
 
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
@@ -85,7 +92,22 @@ for (const entry of sorted) {
   if (url && !urls.has(hit.name)) urls.set(hit.name, url);
 }
 
-/* ---------- 2. Download ---------- */
+/* ---------- 2. Save the URL list (links only, no image data) ---------- */
+
+if (!dryRun) {
+  const sortedUrls = Object.fromEntries([...urls].sort((a, b) => a[0].localeCompare(b[0])));
+  writeFileSync(URLS_FILE, JSON.stringify({
+    meta: { source: MATRIX_URL, updated: new Date().toISOString().slice(0, 10), note: "Links to RSI store images. The images belong to Cloud Imperium Games and are not part of this repository." },
+    urls: sortedUrls,
+  }, null, 2) + "\n");
+  console.log(`data/image-urls.json written (${urls.size} links).`);
+}
+if (urlsOnly) {
+  console.log("--urls-only: no download. Next: node tools/build-standalone.mjs --remote-images");
+  process.exit(0);
+}
+
+/* ---------- 3. Download ---------- */
 
 if (!dryRun) mkdirSync(join(ROOT, IMAGE_DIR), { recursive: true });
 let downloaded = 0, kept = 0;
@@ -110,7 +132,7 @@ for (const s of shipsDoc.ships) {
   }
 }
 
-/* ---------- 3. Report and save ---------- */
+/* ---------- 4. Report and save ---------- */
 
 console.log(`\n\n${downloaded} images downloaded, ${kept} already present.`);
 if (failed.length) console.log(`\nFailed (${failed.length}): ${failed.join(", ")}`);

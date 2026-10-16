@@ -112,7 +112,7 @@ export const shipLabel = (ship, { lock = true } = {}) =>
  */
 export const thumb = (ship, size = "s") =>
   ship.image
-    ? `<img class="thumb thumb--${size}" src="${esc(ship.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
+    ? `<img class="thumb thumb--${size}" src="${esc(ship.image)}"${ship.imageFallback ? ` data-fallback="${esc(ship.imageFallback)}"` : ""} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
     : `<span class="thumb thumb--${size} thumb--empty" aria-hidden="true"></span>`;
 
 /**

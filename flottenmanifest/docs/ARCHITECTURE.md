@@ -24,7 +24,7 @@ file / text box ── importers.importFile() ──► items [{ name, qty, insu
 - **Security:** everything from import files and from `localStorage` is untrusted.
   - Output: every value that ends up in `innerHTML` goes through `esc()` (`js/util.js`). New view code must do the same; only translation texts from `i18n.js` and fixed markup are inserted unescaped.
   - Input: `sanitizeItem()` (`js/state.js`) checks every imported and stored fleet entry (insurance only `LTI` or a number of months); `loadState()` validates all other stored values, and `sanitizeOverride()` (`js/shipdb.js`) checks editor overrides field by field.
-  - The page makes no external requests: fonts are in `fonts/`, images in `images/ships/`.
+  - External requests: none, except ship images linked to RSI (`data/image-urls.json` or a release built with `--remote-images`). Fonts are in `fonts/`.
 
 ## Where do I change what?
 

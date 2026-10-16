@@ -12,7 +12,7 @@ Imported data stays in the visitor's browser (`localStorage`). Only ship name, q
 
 ## Quick start
 
-**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts and ship data inlined) and works without a server. It works fully offline and makes no external requests (fonts and images are embedded).
+**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts and ship data inlined) and works without a server. It works without a server; fonts are embedded. Ship images are either embedded (your local build) or loaded from RSI (release build, see below).
 
 **Developing?** Run the source version through a local web server:
 
@@ -95,4 +95,10 @@ This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imper
 
 Star Citizen®, Squadron 42®, Roberts Space Industries® and Cloud Imperium® are registered trademarks of Cloud Imperium Rights LLC. Official site: https://robertsspaceindustries.com
 
-Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content). For a public release build the standalone file with `node tools/build-standalone.mjs --no-images`.
+Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content). ### Building a release
+
+Double-click `tools/build-release.cmd` (Windows) or run `sh tools/build-release.sh`. It fetches the list of RSI image links into `data/image-urls.json` and builds `dist/flottenmanifest.html` with `--remote-images`: the file contains only links, and the browser loads each thumbnail straight from robertsspaceindustries.com when the page is opened. Attach that file to a GitHub release.
+
+Committing `data/image-urls.json` (links only) also lets the source version show the images without an `images/` folder.
+
+Privacy note: with linked images the browser contacts RSI's image server, so RSI sees the visitor's IP address. Builds with `--no-images` make no external requests at all.

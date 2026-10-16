@@ -1,0 +1,157 @@
+/**
+ * Ship database: loads the JSON files and matches ship names.
+ *
+ * Data sources (relative to this file):
+ *   ../data/ships.json   – all ships (maintenance guide: docs/SHIP-DATABASE.md)
+ *   ../data/loops.json   – gameplay loops with German/English names
+ */
+import { normalizeName } from "./util.js";
+
+export const ROLE = { PRIMARY: "primary", SECONDARY: "secondary", PLANNED: "planned" };
+export const STATUS = { FLIGHT_READY: "flight-ready", IN_PRODUCTION: "in-production", CONCEPT: "concept" };
+
+/** Sort order of roles in lists: primary, planned, secondary. */
+export const ROLE_ORDER = { primary: 0, planned: 1, secondary: 2 };
+
+const dataUrl = (file) => new URL(`../data/${file}`, import.meta.url);
+
+async function loadJson(file) {
+  // Standalone build (tools/build-standalone.mjs) embeds the data as globalThis.FM_DATA
+  if (globalThis.FM_DATA && globalThis.FM_DATA[file]) return globalThis.FM_DATA[file];
+  const res = await fetch(dataUrl(file));
+  if (!res.ok) throw new Error(`${file} could not be loaded (HTTP ${res.status})`);
+  return res.json();
+}
+
+/**
+ * Loads ships, loops and the example fleet and builds the name index.
+ * @returns {Promise<ShipDb>}
+ */
+export async function loadShipDb() {
+  const [shipsDoc, loopsDoc, example] = await Promise.all([
+    loadJson("ships.json"),
+    loadJson("loops.json"),
+    loadJson("example-fleet.json"),
+  ]);
+  // untouched copy for the editor export (js/views/editor.js) – keeps the relative image paths
+  const rawShipsDoc = JSON.parse(JSON.stringify(shipsDoc));
+  // Local images ("images/ships/x.jpg", see tools/fetch-ship-images.mjs) are relative to the project root,
+  // so they also work when the page is embedded elsewhere. URLs and embedded data: URIs stay as they are.
+  for (const s of shipsDoc.ships) {
+    if (s.image && !/^(https?:|data:)/.test(s.image)) s.image = new URL(`../${s.image}`, import.meta.url).href;
+  }
+  const db = createShipDb(shipsDoc, loopsDoc, example);
+  db.source = { shipsDoc, rawShipsDoc, loopsDoc, example };
+  return db;
+}
+
+/**
+ * Editable fields of a ship. The in-page editor stores changes per ship as an "override"
+ * ({ shipName: { field: newValue } }, localStorage key fm_overrides) that is laid over ships.json.
+ */
+export const EDITABLE_FIELDS = ["size", "length", "beam", "height", "crewMin", "crewMax", "scu", "status", "loops", "fighterClass", "note"];
+
+/**
+ * Fighter classes = the official RSI role shown on starcitizen.tools ("Light fighter", "Interdiction" …).
+ * The first four form a ladder (snub < light < medium < heavy): a heavier class may replace a lighter one.
+ * The others are specialised jobs and can only be replaced by the same class.
+ * Labels: "fc_<class>" in i18n.js. Keep in sync with tools/validate-ships.mjs.
+ */
+export const FIGHTER_CLASSES = ["snub", "light", "medium", "heavy", "interceptor", "stealth", "interdiction", "bomber"];
+export const FIGHTER_LADDER = { snub: 0, light: 1, medium: 2, heavy: 3 };
+
+/** Returns a copy of shipsDoc with the overrides applied (unknown ship names are ignored). */
+export function applyOverrides(shipsDoc, overrides) {
+  const doc = JSON.parse(JSON.stringify(shipsDoc));
+  for (const s of doc.ships) {
+    const o = overrides[s.name];
+    if (o) for (const f of EDITABLE_FIELDS) if (f in o) s[f] = JSON.parse(JSON.stringify(o[f]));
+  }
+  return doc;
+}
+
+/** Builds the database from already loaded data (also usable in tests). */
+export function createShipDb(shipsDoc, loopsDoc, example) {
+  const ships = shipsDoc.ships.map((s) => ({
+    aliases: [],
+    note: { de: "", en: "" },
+    motherships: [],
+    image: null,
+    upgradeable: true,
+    fighterClass: null,
+    beam: null,
+    height: null,
+    ...s,
+  }));
+
+  // Index: normalized name or alias -> ship. The main name wins over aliases.
+  const index = new Map();
+  ships.forEach((s) => index.set(normalizeName(s.name), s));
+  ships.forEach((s) => s.aliases.forEach((a) => {
+    const k = normalizeName(a);
+    if (!index.has(k)) index.set(k, s);
+  }));
+  // For prefix matching: longest keys first, so "Cyclone AA" wins over "Cyclone".
+  const keysByLength = [...index.keys()].sort((a, b) => b.length - a.length);
+
+  return {
+    meta: shipsDoc.meta,
+    ships,
+    loops: loopsDoc.loops,
+    example,
+
+    /** Ship by its exact name in ships.json (no alias). */
+    byName(name) {
+      return ships.find((s) => s.name === name) || null;
+    },
+
+    /**
+     * Matches any name from an import to a ship.
+     * 1. exact match on name or alias (case and punctuation are ignored)
+     * 2. prefix match: "Cutlass Black Best In Show Edition" -> "Cutlass Black"
+     */
+    match(name) {
+      const k = normalizeName(name);
+      if (!k) return null;
+      if (index.has(k)) return index.get(k);
+      const hit = keysByLength.find((key) => k.startsWith(key + " "));
+      return hit ? index.get(hit) : null;
+    },
+  };
+}
+
+/** Size class as a number for comparisons (ground vehicle = 0, snub = 1 … capital = 6). */
+export function sizeRank(size) {
+  const m = String(size).match(/S(\d)/);
+  if (m) return +m[1];
+  if (/Capital/.test(size)) return 6;
+  if (/Large/.test(size)) return 5;
+  if (/Medium/.test(size)) return 3;
+  if (/Snub/.test(size)) return 1;
+  return 0;
+}
+
+/**
+ * @typedef {Object} Ship
+ * @property {string} name            display name, unique
+ * @property {string[]} aliases       other names used in hangar exports
+ * @property {string} size            e.g. "S3 Medium", "Capital", "Ground vehicle"
+ * @property {?number} length         m
+ * @property {?number} beam           m
+ * @property {?number} height         m
+ * @property {number} crewMin
+ * @property {number} crewMax
+ * @property {number} scu             cargo capacity in SCU
+ * @property {"flight-ready"|"in-production"|"concept"} status
+ * @property {Object<string,"primary"|"secondary"|"planned">} loops  loop ID -> role
+ * @property {{de:string,en:string}} note
+ * @property {string[]} motherships   snubs only: matching motherships
+ *
+ * @typedef {Object} ShipDb
+ * @property {Object} meta
+ * @property {Ship[]} ships
+ * @property {{id:string,de:string,en:string}[]} loops
+ * @property {Object} example
+ * @property {(name:string)=>?Ship} byName
+ * @property {(name:string)=>?Ship} match
+ */

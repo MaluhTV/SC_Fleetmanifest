@@ -1,0 +1,202 @@
+{
+  "_info": "Example fleet for first-time visitors. username = default for the name field, compare = ships preselected in the compare tab (max. 4). All names must exist in ships.json.",
+  "username": "Citizen",
+  "compare": [
+    "Starlancer MAX",
+    "Constellation Mk V Centaurus"
+  ],
+  "ships": [
+    {
+      "name": "300i",
+      "qty": 1
+    },
+    {
+      "name": "400i",
+      "qty": 1
+    },
+    {
+      "name": "600i Explorer",
+      "qty": 1
+    },
+    {
+      "name": "Apollo Medivac",
+      "qty": 1
+    },
+    {
+      "name": "Arrastra",
+      "qty": 1
+    },
+    {
+      "name": "Aurora Mk I MR",
+      "qty": 1
+    },
+    {
+      "name": "Aurora Mk II",
+      "qty": 1
+    },
+    {
+      "name": "Carrack Expedition w/C8X",
+      "qty": 1
+    },
+    {
+      "name": "Caterpillar",
+      "qty": 1
+    },
+    {
+      "name": "Clipper",
+      "qty": 1
+    },
+    {
+      "name": "Constellation Mk IV Phoenix",
+      "qty": 1
+    },
+    {
+      "name": "Cutter Rambler",
+      "qty": 1
+    },
+    {
+      "name": "Dragonfly Starkitten",
+      "qty": 1
+    },
+    {
+      "name": "F7A Hornet Mk II",
+      "qty": 1
+    },
+    {
+      "name": "F8C Lightning Civilian",
+      "qty": 1
+    },
+    {
+      "name": "Glaive",
+      "qty": 1
+    },
+    {
+      "name": "Golem",
+      "qty": 1
+    },
+    {
+      "name": "Hammerhead",
+      "qty": 1
+    },
+    {
+      "name": "Hurricane",
+      "qty": 1
+    },
+    {
+      "name": "Ironclad Assault",
+      "qty": 1
+    },
+    {
+      "name": "L-21 Wolf",
+      "qty": 1
+    },
+    {
+      "name": "Legionnaire",
+      "qty": 1
+    },
+    {
+      "name": "Liberator",
+      "qty": 1
+    },
+    {
+      "name": "MDC",
+      "qty": 1
+    },
+    {
+      "name": "Merchantman",
+      "qty": 1
+    },
+    {
+      "name": "MPUV Tractor",
+      "qty": 1
+    },
+    {
+      "name": "Mustang Alpha Vindicator",
+      "qty": 1
+    },
+    {
+      "name": "Mustang Omega",
+      "qty": 1
+    },
+    {
+      "name": "P-52 Merlin",
+      "qty": 1
+    },
+    {
+      "name": "P-72 Archimedes Emerald",
+      "qty": 1
+    },
+    {
+      "name": "Paladin",
+      "qty": 1
+    },
+    {
+      "name": "Perseus",
+      "qty": 1
+    },
+    {
+      "name": "Polaris",
+      "qty": 1
+    },
+    {
+      "name": "PTV",
+      "qty": 1
+    },
+    {
+      "name": "Pulse",
+      "qty": 1
+    },
+    {
+      "name": "Railen",
+      "qty": 1
+    },
+    {
+      "name": "Reclaimer",
+      "qty": 1
+    },
+    {
+      "name": "Salvation",
+      "qty": 1
+    },
+    {
+      "name": "Shiv",
+      "qty": 1
+    },
+    {
+      "name": "Starlancer MAX",
+      "qty": 1
+    },
+    {
+      "name": "Starlancer TAC",
+      "qty": 1
+    },
+    {
+      "name": "Stinger",
+      "qty": 1
+    },
+    {
+      "name": "Syulen",
+      "qty": 1
+    },
+    {
+      "name": "Terrapin Medic",
+      "qty": 1
+    },
+    {
+      "name": "Ursa Fortuna",
+      "qty": 1
+    },
+    {
+      "name": "Ursa Medivac",
+      "qty": 1
+    },
+    {
+      "name": "Valkyrie",
+      "qty": 1
+    },
+    {
+      "name": "Vulcan",
+      "qty": 1
+    }
+  ]
+}

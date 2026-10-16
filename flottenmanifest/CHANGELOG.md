@@ -1,0 +1,132 @@
+# Changelog
+
+## 2.16.0 – 2026-10-16
+- New field `fighterClass` for all 60 ships with a fighter role, taken from the RSI role on starcitizen.tools (light / medium / heavy fighter, snub fighter, interceptor, stealth fighter, interdiction, fighter-bomber). Pathfinders, Starter and freight ships with a secondary fighter role have none.
+- Shown in the fighter loop card (below the size), the overlaps fighter card (next to every ship), the ship list (column) and the compare tab (row); editable in the ship editor.
+- Overlaps rule: in the fighter card a substitute needs at least the same class (snub < light < medium < heavy); interceptor, stealth, interdiction and fighter-bomber only by the same class. Substitutes of the nearest class are named first.
+
+## 2.15.2 – 2026-10-16
+- Loop cards and matrix now show the melt pair for every fleet ship. Before, ships that can be exchanged and upgraded had no mark there (only deviations were shown), unlike the ship list and overlaps tab.
+- Role marks (primary / secondary / planned) are drawn in CSS instead of the glyphs ● ○ ◇, so they sit exactly centred in every font. `ROLE_SYMBOL` is gone.
+
+## 2.15.1 – 2026-10-16
+- Overlaps tab: the explanation box is folded into a one-line "How the analysis works" (`<details>`), closed by default.
+
+## 2.15.0 – 2026-10-16
+- Tabs, legend and the extra-data chips of the overlaps tab are sticky while scrolling (`.fm-sticky`). Pages with a fixed header can offset it via `--fm-sticky-top`.
+
+## 2.14.1 – 2026-10-16
+- Fleet ships without melt data from the import now show a grey dashed "?" pair in the ship list, overlaps and compare tab, so their status can be set by click. The compare tab shows all four states (it used to hide "exchange and upgrade possible").
+
+## 2.14.0 – 2026-10-16
+- Overlaps tab: chips "SCU", "Crew", "Dimensions" and "Status" show extra data next to every ship (tiles, candidates and substitutes). The choice is saved (`fm_ovdetails`); new details go into `OV_DETAILS` in `js/views/overlaps.js`.
+
+## 2.13.0 – 2026-10-16
+- Melt states shown as a pair of marks instead of four locks (`meltPair()` in `js/views/common.js`): circular arrows = exchange (melt for store credit), arrow up = CCU upgrade; green/blue when possible, grey and struck through when not. Legend and click menu updated; states and storage (`fm_melt`) unchanged.
+
+## 2.12.1 – 2026-10-16
+- Fourth melt state "meltable, not upgradeable" (orange open lock with !, colour token `--alert`). F8C Lightning Civilian and PTV are meltable but not upgradeable: they now show orange when the import says meltable, red only when it says not meltable.
+
+## 2.12.0 – 2026-10-16
+- Three melt states: meltable (green open lock), upgrade only (yellow lock with arrow), neither meltable nor upgradeable (red lock). Default from the import: not meltable → "upgrade only", unless `upgradeable: false` in `ships.json` (F8C Lightning Civilian, PTV).
+- Click any lock icon to choose the state (menu incl. "automatic"); stored per ship in `fm_melt`. The ship list shows all three states so every ship can be changed there.
+
+## 2.11.1 – 2026-10-16
+- Fixed: beam and height were missing for 24 non-flight-ready ships (e.g. Arrastra now 124 × 64 × 21 m). Values re-read from starcitizen.tools; G12 also corrected to 7.25 m / 2 SCU, Ranger to 3.7 × 2 × 2 m. Only RAPTOR still has no published dimensions.
+- A sample of 8 flight-ready ships was re-checked against the wiki: all values matched.
+- The validator now warns about incomplete dimensions for every status.
+
+## 2.11.0 – 2026-10-16
+- KPI row reduced to "ships & vehicles" and "flight-ready"; SCU, crew seats, LTI and melt tiles removed.
+- Ship images are now part of the project (`images/ships/`, 220 of 223 ships). Still without image: F7C-M Hornet Heartseeker Mk II, RAPTOR, Starlancer BLD. Run `tools/update-images.cmd` only when ships are added.
+
+## 2.10.0 – 2026-10-16
+- In-page ship editor (✎ in the ship list and compare tab, `js/views/editor.js`): edits are stored as overrides in the browser and can be exported as a complete `ships.json`.
+- Gameplay loops reviewed against the Star Citizen Wiki (role overview and ship pages, i.e. the official RSI role, armament and equipment). Changes:
+  - 100i: fighter secondary → –
+  - 300i: fighter secondary → –
+  - 400i: fighter secondary → –
+  - Clipper: fighter secondary → –
+  - Clipper: exploration – → primary
+  - Clipper: cargo primary → primary
+  - Clipper: medical – → secondary
+  - Intrepid: fighter secondary → –
+  - Mustang Alpha Vindicator: cargo secondary → primary
+  - Mustang Alpha Vindicator: fighter primary → secondary
+  - Aurora Mk I ES: cargo secondary → primary
+  - Aurora Mk I ES: fighter primary → secondary
+  - Avenger Stalker: dropship secondary → –
+  - Gladiator: fighter secondary → primary
+  - Gladiator: gunship primary → secondary
+  - Vanguard Hoplite: fighter secondary → –
+  - Starlancer TAC: snub – → secondary
+  - Corsair: vehicle-transport – → secondary
+  - Caterpillar: dropship secondary → –
+  - Polaris: snub – → secondary
+  - Paladin: dropship secondary → –
+  - Redeemer: dropship secondary → –
+  - Retaliator: dropship – → planned
+  - Idris-P: snub – → secondary
+  - Idris-P: medical – → secondary
+  - Nomad: vehicle-transport – → secondary
+  - Mercury Star Runner: vehicle-transport – → secondary
+  - Tyilui: snub – → secondary
+
+## 2.9.0 – 2026-10-16
+- Ship images in all tabs: loop matrix (column), ship list (column), compare (header), overlaps (size groups as image tiles, small thumbnails in candidate lines). Everything stays text-only if no fleet ship has an image.
+
+## 2.8.1 – 2026-10-16
+- Ship thumbnails more than doubled (112×63 px, `.thumb--s`); loop cards now 3 per row on desktop (2 below 1400 px, 1 below 860 px).
+
+## 2.8.0 – 2026-10-16
+- Ship images are stored locally (`images/ships/`) instead of hot-linked: `tools/fetch-ship-images.mjs` downloads them from the RSI ship matrix (replaces `import-rsi-images.mjs`); `tools/update-images.cmd` / `.sh` run fetch, validate and build in one go.
+- `build-standalone.mjs` embeds local images as data: URIs, so `dist/flottenmanifest.html` shows them offline (`--no-images` to skip).
+- `image` may be a local path; `loadShipDb()` resolves it relative to the project root, the validator warns about missing files.
+
+## 2.7.0 – 2026-10-16
+- New optional field `image` in `data/ships.json` (hot-linked RSI store image). Thumbnails in loop cards, ship list and compare header; the column only appears once a fleet ship has an image, failed images are hidden.
+- New `tools/import-rsi-images.mjs`: fills `image` from the RSI ship matrix (download or saved copy). The four Aurora Mk I variants are already filled.
+
+## 2.6.1 – 2026-10-16
+- Gaps: planned ships count like regular ones (several loops are not fully implemented yet). The separate "covered only by planned ships" list is gone; `analyseOverlaps()` now returns `gaps` instead of `gapsNone` / `gapsPlannedOnly`.
+
+## 2.6.0 – 2026-10-16
+- Suggested substitutes (incl. those in brackets) are clickable: the pick is shown green hatched in all categories and the replaced ship is marked red automatically. A second click undoes both; marking a green ship red drops the pick. Saved as `fm_chosen`.
+- Summary at the top of the overlaps tab lists picks as "A → B"; legend has an entry for chosen substitutes.
+
+## 2.5.0 – 2026-10-16
+- Overlaps are evaluated per category: a substitute only needs the loop as primary role, the size, the SCU (cargo) and the crew rule. Missing other roles no longer block a suggestion; a yellow (!) shows them on hover.
+- Click a ship name (overlaps tab, loop cards) to mark it for replacement (red hatched box, in all categories, saved as `fm_marked`). Marked ships are no longer suggested as substitutes; gaps and orphan snubs are recomputed without them.
+- Legend: new entries for the (!) hint and for marked ships.
+
+## 2.4.0 – 2026-10-16
+- Overlap rule: a substitute's minimum crew may grow to at most 1.75× (`CREW_GROWTH_MAX`), 1 → 2 is allowed.
+- The closest substitute is named (smallest size / crew first) instead of the largest; other matches are listed as "also: …".
+
+## 2.3.0 – 2026-10-16
+- Overlaps tab: the size lists use the same green/yellow melt icons as the candidates, so a ship no longer shows a red lock in one list and a yellow one in the next.
+- Melt status is shown as icons only (no text badges); the text is in the legend and appears as tooltip / aria-label.
+- Melt icons in one design (`ICONS` in `js/views/common.js`): red closed lock = not meltable, green open lock = meltable, yellow lock with up arrow = upgrade (CCU) only. New colour tokens `--good` and `--warn`; legend shows all three (`data-icon` spans in `index.html`).
+
+## 2.2.0 – 2026-10-16
+- New `dist/flottenmanifest.html`: single self-contained file that works on double-click (`file://`), built by `tools/build-standalone.mjs` (no dependencies).
+- `index.html` opened via `file://` now shows a notice pointing to the standalone file instead of an empty page.
+- `loadJson()` uses embedded `globalThis.FM_DATA` when present.
+
+## 2.1.0 – 2026-10-16
+- Overlaps tab shows the melt status of every ship: lock icon in the size lists, and for replacement candidates and orphan snubs a badge "meltable" / "not meltable – upgrade only" / "n of q not meltable" (`meltBadge()` in `js/views/common.js`).
+- `buildFleet()` now also counts `meltKnown` (copies whose meltability the import stated); if the import has no melt data, the tab says so.
+
+## 2.0.1 – 2026-10-16
+- Developer-facing content switched to English: code comments, docs (new file names `SHIP-DATABASE.md`, `IMPORT-FORMATS.md`, `ARCHITECTURE.md`), validator messages and data file notes. The page itself stays bilingual (DE/EN).
+- The load error message is now translated.
+
+## 2.0.0 – 2026-10-16
+- Project split into data (`data/*.json`), modules (`js/`, `js/views/`), styles (`css/`) and docs (`docs/`).
+- Ship database as `data/ships.json` with 223 models, values per starcitizen.tools; loops with readable IDs (`cargo`, `mining` …) in `data/loops.json`.
+- `tools/validate-ships.mjs` checks and formats the database.
+- Import formats as an extensible list `IMPORTERS` (HangarLink CSV, ship list CSV, FleetViewer JSON, JSON list, text list).
+- Fleets saved by version 1 (`localStorage`) remain valid.
+
+## 1.x
+- Single HTML file with embedded data (artifact version).

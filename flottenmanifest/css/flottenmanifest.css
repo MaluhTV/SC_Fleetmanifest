@@ -378,7 +378,7 @@ tr.row--planned td { color: var(--fut); }
 .plan-table { width: 100%; }
 .plan-table td, .plan-table th { vertical-align: middle; }
 .plan-table tbody td { border-top: 1px solid var(--line); }
-.plan-ov-wishes { display: flex; flex-wrap: wrap; gap: 4px; }
+.plan-ov-wishes { display: flex; flex-wrap: wrap; gap: 4px; } /* inner div – the <td> itself must stay a table cell */
 .plan-wish { display: inline-flex; align-items: center; gap: 2px; padding: 1px 2px 1px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; white-space: nowrap; }
 .plan-wish button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px var(--f-mono); padding: 0 4px; }
 .plan-wish button:hover { color: var(--bad); }

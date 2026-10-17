@@ -85,7 +85,7 @@ function planOverview(byShip, owned, { db }) {
       `<span class="plan-wish">${wishLabel(db, w.slot)}<button type="button" data-plan-pick="${w.index}" data-ship="${esc(ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + ship.name + " – " + wishLabel(db, w.slot))}">×</button></span>`).join("");
     return `<tr>
       <td class="plan-ov-ship">${thumb(ship, "xs")}${shipLabel(ship, { lock: false })}${isOwned ? hangarIcon() : ""}</td>
-      <td class="plan-ov-wishes">${chips}</td>
+      <td><div class="plan-ov-wishes">${chips}</div></td>
       <td>${sizeLabel(ship.size)}</td>
       <td class="num">${fmt(ship.scu)}</td>
       <td class="num">${crew(ship)}</td>

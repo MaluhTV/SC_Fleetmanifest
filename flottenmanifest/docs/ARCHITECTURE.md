@@ -59,7 +59,7 @@ All rules live in one place, `js/analysis.js`:
   - O is at least as large
   - for cargo, O has at least as much SCU
   - for fighters, O has at least S's fighter class (`fighterClassAcceptable()`): snub < light < medium < heavy; interceptor, stealth, interdiction and bomber only by the same class. Ships without a class are compared by size only. Substitutes of the nearest class are named first.
-  - O's minimum crew is at most `CREW_GROWTH_MAX` (1.75) × S's minimum crew; a solo ship may be replaced by a 2-seater (1 → 2 ok, 1 → 3 no, 3 → 5 ok, 3 → 6 no, 6 → 10 ok)
+  - O's minimum crew is at most `CREW_GROWTH_MAX` (1.75) × S's minimum crew; a pure single-seater (crew 1–1) only by a ship that can also be flown alone (minimum crew 1); a ship that seats 2 (1–2) may be replaced by one that needs 2 (1–2 → 2 ok, → 3 no, 3 → 5 ok, 3 → 6 no, 6 → 10 ok)
 - **Which substitute is named:** the closest match (`findReplacements()` sorts by size, minimum crew, number of lost loops, SCU). Further matches are shown in brackets.
 - **Lost loops:** other loops S plays that O does not (`lostLoops()`). They don't block the suggestion; the view shows a yellow (!) with a tooltip, and says if no other primary ship in the fleet covers them.
 - **Excluded as candidates:** ground vehicles and ships owned more than once (unless the user marked them).

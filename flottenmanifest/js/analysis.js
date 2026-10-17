@@ -75,11 +75,14 @@ const isActive = (role) => role && role !== ROLE.PLANNED;
 
 /**
  * A substitute may need more minimum crew, but at most CREW_GROWTH_MAX times as much.
- * Exception: a solo ship (1) may be replaced by a 2-seater.
- *   1 → 2 ok, 1 → 3 no · 3 → 5 ok, 3 → 6 no · 6 → 10 ok, 6 → 11 no
+ * Pure single-seaters (crew 1–1) are only replaced by ships that can also be flown alone (minimum crew 1) –
+ * a solo player gets no multicrew-only ship (Aurora Mk II → Shiv 1–2 ok, → Hurricane 2–2 no).
+ * A ship that seats 2 (e.g. 1–2) may be replaced by one that needs 2.
+ *   1–1 → min 1 ok, min 2 no · 1–2 → min 2 ok, min 3 no · 3 → 5 ok, 3 → 6 no · 6 → 10 ok, 6 → 11 no
  */
 export const CREW_GROWTH_MAX = 1.75;
-const crewAcceptable = (o, s) => o.crewMin <= (s.crewMin <= 1 ? 2 : s.crewMin * CREW_GROWTH_MAX);
+const crewAcceptable = (o, s) =>
+  s.crewMax <= 1 ? o.crewMin <= 1 : o.crewMin <= (s.crewMin <= 1 ? 2 : s.crewMin * CREW_GROWTH_MAX);
 
 /**
  * o can stand in for s within ONE loop (the overlap being looked at). Other loops don't matter here –

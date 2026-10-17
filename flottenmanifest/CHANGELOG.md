@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.19.0 – 2026-10-17
+- Overlaps crew rule: pure single-seaters (crew 1–1) are only replaced by ships that can also be flown alone (e.g. Aurora Mk II → Shiv 1–2 ok, → Hurricane 2–2 no). Ships that seat 2 (1–2) may still be replaced by 2-crew ships.
 - Tab order: the fleet planner sits between "Overlaps" and "Compare"; "Compare" is the last tab.
 - One line icon per gameplay loop (`LOOP_ICONS` in `js/views/common.js`), shown above the squares of the planner's coverage bar.
 - The legend is folded away ("Legend", click to open); every symbol explains itself on hover instead (role marks, marked/chosen ships now name their state in the tooltip).

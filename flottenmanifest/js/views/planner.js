@@ -39,8 +39,22 @@ export function renderPlanner(el, ctx) {
   }
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
   const rows = planRows(ctx);
-  el.innerHTML = (rows.length ? planOverview(rows, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
-    state.planner.map((slot, i) => slotCard(slot, i, ctx, owned)).join("");
+  const byShip = groupByShip(rows);
+  el.innerHTML = (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
+    state.planner.map((slot, i) => slotCard(slot, i, ctx, owned, byShip)).join("");
+}
+
+/** Short name of a wish, e.g. "Bergung (Salvage) · 1–2". */
+const wishLabel = (db, slot) => `${loopName(db, slot.loop)} · ${crewRange(slot.min, slot.max)}`;
+
+/** Picks grouped by ship: Map name → { ship, wishes: [{ slot, index }] }, in the order of first selection. */
+function groupByShip(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    if (!map.has(r.ship.name)) map.set(r.ship.name, { ship: r.ship, wishes: [] });
+    map.get(r.ship.name).wishes.push({ slot: r.slot, index: r.index });
+  }
+  return map;
 }
 
 /** All picks as rows { slot, index, ship }, in wish order; picks that no longer match a wish are dropped. */
@@ -55,60 +69,54 @@ function planRows({ db, fleet, state }) {
 export function planText(ctx) {
   const { db } = ctx;
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
-  const rows = planRows(ctx);
-  return ctx.state.planner
-    .map((slot) => {
-      const ships = rows.filter((r) => r.slot === slot).map((r) => r.ship);
-      if (!ships.length) return null;
-      const head = `${loopName(db, slot.loop)} · ${t("col_crew")} ${crewRange(slot.min, slot.max)}`;
-      return head + "\n" + ships.map((s) =>
-        `  - ${s.name} (${sizeLabel(s.size)}, ${fmt(s.scu)} SCU, ${t("col_crew")} ${crew(s)}) – ${owned.has(s.name) ? t("planner_in_fleet") : t("planner_missing")}`).join("\n");
-    })
-    .filter(Boolean)
-    .join("\n\n");
+  const lines = [...groupByShip(planRows(ctx)).values()].map(({ ship: s, wishes }) =>
+    `- ${s.name} (${sizeLabel(s.size)}, ${fmt(s.scu)} SCU, ${t("col_crew")} ${crew(s)}) – ${owned.has(s.name) ? t("planner_in_fleet") : t("planner_missing")}\n` +
+    `    ${t("planner_for")}: ${wishes.map((w) => `${wishLabel(db, w.slot)}`).join("; ")}`);
+  return `${t("planner_plan_title")}\n\n${lines.join("\n")}`;
 }
 
-/** "My plan": every picked ship per wish, then totals over the distinct ships. */
-function planOverview(rows, owned, { db }) {
-  const distinct = [...new Map(rows.map((r) => [r.ship.name, r.ship])).values()];
-  const have = distinct.filter((s) => owned.has(s.name));
-  const body = rows.map((r, i) => {
-    const first = i === 0 || rows[i - 1].slot !== r.slot;
-    const isOwned = owned.has(r.ship.name);
-    return `<tr${first ? ' class="plan-group"' : ""}>
-      <td>${first ? `${loopName(db, r.slot.loop)} <span class="muted">· ${crewRange(r.slot.min, r.slot.max)}</span>` : ""}</td>
-      <td class="plan-ov-ship">${thumb(r.ship, "xs")}${shipLabel(r.ship, { lock: false })}${isOwned ? hangarIcon() : ""}</td>
-      <td>${sizeLabel(r.ship.size)}</td>
-      <td class="num">${fmt(r.ship.scu)}</td>
-      <td class="num">${crew(r.ship)}</td>
+/** "My plan": one row per selected ship with the scenarios it was chosen for, then totals. */
+function planOverview(byShip, owned, { db }) {
+  const entries = [...byShip.values()];
+  const have = entries.filter((e) => owned.has(e.ship.name));
+  const body = entries.map(({ ship, wishes }) => {
+    const isOwned = owned.has(ship.name);
+    const chips = wishes.map((w) =>
+      `<span class="plan-wish">${wishLabel(db, w.slot)}<button type="button" data-plan-pick="${w.index}" data-ship="${esc(ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + ship.name + " – " + wishLabel(db, w.slot))}">×</button></span>`).join("");
+    return `<tr>
+      <td class="plan-ov-ship">${thumb(ship, "xs")}${shipLabel(ship, { lock: false })}${isOwned ? hangarIcon() : ""}</td>
+      <td class="plan-ov-wishes">${chips}</td>
+      <td>${sizeLabel(ship.size)}</td>
+      <td class="num">${fmt(ship.scu)}</td>
+      <td class="num">${crew(ship)}</td>
       <td>${isOwned ? `<span class="good">${t("planner_in_fleet")}</span>` : `<span class="warn">${t("planner_missing")}</span>`}</td>
-      <td><button type="button" class="remove" data-plan-pick="${r.index}" data-ship="${esc(r.ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + r.ship.name)}">×</button></td>
     </tr>`;
   }).join("");
-  const scu = distinct.reduce((a, s) => a + s.scu, 0);
+  const scu = entries.reduce((a, e) => a + e.ship.scu, 0);
   return `<article class="plan-card plan-overview">
     <div class="plan-head">
       <h3>${t("planner_plan_title")}</h3>
-      <span class="muted">${t("planner_plan_sum", { n: distinct.length, h: have.length, m: distinct.length - have.length })}</span>
+      <span class="muted">${t("planner_plan_sum", { n: entries.length, h: have.length, m: entries.length - have.length })}</span>
       <span class="plan-actions">
         <button type="button" class="btn" data-plan-copy>${t("planner_copy")}</button>
         <button type="button" class="btn" data-plan-clear>${t("planner_unpick_all")}</button>
       </span>
     </div>
     <div class="table-wrap"><table class="plan-table">
-      <thead><tr><th>${t("planner_wish")}</th><th>${t("col_ship")}</th><th>${t("filter_size")}</th><th class="num">SCU</th><th class="num">${t("col_crew")}</th><th>${t("col_status")}</th><th></th></tr></thead>
+      <thead><tr><th>${t("col_ship")}</th><th>${t("planner_for")}</th><th>${t("filter_size")}</th><th class="num">SCU</th><th class="num">${t("col_crew")}</th><th>${t("col_status")}</th></tr></thead>
       <tbody>${body}</tbody>
-      <tfoot><tr><td></td><td>${t("planner_plan_ships", { n: distinct.length })}</td><td></td><td class="num"><b>${fmt(scu)}</b></td><td></td><td colspan="2"></td></tr></tfoot>
+      <tfoot><tr><td>${t("planner_plan_ships", { n: entries.length })}</td><td></td><td></td><td class="num"><b>${fmt(scu)}</b></td><td></td><td></td></tr></tfoot>
     </table></div>
-    ${distinct.length < rows.length ? `<p class="muted plan-note">${t("planner_plan_dupes")}</p>` : ""}
   </article>`;
 }
 
-function slotCard(slot, index, { db, fleet, state }, owned) {
+function slotCard(slot, index, { db, fleet, state }, owned, byShip) {
   const ships = plannerSuggestions(db.ships, fleet.ships, slot);
   const mine = ships.filter((s) => owned.has(s.name));
   const picked = new Set(slot.picks);
-  const tile = (s) => planTile(s, { index, isOwned: owned.has(s.name), isPicked: picked.has(s.name), inCompare: state.compare.includes(s.name), loopId: slot.loop });
+  // other wishes this ship is already selected for (shown hatched with "Already planned: …")
+  const elsewhere = (s) => (byShip.get(s.name)?.wishes || []).filter((w) => w.index !== index).map((w) => wishLabel(db, w.slot));
+  const tile = (s) => planTile(s, { index, isOwned: owned.has(s.name), isPicked: picked.has(s.name), elsewhere: elsewhere(s), inCompare: state.compare.includes(s.name), loopId: slot.loop });
   // picked ships always stay visible, even if they would be folded away
   const shown = [...ships.slice(0, PLAN_VISIBLE), ...ships.slice(PLAN_VISIBLE).filter((s) => picked.has(s.name))];
   const rest = ships.slice(PLAN_VISIBLE).filter((s) => !picked.has(s.name));
@@ -133,15 +141,16 @@ function slotCard(slot, index, { db, fleet, state }, owned) {
 /**
  * One suggestion: image, name, metrics (size, SCU, crew), status, compare toggle.
  * The whole tile is a checkbox (data-plan-pick, handled in main.js): picked = orange frame with a check mark.
- * Owned = green hangar icon next to the name.
+ * Owned = green hangar icon next to the name. Selected for another wish = green hatching and "Already planned: …".
  */
-function planTile(s, { index, isOwned, isPicked, inCompare, loopId }) {
+function planTile(s, { index, isOwned, isPicked, elsewhere, inCompare, loopId }) {
   const extra = [
     s.status !== "flight-ready" ? statusPill(s.status) : "",
     loopId === "fighter" && s.fighterClass ? `<span class="muted">${fighterClass(s)}</span>` : "",
   ].filter(Boolean).join(" ");
   const label = t(isPicked ? "planner_unpick" : "planner_pick") + ": " + s.name;
-  return `<div class="plan-tile${isPicked ? " is-picked" : ""}" role="checkbox" tabindex="0" aria-checked="${isPicked}"
+  const planned = elsewhere.length ? `<div class="plan-elsewhere">${t("planner_elsewhere")}: ${elsewhere.join("; ")}</div>` : "";
+  return `<div class="plan-tile${isPicked ? " is-picked" : ""}${elsewhere.length ? " is-planned" : ""}" role="checkbox" tabindex="0" aria-checked="${isPicked}"
       data-plan-pick="${index}" data-ship="${esc(s.name)}" title="${esc(label)}" aria-label="${esc(label)}">
     <span class="plan-check" aria-hidden="true">${ICONS.check}</span>
     ${thumb(s)}
@@ -151,6 +160,7 @@ function planTile(s, { index, isOwned, isPicked, inCompare, loopId }) {
       <div><dt>SCU</dt><dd>${fmt(s.scu)}</dd></div>
       <div><dt>${t("col_crew")}</dt><dd>${crew(s)}${effectiveCrew(s) !== s.crewMin ? icon("icon--warn plan-eff", ICONS.warn, t("planner_eff_hint")) : ""}</dd></div>
     </dl>
+    ${planned}
     <div class="plan-foot">${extra}${compareToggle(s.name, inCompare)}</div>
   </div>`;
 }

@@ -33,7 +33,9 @@
     </div>
   </header>
 
-  <!-- Toolbar: name, import, example -->
+  <!-- Toolbar: name, import, example. Folds into one line once an own fleet is loaded (main.js → setToolsOpen) -->
+  <details class="fm-tools" id="tools" open>
+  <summary class="fm-tools__sum"><span id="toolsSummary"></span></summary>
   <div class="fm-toolbar">
     <label class="fm-toolbar__name" for="usernameInput">
       <span data-i18n="username_label"></span>
@@ -47,6 +49,7 @@
     <span class="fm-toolbar__spacer"></span>
     <span class="fm-dbinfo" id="dbInfo"></span>
   </div>
+  </details>
 
   <!-- "Paste list" input -->
   <div class="fm-paste" id="pasteBox" hidden>

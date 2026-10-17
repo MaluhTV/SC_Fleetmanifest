@@ -43,6 +43,8 @@ const el = {
   pasteCancel: $("#pasteCancel"),
   resetExample: $("#resetExample"),
   imgConsent: $("#imgConsent"),
+  tools: $("#tools"),
+  toolsSummary: $("#toolsSummary"),
   imgToggle: $("#imgToggle"),
   dbInfo: $("#dbInfo"),
   banner: $("#banner"),
@@ -96,8 +98,12 @@ function renderHeader() {
   el.filterText.setAttribute("aria-label", t("search"));
   el.pasteText.placeholder = "Caterpillar\n2x Golem\nStarlancer MAX";
   el.dbInfo.textContent = t("db_info", { n: db.ships.length, date: db.meta.updated });
-  el.banner.className = "fm-banner" + (state.ownFleet ? " fm-banner--own" : "");
-  el.banner.textContent = state.ownFleet ? t("banner_own", { n: state.items.length }) : t("banner_example");
+  // own fleet: the folded toolbar line says it all; example fleet: banner invites to import
+  el.banner.hidden = state.ownFleet;
+  el.banner.className = "fm-banner";
+  el.banner.textContent = state.ownFleet ? "" : t("banner_example");
+  el.toolsSummary.textContent = state.ownFleet ? t("tools_summary_own", { n: state.items.length }) : t("tools_summary");
+  document.body.classList.toggle("has-own-fleet", state.ownFleet);
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
   renderImageConsent();
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
@@ -111,7 +117,12 @@ function renderCompareArea() {
 }
 
 /** Rebuilds the ship database from ships.json plus the user's local edits (state.overrides). */
-const isRemote = (url) => typeof url === "string" && /^https?:/i.test(url);
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+// another site's image (RSI): needs consent. Own files (resolved to this origin by loadShipDb) and data: URIs do not.
+const isRemote = (url) => {
+  if (typeof url !== "string" || !/^https?:/i.test(url)) return false;
+  try { return new URL(url).origin !== location.origin; } catch { return true; }
+};
 
 function rebuildDb() {
   const { source } = db;
@@ -216,6 +227,7 @@ function applyFleet(items, format) {
   save.fleet(state);
   save.compare(state);
   renderAll();
+  el.tools.open = false; // fleet is in – fold the toolbar into one line
   toast(t("import_ok", { n: items.length, u: fleet.unknown.length, format }));
 }
 
@@ -315,6 +327,7 @@ function resetToExample() {
   save.username(state);
   save.compare(state);
   renderAll();
+  el.tools.open = true;
 }
 
 /* ---------- Events ---------- */
@@ -400,17 +413,26 @@ function spyCurrent() {
   if (!spy) return;
   const line = stickyBottom() + 24;
   const cards = $$(spy.cards);
-  // last card whose top has passed the line under the sticky area, otherwise the first one
-  let current = cards[0];
-  for (const c of cards) if (c.getBoundingClientRect().top <= line) current = c;
+  // the last row of cards whose top has passed the line under the sticky area (otherwise the first card);
+  // cards side by side share a row – then the one picked in the bar wins, else the leftmost
+  let rowTop = null;
+  for (const c of cards) { const top = c.getBoundingClientRect().top; if (top <= line && (rowTop === null || top > rowTop)) rowTop = top; }
+  const row = rowTop === null ? cards.slice(0, 1) : cards.filter((c) => Math.abs(c.getBoundingClientRect().top - rowTop) < 2);
+  const current = row.find((c) => spy.id(c) === spyPicked) || row[0];
   const id = current ? spy.id(current) : null;
   el[spy.bar].querySelectorAll(".cover-item").forEach((b) => b.classList.toggle("is-current", b.dataset[spy.attr] === id));
 }
+let spyPicked = null; // loop last clicked in a bar
 let spyQueued = false;
 const queueSpy = () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spyCurrent(); }); } };
 
 function wireEvents() {
   addEventListener("scroll", queueSpy, { passive: true });
+  document.addEventListener("click", (e) => {
+    const item = e.target.closest(".fm-bar .cover-item");
+    const spy = SPY[state.view];
+    if (item && spy) spyPicked = item.dataset[spy.attr];
+  }, true);
   // bars are re-rendered often – frame the current square again afterwards
   new MutationObserver(queueSpy).observe(el.sticky, { childList: true, subtree: true });
   // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it;
@@ -526,6 +548,8 @@ function wireEvents() {
   el.importFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // a hangar export is a few KB – refuse huge files instead of freezing the tab
+    if (file.size > MAX_IMPORT_BYTES) { e.target.value = ""; return toast(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 }), true); }
     const reader = new FileReader();
     reader.onload = () => {
       let result;
@@ -721,6 +745,7 @@ async function start() {
 
   wireEvents();
   renderAll();
+  el.tools.open = !state.ownFleet; // own fleet loaded before: toolbar folded into one line
   showView(state.view);
 }
 

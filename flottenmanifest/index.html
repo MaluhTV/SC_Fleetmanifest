@@ -93,18 +93,23 @@
 
   <!-- Extra-data chips for the overlaps tab (js/views/overlaps.js → renderOvDetails) -->
   <div class="ov-details" id="ovDetailsBar" hidden></div>
+
+  <!-- Loop bars (quick navigation), one per tab; main.js → showView() shows the one of the open tab -->
+  <div class="fm-bar" id="loopBar" data-bar-for="loops"></div>
+  <div class="fm-bar" id="matrixBar" data-bar-for="matrix" hidden></div>
+  <div class="fm-bar" id="listBar" data-bar-for="list" hidden></div>
+  <div class="fm-bar" id="overlapBar" data-bar-for="overlaps" hidden></div>
+  <div class="fm-bar" id="plannerBar" data-bar-for="planner" hidden></div>
   </div>
 
   <!-- Views -->
-  <section id="view-loops"><div id="loopBar"></div><div class="loop-grid" id="loopCards"></div></section>
+  <section id="view-loops"><div class="loop-grid" id="loopCards"></div></section>
 
   <section id="view-matrix" hidden>
-    <div id="matrixBar"></div>
     <div class="box"><div class="table-wrap"><table class="matrix" id="matrixTable"></table></div></div>
   </section>
 
   <section id="view-list" hidden>
-    <div id="listBar"></div>
     <div class="filters">
       <label for="filterLoop" data-i18n="filter_loop"></label>
       <select id="filterLoop"></select>
@@ -122,7 +127,7 @@
     <div class="box"><div class="table-wrap"><table id="shipTable"></table></div></div>
   </section>
 
-  <section id="view-overlaps" hidden><div id="overlapBar"></div><div class="cards" id="overlapCards"></div></section>
+  <section id="view-overlaps" hidden><div class="cards" id="overlapCards"></div></section>
 
   <section id="view-compare" hidden>
     <div class="filters">

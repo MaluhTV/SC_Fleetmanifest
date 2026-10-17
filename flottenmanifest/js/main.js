@@ -53,6 +53,9 @@ const el = {
   matrixBar: $("#matrixBar"),
   listBar: $("#listBar"),
   overlapBar: $("#overlapBar"),
+  plannerBar: $("#plannerBar"),
+  sticky: $(".fm-sticky"),
+  bars: $$(".fm-bar[data-bar-for]"),
   plannerForm: $("#plannerForm"),
   plannerLoop: $("#plannerLoop"),
   plannerMin: $("#plannerMin"),
@@ -144,7 +147,7 @@ function renderListArea() {
 function renderPlannerArea() {
   renderPlannerForm({ loopSelect: el.plannerLoop, presets: el.plannerPresets }, ctx());
   el.plannerMax.placeholder = t("planner_open");
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
 }
 
 function showView(view) {
@@ -153,6 +156,7 @@ function showView(view) {
   el.tabs.forEach((b) => b.setAttribute("aria-selected", b.dataset.view === view));
   VIEWS.forEach((v) => { $("#view-" + v).hidden = v !== view; });
   el.ovDetailsBar.hidden = view !== "overlaps"; // chips only belong to the overlaps tab
+  el.bars.forEach((b) => { b.hidden = b.dataset.barFor !== view; }); // the loop bar of the open tab (sticky quick navigation)
 }
 
 let toastTimer;
@@ -198,7 +202,7 @@ function togglePick(index, name) {
   else slot.picks.push(name);
   save.planner(state);
   const y = scrollY;
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
   scrollTo(0, y); // the overview may appear above – keep the tile where it was clicked
   const again = el.plannerSlots.querySelector(`.plan-tile[data-plan-pick="${index}"][data-ship="${CSS.escape(name)}"]`);
   if (again) again.focus({ preventScroll: true });
@@ -227,7 +231,7 @@ function addPlannerSlot() {
   if (state.planner.length >= PLANNER_MAX_SLOTS) return toast(t("planner_full", { max: PLANNER_MAX_SLOTS }), true);
   state.planner.push({ ...slot, picks: [] });
   save.planner(state);
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
 }
 
 /* Replacement planning: red = marked to replace (state.marked), green = chosen substitute (state.chosen) */
@@ -333,6 +337,11 @@ function saveOverride(name, diff, message) {
 }
 
 function wireEvents() {
+  // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it
+  const stickyHeight = () => document.documentElement.style.setProperty("--fm-sticky-h", el.sticky.offsetHeight + "px");
+  if (window.ResizeObserver) new ResizeObserver(stickyHeight).observe(el.sticky);
+  stickyHeight();
+
   // Melt icons sit inside clickable ship names, so they are handled first (capture) and stop the click there
   document.addEventListener("click", (e) => {
     const iconEl = e.target.closest("[data-melt]");
@@ -494,14 +503,14 @@ function wireEvents() {
     if (!state.planner.length || !confirm(t("planner_clear_confirm"))) return;
     state.planner = [];
     save.planner(state);
-    renderPlanner(el.plannerSlots, ctx());
+    renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
   });
   el.plannerSlots.addEventListener("click", (e) => {
     const r = e.target.closest("[data-planner-remove]");
     if (r) {
       state.planner.splice(Number(r.dataset.plannerRemove), 1);
       save.planner(state);
-      return renderPlanner(el.plannerSlots, ctx());
+      return renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
     }
     const b = e.target.closest(".cmp-toggle[data-compare]");
     if (b) return toggleCompare(b.dataset.compare);
@@ -509,13 +518,18 @@ function wireEvents() {
     if (e.target.closest("[data-plan-clear]")) {
       state.planner.forEach((slot) => { slot.picks = []; });
       save.planner(state);
-      return renderPlanner(el.plannerSlots, ctx());
+      return renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
     }
     const p = e.target.closest("[data-plan-pick]");
     if (p) return togglePick(Number(p.dataset.planPick), p.dataset.ship);
-    // coverage bar: pick that loop in the form
+  });
+  // planner loop bar: pick that loop in the form and jump to its first wish (or to the form)
+  el.plannerBar.addEventListener("click", (e) => {
     const c = e.target.closest("[data-cover-loop]");
-    if (c) { el.plannerLoop.value = c.dataset.coverLoop; el.plannerLoop.focus(); }
+    if (!c) return;
+    el.plannerLoop.value = c.dataset.coverLoop;
+    const card = el.plannerSlots.querySelector(`.plan-card[data-loop="${CSS.escape(c.dataset.coverLoop)}"]`);
+    (card || el.plannerForm).scrollIntoView({ behavior: "smooth", block: "start" });
   });
   // tiles are checkboxes: Enter / Space toggle them
   el.plannerSlots.addEventListener("keydown", (e) => {

@@ -31,16 +31,18 @@ export function renderPlannerForm({ loopSelect, presets }, { db }) {
     `<button type="button" class="chip" data-crew-preset="${a}-${b ?? ""}">${crewRange(a, b)}</button>`).join("");
 }
 
-export function renderPlanner(el, ctx) {
+/** barEl = the planner's loop bar in the sticky area (#plannerBar). */
+export function renderPlanner(el, ctx, barEl = null) {
   const { state } = ctx;
   const rows = planRows(ctx);
+  if (barEl) barEl.innerHTML = coverageBar(rows, ctx);
   if (!state.planner.length) {
-    el.innerHTML = coverageBar(rows, ctx) + `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
+    el.innerHTML = `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
     return;
   }
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
   const byShip = groupByShip(rows);
-  el.innerHTML = coverageBar(rows, ctx) +
+  el.innerHTML =
     (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
     state.planner.map((slot, i) => slotCard(slot, i, ctx, owned, byShip)).join("");
 }
@@ -143,7 +145,7 @@ function slotCard(slot, index, { db, fleet, state }, owned, byShip) {
     : `<p class="plan-owned warn">${t("planner_none_owned")}</p>`;
   const pickCount = slot.picks.filter((n) => ships.some((s) => s.name === n)).length;
 
-  return `<article class="plan-card">
+  return `<article class="plan-card" data-loop="${esc(slot.loop)}">
     <div class="plan-head">
       <h3>${loopIconTitle(slot.loop)}${loopName(db, slot.loop)} <span class="muted">· ${t("col_crew")} ${crewRange(slot.min, slot.max)}</span></h3>
       <span class="muted">${ships.length === 1 ? t("planner_count_one") : t("planner_count", { n: ships.length })}${pickCount ? ` · <b class="plan-picked-count">${t("planner_picked", { n: pickCount })}</b>` : ""}</span>

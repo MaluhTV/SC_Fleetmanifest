@@ -12,7 +12,7 @@ import { setLang, t, applyStaticTexts } from "./i18n.js";
 import { loadShipDb, createShipDb, applyOverrides } from "./shipdb.js";
 import { renderEditor, readEditor, diffFromOriginal, downloadShipsJson } from "./views/editor.js";
 import { importFile, importTextList, IMPORTERS } from "./importers.js";
-import { buildFleet } from "./analysis.js";
+import { buildFleet, plannerSuggestions } from "./analysis.js";
 import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis } from "./views/kpis.js";
@@ -66,6 +66,7 @@ const el = {
   plannerMax: $("#plannerMax"),
   plannerPresets: $("#plannerPresets"),
   plannerClear: $("#plannerClear"),
+  plannerAll: $("#plannerAll"),
   plannerSlots: $("#plannerSlots"),
   matrixTable: $("#matrixTable"),
   filterLoop: $("#filterLoop"),
@@ -106,6 +107,7 @@ function renderHeader() {
   document.body.classList.toggle("has-own-fleet", state.ownFleet);
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
   renderImageConsent();
+  el.plannerAll.title = t("planner_all_title");
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
 }
 
@@ -282,6 +284,26 @@ function addPlannerSlot() {
   state.planner.push({ ...slot, picks: [] });
   save.planner(state);
   renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
+}
+
+/**
+ * "All categories": one wish per gameplay loop with the crew range from the form (default 1 – open = every ship),
+ * in loop order. Loops that already have a wish with that range, or no matching ship, are skipped.
+ */
+function addAllPlannerSlots() {
+  const max = el.plannerMax.value === "" ? null : Number(el.plannerMax.value);
+  const range = sanitizeSlot({ loop: "x", min: Number(el.plannerMin.value), max });
+  if (!range || (max !== null && range.max === null)) return toast(t("planner_bad_crew"), true);
+  const has = (loop) => state.planner.some((s) => s.loop === loop && s.min === range.min && s.max === range.max);
+  const todo = db.loops.map((l) => l.id)
+    .filter((loop) => !has(loop) && plannerSuggestions(db.ships, fleet.ships, { loop, min: range.min, max: range.max }).length);
+  if (!todo.length) return toast(t("planner_all_none"));
+  const room = PLANNER_MAX_SLOTS - state.planner.length;
+  if (room <= 0) return toast(t("planner_full", { max: PLANNER_MAX_SLOTS }), true);
+  todo.slice(0, room).forEach((loop) => state.planner.push({ loop, min: range.min, max: range.max, picks: [] }));
+  save.planner(state);
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
+  toast(todo.length > room ? t("planner_all_partial", { n: room, max: PLANNER_MAX_SLOTS }) : t("planner_all_added", { n: todo.length }), todo.length > room);
 }
 
 /* Replacement planning: red = marked to replace (state.marked), green = chosen substitute (state.chosen) */
@@ -638,6 +660,7 @@ function wireEvents() {
     el.plannerMin.value = min;
     el.plannerMax.value = max;
   });
+  el.plannerAll.addEventListener("click", addAllPlannerSlots);
   el.plannerClear.addEventListener("click", () => {
     if (!state.planner.length || !confirm(t("planner_clear_confirm"))) return;
     state.planner = [];

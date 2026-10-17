@@ -2,7 +2,7 @@
 
 ## 2.19.0 – 2026-10-17
 - New tab "Fleet planner": add wishes "gameplay loop + crew range" (e.g. salvage, crew 1–2 and salvage, crew 2+; presets 1, 1–2, 2–4, 4+, 8+). Each wish shows matching ships from the whole database as tiles with size, SCU and crew; owned ships come first and are framed green, with a line "in your fleet". The first 12 are shown, the rest folds out. Wishes are saved in the browser (`fm_planner`).
-- Matching rule: loop as primary or planned role, effective crew within the range. Ships listed with crew 1 but 3 or more seats (e.g. MOTH 1–4) count as 2-person ships, because RSI lists them as solo-flyable although they are only effective with a second person; the tile shows "from 2".
+- Matching rule: loop as primary or planned role, effective crew within the range. Ships listed with crew 1 but 3 or more seats (e.g. MOTH 1–4) count as 2-person ships, because RSI lists them as solo-flyable although they are only effective with a second person; the tile shows a yellow (!) next to the crew with the hint "Designed for multicrew".
 
 ## 2.18.0 – 2026-10-17
 - Overlaps tab: with images, "Candidates to review" is a grid – ship | arrow and "covered by" | substitute | further substitutes – with every ship as a tile (image above the name). Columns line up in every row; up to `ALSO_TILES` (6) further substitutes are shown, then "+n". Without images the text list stays.

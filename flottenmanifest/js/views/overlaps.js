@@ -179,16 +179,25 @@ export function renderOverlaps(el, ctx) {
     parts.push(`<article class="is-gap"><h3>${t("unknown_title")}</h3><p>${t("unknown_text")}</p>${list(fleet.unknown.map(esc))}</article>`);
   }
 
-  if (!result.overlaps.length) parts.push(`<article><p>${t("ov_no_overlap")}</p></article>`);
-  for (const o of result.overlaps) {
-    loopId = o.loopId;
-    // group ships by size class, largest first
+  // ships grouped by size class, largest first: Map size label → tiles (or text with images off)
+  const sizeGroups = (ships) => {
     const groups = new Map();
-    [...o.primary].sort((a, b) => sizeRank(b.size) - sizeRank(a.size)).forEach((s) => {
+    [...ships].sort((a, b) => sizeRank(b.size) - sizeRank(a.size)).forEach((s) => {
       const key = sizeLabel(s.size);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(pics ? tile(s) : mark(s, shipWithMelt(s) + meta(s)));
     });
+    return groups;
+  };
+  const groupsHtml = (groups) => pics
+    ? `<div class="size-groups">${[...groups].map(([size, tiles]) => `<div class="size-group"><b>${size}</b><div class="tiles">${tiles.join("")}</div></div>`).join("")}</div>`
+    : list([...groups].map(([size, names]) => `<b>${size}</b>: ${names.join(", ")}`));
+
+  if (!result.overlaps.length) parts.push(`<article><p>${t("ov_no_overlap")}</p></article>`);
+  for (const o of result.overlaps) {
+    loopId = o.loopId;
+    // group ships by size class, largest first
+    const groups = sizeGroups(o.primary);
     // With images: one grid row per candidate – ship | arrow + label | substitute | further substitutes,
     // every ship as a tile (image above the name), so the columns line up across all rows.
     const subTile = (s, c, extra = "") =>
@@ -219,18 +228,21 @@ export function renderOverlaps(el, ctx) {
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
     parts.push(`<article id="ov-${esc(o.loopId)}">
       <h3>${title}</h3>
-      <p class="muted">${t("ov_by_size")}</p>${pics
-        ? `<div class="size-groups">${[...groups].map(([size, tiles]) => `<div class="size-group"><b>${size}</b><div class="tiles">${tiles.join("")}</div></div>`).join("")}</div>`
-        : list([...groups].map(([size, names]) => `<b>${size}</b>: ${names.join(", ")}`))}
+      <p class="muted">${t("ov_by_size")}</p>${groupsHtml(groups)}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
       <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}
     </article>`);
   }
 
-  // Loops covered only by ships that are not usable today (planned role or not flight-ready)
-  if (result.plannedOnly.length) {
-    parts.push(`<article class="is-planned-only" id="ov-planned"><h3>${t("ov_planned_title")}</h3><p class="muted">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>${list(result.plannedOnly.map((x) =>
-      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId))}</span>`).join(", ")}`))}</article>`);
+  // Loops covered only by ships that are not usable today (planned role or not flight-ready):
+  // same card layout as an overlap (tiles by size, violet notes), without candidates
+  for (const x of result.plannedOnly) {
+    loopId = x.loopId;
+    parts.push(`<article class="is-planned-only" id="ov-${esc(x.loopId)}">
+      <h3>${t("ov_planned_card_title", { loop: loopName(db, x.loopId), n: x.ships.length })}</h3>
+      <p class="muted">${t("ov_by_size")}</p>${groupsHtml(sizeGroups(x.ships))}
+      <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>
+    </article>`);
   }
 
   // Gaps and orphan snubs are computed without the marked ships

@@ -367,7 +367,8 @@ tr.row--planned td { color: var(--fut); }
 .ov-pending { color: var(--fut); }
 .ov-opt-sep { margin-left: 10px; }
 .ship-meta > span.ov-pending { white-space: normal; }
-.is-planned-only h3 { color: var(--fut); }
+.cards article.is-planned-only { border-left-color: var(--fut); }
+.plan-note-planned { font-size: 13px; max-width: 90ch; }
 .cover-item.is-active .cover-cell { outline: 2px solid var(--fg); outline-offset: 2px; }
 .cover-item.is-active { color: var(--fg); }
 .cover-cell { position: relative; }

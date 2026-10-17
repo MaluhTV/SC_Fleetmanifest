@@ -2,7 +2,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc, sum } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
-import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insuranceText, note, thumb, meltIcon, fighterClass } from "./common.js";
+import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insuranceText, note, thumb, meltIcon, fighterClass, loanerText } from "./common.js";
 
 /**
  * Table columns. No sortValue = column is not sortable.
@@ -17,6 +17,7 @@ const COLUMNS = [
   { key: "scu", label: "col_scu", numeric: true, cell: (s) => fmt(s.scu), sortValue: (s) => s.scu },
   { key: "crew", label: "col_crew", numeric: true, cell: (s) => crew(s), sortValue: (s) => s.crewMax },
   { key: "status", label: "col_status", cell: (s) => statusPill(s.status), sortValue: (s) => s.status },
+  { key: "loaners", label: "col_loaners", wrap: true, cell: (s) => `<span class="muted">${esc(loanerText(s))}</span>`, sortValue: (s) => loanerText(s) || "~" },
   { key: "insurance", label: "col_insurance", cell: (s) => insuranceText(s), sortValue: (s) => insuranceText(s) },
   { key: "loops", label: "col_loops", wrap: true, cell: (s, db) => loopList(s, db) },
   { key: "note", label: "col_note", wrap: true, cell: (s) => `<span class="muted">${esc(note(s))}</span>` },
@@ -53,7 +54,8 @@ export function renderList(table, { db, fleet, state }, filter) {
   // the image column is left out if no fleet ship has an image
   // optional columns only appear when at least one fleet ship has a value
   const has = (k) => fleet.ships.some((s) => s[k]);
-  const cols = COLUMNS.filter((c) => (c.key !== "image" || has("image")) && (c.key !== "fighterClass" || has("fighterClass")));
+  const cols = COLUMNS.filter((c) => (c.key !== "image" || has("image")) && (c.key !== "fighterClass" || has("fighterClass")) &&
+    (c.key !== "loaners" || fleet.ships.some((s) => s.loaners && s.loaners.length)));
   const col = cols.find((c) => c.key === sortKey && c.sortValue) || cols.find((c) => c.sortValue);
   rows.sort((a, b) => {
     const x = col.sortValue(a), y = col.sortValue(b);

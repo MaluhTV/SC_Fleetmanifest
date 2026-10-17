@@ -84,6 +84,18 @@ for (const s of ships) {
   for (const m of s.motherships || []) if (!names.has(m)) err(s.name, `mothership "${m}" does not exist in ships.json`);
 }
 
+// --- data/loaners.json (RSI Loaner Ship Matrix) ------------------------------
+const LOANERS_FILE = join(ROOT, "data", "loaners.json");
+if (existsSync(LOANERS_FILE)) {
+  const rows = JSON.parse(readFileSync(LOANERS_FILE, "utf8")).loaners || [];
+  for (const r of rows) {
+    const where = `loaners.json "${r.label}"`;
+    for (const n of r.ships || []) if (!names.has(n)) err(where, `ship "${n}" does not exist in ships.json`);
+    for (const l of r.loaners || []) if (l.ship && !names.has(l.ship)) err(where, `loaner ship "${l.ship}" does not exist in ships.json`);
+    if (!(r.ships || []).length) warn(where, "no matching ship in ships.json (add the ship or an alias)");
+  }
+}
+
 // --- Output ------------------------------------------------------------------
 warnings.forEach((w) => console.log("Warning: " + w));
 errors.forEach((e) => console.log("ERROR:   " + e));

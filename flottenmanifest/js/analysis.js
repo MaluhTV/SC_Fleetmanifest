@@ -131,16 +131,17 @@ const lostLoops = (s, o, loopId) =>
   Object.keys(s.loops).filter((k) => k !== loopId && isActive(s.loops[k]) && !isActive(o.loops[k]));
 
 /**
- * Fleet ships that could replace s in this loop, closest match first (ships usable today before planned / unfinished ones):
+ * Fleet ships that could replace s in this loop, closest match first (with readyFirst: ships usable today before
+ * planned / unfinished ones – an option in the overlaps tab, off by default):
  * (fighters: nearest fighter class), smallest size, then lowest minimum crew, then fewest lost loops, then least SCU.
  * pool = flight-ready ships that are not marked for replacement.
  * If two unmarked ships could replace each other, only one of them is reported (alphabetical).
  */
-function findReplacements(s, loopId, pool, isMarked) {
+function findReplacements(s, loopId, pool, isMarked, readyFirst = false) {
   const options = pool.filter((o) =>
     substitutesInLoop(o, s, loopId) && (isMarked || !(substitutesInLoop(s, o, loopId) && s.name < o.name)));
   return options.sort((a, b) =>
-    isPending(a, loopId) - isPending(b, loopId) || // usable today first
+    (readyFirst ? isPending(a, loopId) - isPending(b, loopId) : 0) || // option: usable today first
     (loopId === "fighter" ? fighterClassDistance(a, s) - fighterClassDistance(b, s) : 0) ||
     sizeRank(a.size) - sizeRank(b.size) || a.crewMin - b.crewMin ||
     lostLoops(s, a, loopId).length - lostLoops(s, b, loopId).length || a.scu - b.scu || a.name.localeCompare(b.name));
@@ -156,12 +157,13 @@ export const OVERLAP_MIN_SHIPS = 3;
  * chosen = { shipToReplace: substitute } picked by the user; a valid choice is listed as the replacement.
  * Gaps: loops without any remaining ship in a primary or planned role. Planned ships count like regular ones,
  * because several loops are not fully implemented in the game yet.
- * All ships count, also concepts and planned roles (isPending); they are marked in the view and suggested last.
+ * All ships count, also concepts and planned roles (isPending); they are marked in the view.
+ * readyFirst (option): ships usable today are suggested before pending ones.
  * plannedOnly: loops covered only by pending ships.
  * @returns {{overlaps, gaps: string[], plannedOnly: {loopId, ships}[], orphanSnubs: FleetShip[]}}
  *   overlaps[].candidates[] = { ship, marked, replacement (or null), chosen (bool), alternatives[], lost: [{ loopId, coveredElsewhere }] }
  */
-export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}) {
+export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { readyFirst = false } = {}) {
   const markedSet = new Set(marked);
   const remaining = fleetShips.filter((s) => !markedSet.has(s.name));
   // all ships count – also concepts and ships whose role is only planned (marked as pending in the view)
@@ -176,7 +178,7 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}) {
           const isMarked = markedSet.has(ship.name);
           // ships owned more than once and ground vehicles are only listed if the user marked them
           if (!isMarked && (ship.qty !== 1 || sizeRank(ship.size) === 0)) return null;
-          const options = findReplacements(ship, id, pool, isMarked);
+          const options = findReplacements(ship, id, pool, isMarked, readyFirst);
           // the user's pick comes first if it is a valid substitute in this loop
           const pick = options.findIndex((o) => o.name === chosen[ship.name]);
           if (pick > 0) options.unshift(...options.splice(pick, 1));

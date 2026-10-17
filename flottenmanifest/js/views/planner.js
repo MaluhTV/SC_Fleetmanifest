@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, loopBar, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, loopBar, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS, loanerText } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -164,6 +164,7 @@ function planTile(s, { index, isOwned, isPicked, elsewhere, inCompare, loopId })
   const extra = [
     s.status !== "flight-ready" ? statusPill(s.status) : "",
     loopId === "fighter" && s.fighterClass ? `<span class="muted">${fighterClass(s)}</span>` : "",
+    s.status !== "flight-ready" && loanerText(s) ? `<span class="plan-loaner" title="${esc(t("loaner_hint"))}">${t("loaner_short", { x: esc(loanerText(s)) })}</span>` : "",
   ].filter(Boolean).join(" ");
   const label = t(isPicked ? "planner_unpick" : "planner_pick") + ": " + s.name;
   const planned = elsewhere.length ? `<div class="plan-elsewhere">${t("planner_elsewhere")}: ${elsewhere.join("; ")}</div>` : "";

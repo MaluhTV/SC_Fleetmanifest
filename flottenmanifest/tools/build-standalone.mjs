@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_DIR = join(ROOT, "dist");
 const OUT_FILE = join(OUT_DIR, "flottenmanifest.html");
-const DATA_FILES = ["ships.json", "loops.json", "example-fleet.json"];
+const DATA_FILES = ["ships.json", "loops.json", "example-fleet.json", "loaners.json"];
 const URLS_FILE = join(ROOT, "data", "image-urls.json");
 
 const read = (p) => readFileSync(p, "utf8");

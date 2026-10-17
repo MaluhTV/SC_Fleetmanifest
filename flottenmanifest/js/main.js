@@ -107,7 +107,7 @@ function renderCompareArea() {
 /** Rebuilds the ship database from ships.json plus the user's local edits (state.overrides). */
 function rebuildDb() {
   const { source } = db;
-  db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
+  db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example, source.loanersDoc);
   db.source = source;
 }
 
@@ -451,6 +451,13 @@ function wireEvents() {
   // Overlaps: click a ship name to mark it "to replace"; the analysis is recomputed without it
   // Extra-data chips (sticky bar, overlaps tab)
   el.ovDetailsBar.addEventListener("click", (e) => {
+    if (e.target.closest('[data-ov-option="readyFirst"]')) {
+      state.ovReadyFirst = !state.ovReadyFirst;
+      save.ovReadyFirst(state);
+      renderOvDetails(el.ovDetailsBar, state);
+      renderOverlaps(el.overlapCards, ctx());
+      return;
+    }
     const d = e.target.closest("[data-ov-detail]");
     if (!d) return;
     const k = d.dataset.ovDetail;

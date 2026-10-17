@@ -4,7 +4,7 @@ import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps, loopStats, isPending, isFlightReady } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
-import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass, loanerText } from "./common.js";
 
 /** From this total crew upwards, the crew requirement of an overlap is mentioned. */
 const CREW_HINT_FROM = 12;
@@ -30,10 +30,11 @@ export const OV_DETAILS = {
   status: { label: "ov_detail_status", value: (s) => t("status_" + s.status) },
 };
 /** Why a ship is not usable today in this loop: ["Konzept" / "In Produktion", "function planned"] (may be empty). */
-const pendingParts = (s, loopId) =>
+const pendingParts = (s, loopId, withLoaner = true) =>
   !loopId || !isPending(s, loopId) ? []
-    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned")].filter(Boolean);
-const pendingText = (s, loopId) => pendingParts(s, loopId).join(" · ");
+    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned"),
+      withLoaner && !isFlightReady(s) && loanerText(s) && t("loaner_short", { x: loanerText(s) })].filter(Boolean);
+const pendingText = (s, loopId, withLoaner = true) => pendingParts(s, loopId, withLoaner).join(" · ");
 
 const detailsOf = (s, keys, loopId) => {
   const parts = keys.map((k) => OV_DETAILS[k] && OV_DETAILS[k].value(s)).filter(Boolean);
@@ -60,7 +61,9 @@ export function renderOvDetails(el, state) {
   el.setAttribute("role", "group");
   el.setAttribute("aria-label", t("ov_details"));
   el.innerHTML = `<span class="muted">${t("ov_details")}</span>` + Object.entries(OV_DETAILS).map(([k, d]) =>
-    `<button type="button" class="chip" data-ov-detail="${k}" aria-pressed="${state.ovDetails.includes(k)}">${t(d.label)}</button>`).join("");
+    `<button type="button" class="chip" data-ov-detail="${k}" aria-pressed="${state.ovDetails.includes(k)}">${t(d.label)}</button>`).join("") +
+    // option for the substitute order (state.ovReadyFirst, off by default)
+    `<span class="muted ov-opt-sep">${t("ov_options")}</span><button type="button" class="chip" data-ov-option="readyFirst" aria-pressed="${state.ovReadyFirst}" title="${esc(t("ov_opt_ready_first_hint"))}">${t("ov_opt_ready_first")}</button>`;
 }
 
 /** Marks and picks that still refer to fleet ships, and the analysis for them (shared by the cards and the bar). */
@@ -68,7 +71,7 @@ function analyse({ db, fleet, state }) {
   const inFleet = (n) => fleet.ships.some((s) => s.name === n);
   const marked = state.marked.filter(inFleet);
   const chosen = Object.fromEntries(Object.entries(state.chosen).filter(([a, b]) => inFleet(a) && inFleet(b)));
-  return { marked, chosen, result: analyseOverlaps(fleet.ships, db.loops, marked, chosen) };
+  return { marked, chosen, result: analyseOverlaps(fleet.ships, db.loops, marked, chosen, { readyFirst: state.ovReadyFirst }) };
 }
 
 /**
@@ -219,10 +222,21 @@ export function renderOverlaps(el, ctx) {
     </article>`);
   }
 
+  // Does one of the ship's loaners (RSI Loaner Ship Matrix) cover the loop today (primary role, flight-ready)?
+  const loanerCover = (s, loopId) => {
+    if (isFlightReady(s) || !s.loaners?.length) return "";
+    const today = s.loaners.map((l) => l.ship && db.byName(l.ship)).filter((o) => o && isFlightReady(o) && o.loops[loopId] === "primary");
+    return today.length ? ` <span class="good">· ${t("loaner_covers", { x: today.map((o) => esc(o.name)).join(", ") })}</span>` : "";
+  };
+
   // Loops covered only by ships that are not usable today (planned role or not flight-ready)
   if (result.plannedOnly.length) {
     parts.push(`<article class="is-planned-only" id="ov-planned"><h3>${t("ov_planned_title")}</h3><p class="muted">${t("ov_planned_text")}</p>${list(result.plannedOnly.map((x) =>
-      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId))}</span>`).join(", ")}`))}</article>`);
+      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => {
+        // the loaner is named once: "loaner X covers the loop today" if it does, otherwise "Loaner: X"
+        const cover = loanerCover(s, x.loopId);
+        return `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId, !cover))}</span>${cover}`;
+      }).join(", ")}`))}</article>`);
   }
 
   // Gaps and orphan snubs are computed without the marked ships

@@ -128,10 +128,10 @@ function rebuildDb() {
   const { source } = db;
   db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
   db.source = source;
-  // Images hotlinked from robertsspaceindustries.com send the visitor's IP address to RSI, so they are only
-  // used after the visitor agreed (state.rsiImages). Local and embedded (data:) images need no consent.
+  // Images hotlinked from robertsspaceindustries.com send the visitor's IP address to RSI: they load by default,
+  // a notice says so, and the visitor can switch them off (state.rsiImages = false). Local and data: images stay.
   db.hasRemoteImages = db.ships.some((s) => isRemote(s.image) || isRemote(s.imageFallback));
-  if (state.rsiImages !== true) {
+  if (state.rsiImages === false) {
     for (const s of db.ships) {
       if (isRemote(s.imageFallback)) delete s.imageFallback;
       if (isRemote(s.image)) s.image = null;
@@ -139,13 +139,14 @@ function rebuildDb() {
   }
 }
 
-/** Notice + toolbar switch for the RSI images (only when the data has remote images). */
+/** Notice (until acknowledged) + toolbar switch for the RSI images (only when the data has remote images). */
 function renderImageConsent() {
   const show = db.hasRemoteImages;
+  const on = state.rsiImages !== false;
   el.imgConsent.hidden = !show || state.rsiImages !== null;
-  el.imgToggle.hidden = !show || state.rsiImages === null;
-  el.imgToggle.textContent = t(state.rsiImages ? "img_toggle_on" : "img_toggle_off");
-  el.imgToggle.setAttribute("aria-pressed", String(state.rsiImages === true));
+  el.imgToggle.hidden = !show;
+  el.imgToggle.textContent = t(on ? "img_toggle_on" : "img_toggle_off");
+  el.imgToggle.setAttribute("aria-pressed", String(on));
   el.imgToggle.title = t("img_toggle_title");
 }
 
@@ -578,7 +579,7 @@ function wireEvents() {
   el.resetExample.addEventListener("click", resetToExample);
   $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
   $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
-  el.imgToggle.addEventListener("click", () => setRsiImages(!state.rsiImages));
+  el.imgToggle.addEventListener("click", () => setRsiImages(state.rsiImages === false));
 
   // Loop bar: jump to the card of that loop
   el.loopBar.addEventListener("click", (e) => {

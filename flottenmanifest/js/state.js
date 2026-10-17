@@ -50,7 +50,7 @@ export function loadState(example) {
     ovDetails: strList(ovDetails),
     ovReadyFirst: ovReadyFirst === true, // overlaps option: ships usable today first (off by default) // extra data shown in the overlaps tab, e.g. ["scu"]
     melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: "meltable"|"upgrade"|"locked" }
-    rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: true = load, false = no, null = not asked yet
+    rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: false = off; true = on (notice acknowledged); null = on, notice not acknowledged yet
     planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
   };

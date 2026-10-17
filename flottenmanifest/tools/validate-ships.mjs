@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SHIPS_FILE = join(ROOT, "data", "ships.json");
 const LOOPS_FILE = join(ROOT, "data", "loops.json");
+const URLS_FILE = join(ROOT, "data", "image-urls.json");
 
 const STATUSES = ["flight-ready", "in-production", "concept"];
 const ROLES = ["primary", "secondary", "planned"];
@@ -26,6 +27,8 @@ const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").tr
 const shipsDoc = JSON.parse(readFileSync(SHIPS_FILE, "utf8"));
 const loopIds = JSON.parse(readFileSync(LOOPS_FILE, "utf8")).loops.map((l) => l.id);
 const ships = shipsDoc.ships;
+// RSI image links (tools/fetch-ship-images.mjs): a ship with a link needs no local file – the page falls back to it
+const imageUrls = existsSync(URLS_FILE) ? JSON.parse(readFileSync(URLS_FILE, "utf8")).urls || {} : {};
 
 const errors = [];
 const warnings = [];
@@ -61,7 +64,7 @@ for (const s of ships) {
   if (s.loops?.fighter === "primary" && s.fighterClass == null) warn(n, "primary fighter without 'fighterClass' – see the role on starcitizen.tools");
   if (s.upgradeable !== undefined && typeof s.upgradeable !== "boolean") err(n, "field 'upgradeable' must be true or false");
   if (s.image != null && !/^(https:\/\/\S+|images\/[\w./-]+)$/.test(s.image)) err(n, "field 'image' must be a local path (images/…), an https URL or null");
-  else if (s.image && s.image.startsWith("images/") && !existsSync(join(ROOT, s.image))) warn(n, `image file ${s.image} is missing – run node tools/fetch-ship-images.mjs`);
+  else if (s.image && s.image.startsWith("images/") && !existsSync(join(ROOT, s.image)) && !imageUrls[s.name]) warn(n, `image file ${s.image} is missing and there is no RSI link in data/image-urls.json – run node tools/fetch-ship-images.mjs`);
   // all statuses: concept ships usually have published dimensions on starcitizen.tools as well
   if (s.length == null || s.beam == null || s.height == null) warn(n, "dimensions are incomplete – check the ship page on starcitizen.tools");
 }

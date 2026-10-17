@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.19.1 – 2026-10-17
+- Validator: a missing local image is only reported when `data/image-urls.json` has no RSI link for the ship either (the repository has no `images/` folder, so every ship used to be reported).
+
 ## 2.19.0 – 2026-10-17
 - Overlaps crew rule: pure single-seaters (crew 1–1) are only replaced by ships that can also be flown alone (e.g. Aurora Mk II → Shiv 1–2 ok, → Hurricane 2–2 no). Ships that seat 2 (1–2) may still be replaced by 2-crew ships.
 - Tab order: the fleet planner sits between "Overlaps" and "Compare"; "Compare" is the last tab.

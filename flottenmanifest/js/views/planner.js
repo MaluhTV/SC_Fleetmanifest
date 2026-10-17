@@ -33,15 +33,36 @@ export function renderPlannerForm({ loopSelect, presets }, { db }) {
 
 export function renderPlanner(el, ctx) {
   const { state } = ctx;
+  const rows = planRows(ctx);
   if (!state.planner.length) {
-    el.innerHTML = `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
+    el.innerHTML = coverageBar(rows, ctx) + `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
     return;
   }
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
-  const rows = planRows(ctx);
   const byShip = groupByShip(rows);
-  el.innerHTML = (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
+  el.innerHTML = coverageBar(rows, ctx) +
+    (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
     state.planner.map((slot, i) => slotCard(slot, i, ctx, owned, byShip)).join("");
+}
+
+/**
+ * One square per gameplay loop, always in the order of data/loops.json (fixed positions).
+ * Filled = at least one ship is selected for a wish of that loop; the number = distinct ships.
+ * Clicking a square picks that loop in the form (main.js → data-cover-loop).
+ */
+function coverageBar(rows, { db }) {
+  const count = (loopId) => new Set(rows.filter((r) => r.slot.loop === loopId).map((r) => r.ship.name)).size;
+  const counts = db.loops.map((l) => [l.id, count(l.id)]);
+  const covered = counts.filter(([, n]) => n).length;
+  const cells = counts.map(([id, n]) => {
+    const name = loopName(db, id);
+    const text = n ? `${name}: ${t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n })}` : `${name}: ${t("planner_cover_none")}`;
+    return `<button type="button" class="cover-cell${n ? " is-filled" : ""}" data-cover-loop="${esc(id)}" title="${esc(text)}" aria-label="${esc(text)}">${n || ""}</button>`;
+  }).join("");
+  return `<div class="cover-bar" role="group" aria-label="${esc(t("planner_cover_title"))}">
+    <div class="cover-cells">${cells}</div>
+    <span class="muted cover-sum">${t("planner_cover_sum", { n: covered, total: db.loops.length })}</span>
+  </div>`;
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2". */

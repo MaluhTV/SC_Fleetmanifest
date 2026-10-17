@@ -5,6 +5,7 @@
 - "My plan" has one row per ship with the scenarios it was chosen for (each with ×). A ship already chosen for another wish shows green hatching and "Already planned: …" in the other suggestions.
 - Owned ships are marked with a green hangar icon (also in the legend) instead of a green frame, so the frame is free for the selection.
 - New tab "Fleet planner": add wishes "gameplay loop + crew range" (e.g. salvage, crew 1–2 and salvage, crew 2+; presets 1, 1–2, 2–4, 4+, 8+). Each wish shows matching ships from the whole database as tiles with size, SCU and crew; owned ships come first and are framed green, with a line "in your fleet". The first 12 are shown, the rest folds out. Wishes are saved in the browser (`fm_planner`).
+- Coverage bar above "My plan": one square per gameplay loop at a fixed position (order of `data/loops.json`); filled with the number of selected ships once a ship is chosen for that loop, "n of 14 loops in the plan" next to it. Clicking a square picks that loop in the form.
 - Matching rule: loop as primary or planned role, effective crew within the range. Ships listed with crew 1 but 3 or more seats (e.g. MOTH 1–4) count as 2-person ships, because RSI lists them as solo-flyable although they are only effective with a second person; the tile shows a yellow (!) next to the crew with the hint "Designed for multicrew" (no person count – some ships are not effective with two people either).
 
 ## 2.18.0 – 2026-10-17

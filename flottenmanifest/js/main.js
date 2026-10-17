@@ -473,7 +473,10 @@ function wireEvents() {
       return renderPlanner(el.plannerSlots, ctx());
     }
     const p = e.target.closest("[data-plan-pick]");
-    if (p) togglePick(Number(p.dataset.planPick), p.dataset.ship);
+    if (p) return togglePick(Number(p.dataset.planPick), p.dataset.ship);
+    // coverage bar: pick that loop in the form
+    const c = e.target.closest("[data-cover-loop]");
+    if (c) { el.plannerLoop.value = c.dataset.coverLoop; el.plannerLoop.focus(); }
   });
   // tiles are checkboxes: Enter / Space toggle them
   el.plannerSlots.addEventListener("keydown", (e) => {

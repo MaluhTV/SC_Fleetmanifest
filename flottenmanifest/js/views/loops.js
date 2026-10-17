@@ -3,7 +3,7 @@ import { t, fmt } from "../i18n.js";
 import { ROLE_ORDER } from "../shipdb.js";
 import { loopStats } from "../analysis.js";
 import { ROLE } from "../shipdb.js";
-import { loopName, loopText, loopBar, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
+import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
 
 export function renderLoops(el, { db, fleet, state }) {
   // thumbnail column only if at least one fleet ship has an image (data/ships.json → image)
@@ -14,7 +14,7 @@ export function renderLoops(el, { db, fleet, state }) {
 function loopCard(loopId, db, ships, state, thumbs) {
   const { compare } = state;
   const st = loopStats(ships, loopId);
-  const head = `<div class="loop-card__head"><h3>${loopName(db, loopId)}</h3><span class="muted loop-card__count">${st.all.length} ${t("ships")}</span></div>`;
+  const head = `<div class="loop-card__head"><h3>${loopIconTitle(loopId)}${loopName(db, loopId)}</h3><span class="muted loop-card__count">${st.all.length} ${t("ships")}</span></div>`;
   if (!st.all.length) return `<div class="loop-card" id="loop-${loopId}">${head}<p class="muted">${t("loop_empty")}</p></div>`;
 
   // Sort: primary, planned, secondary; within each by SCU and crew, descending

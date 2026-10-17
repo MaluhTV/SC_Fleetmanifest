@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, loopBar, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -145,7 +145,7 @@ function slotCard(slot, index, { db, fleet, state }, owned, byShip) {
 
   return `<article class="plan-card">
     <div class="plan-head">
-      <h3>${loopName(db, slot.loop)} <span class="muted">· ${t("col_crew")} ${crewRange(slot.min, slot.max)}</span></h3>
+      <h3>${loopIconTitle(slot.loop)}${loopName(db, slot.loop)} <span class="muted">· ${t("col_crew")} ${crewRange(slot.min, slot.max)}</span></h3>
       <span class="muted">${ships.length === 1 ? t("planner_count_one") : t("planner_count", { n: ships.length })}${pickCount ? ` · <b class="plan-picked-count">${t("planner_picked", { n: pickCount })}</b>` : ""}</span>
       <button type="button" class="remove" data-planner-remove="${index}" title="${esc(t("planner_remove"))}" aria-label="${esc(t("planner_remove"))}">×</button>
     </div>

@@ -368,6 +368,10 @@ tr.row--planned td { color: var(--fut); }
 .ov-opt-sep { margin-left: 10px; }
 .ship-meta > span.ov-pending { white-space: normal; }
 .cards article.is-planned-only { border-left-color: var(--fut); }
+/* loop icon in front of card titles (overlaps, loop cards, planner wishes) */
+.card-loop-icon { display: inline-flex; vertical-align: -2px; margin-right: 8px; color: var(--accent); }
+.card-loop-icon svg { width: 18px; height: 18px; }
+.is-planned-only .card-loop-icon { color: var(--fut); }
 .plan-note-planned { font-size: 13px; max-width: 90ch; }
 .cover-item.is-active .cover-cell { outline: 2px solid var(--fg); outline-offset: 2px; }
 .cover-item.is-active { color: var(--fg); }

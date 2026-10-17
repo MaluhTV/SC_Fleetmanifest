@@ -26,6 +26,8 @@ export const LOOP_ICONS = {
 };
 const LOOP_ICON_FALLBACK = loopSvg('<circle cx="8" cy="8" r="2.5"/>');
 export const loopIcon = (loopId) => LOOP_ICONS[loopId] || LOOP_ICON_FALLBACK;
+/** Loop icon in front of a card title (same icon as in the loop bar), hidden from screen readers – the title names the loop. */
+export const loopIconTitle = (loopId) => `<span class="card-loop-icon" aria-hidden="true">${loopIcon(loopId)}</span>`;
 
 /**
  * Loop bar: one icon + square per gameplay loop, always in the order of data/loops.json.

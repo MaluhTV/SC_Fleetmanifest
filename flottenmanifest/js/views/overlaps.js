@@ -4,7 +4,7 @@ import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps, loopStats, isPending, isFlightReady } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
-import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** RSI's list of loaner ships for ships that are not flight-ready – linked from the "covered only by planned ships" card. */
 const LOANER_MATRIX_URL = "https://support.robertsspaceindustries.com/hc/en-us/articles/360003093114-Loaner-Ship-Matrix";
@@ -227,7 +227,7 @@ export function renderOverlaps(el, ctx) {
     const title = t("ov_overlap_title", { loop: loopName(db, o.loopId), n: o.primary.length }) +
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
     parts.push(`<article id="ov-${esc(o.loopId)}">
-      <h3>${title}</h3>
+      <h3>${loopIconTitle(o.loopId)}${title}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(groups)}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
       <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}
@@ -239,7 +239,7 @@ export function renderOverlaps(el, ctx) {
   for (const x of result.plannedOnly) {
     loopId = x.loopId;
     parts.push(`<article class="is-planned-only" id="ov-${esc(x.loopId)}">
-      <h3>${t("ov_planned_card_title", { loop: loopName(db, x.loopId), n: x.ships.length })}</h3>
+      <h3>${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: loopName(db, x.loopId), n: x.ships.length })}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(sizeGroups(x.ships))}
       <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>
     </article>`);

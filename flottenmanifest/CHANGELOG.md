@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.20.0 – 2026-10-17
+- Loop bar in more tabs: loop matrix (click highlights the column), ship list (click filters by that loop, second click clears; the active loop is outlined) and overlaps (filled = overlap with the number of primary ships, red dashed = gap, outline = covered without overlap; click jumps to the card). `loopBar()` got the levels "plain" and "gap" and an `active` option.
 - "By gameplay loop" tab: quick overview bar above the cards (same component as the planner's coverage bar, `loopBar()` in `js/views/common.js`). Filled = ships in a primary role (number = count), dashed = secondary or planned roles only, empty = none; hover shows the breakdown, click jumps to the card.
 
 ## 2.19.1 – 2026-10-17

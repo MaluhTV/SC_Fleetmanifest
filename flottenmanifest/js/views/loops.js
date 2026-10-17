@@ -50,28 +50,34 @@ function loopCard(loopId, db, ships, state, thumbs) {
 }
 
 /**
- * Quick overview above the loop cards: one square per loop (shared loopBar() in common.js).
+ * Fleet coverage per loop for the loop bar (loopBar() in common.js), shared by the loop tab, matrix and ship list.
  * Filled = ships in a primary role (number = how many), dashed = only secondary or planned roles, empty = none.
- * Clicking a square scrolls to its card (main.js → data-loop-jump).
  */
-export function renderLoopBar(el, { db, fleet }) {
+export function fleetLoopCells(db, fleet) {
   const cells = {};
   for (const { id } of db.loops) {
     const st = loopStats(fleet.ships, id);
     const secondary = st.all.filter((s) => s.loops[id] === ROLE.SECONDARY).length;
-    const n = st.primary.length || st.all.length;
     const parts = [
       st.primary.length && t("loopbar_primary", { n: st.primary.length }),
       secondary && t("loopbar_secondary", { n: secondary }),
       st.planned.length && t("loopbar_planned", { n: st.planned.length }),
     ].filter(Boolean);
     cells[id] = {
-      n,
+      n: st.primary.length || st.all.length,
       level: st.primary.length ? "full" : st.all.length ? "partial" : "",
       text: `${loopText(db, id)}: ${parts.length ? parts.join(", ") : t("loop_empty")}`,
     };
   }
-  const full = Object.values(cells).filter((c) => c.level === "full").length;
-  el.innerHTML = loopBar(db, cells, { attr: "loop-jump", label: t("loopbar_title"), summary: t("loopbar_sum", { n: full, total: db.loops.length }) });
+  return cells;
 }
 
+/**
+ * Fleet loop bar above a tab. attr = click attribute handled in main.js
+ * (loop tab: jump to the card · matrix: highlight the column · ship list: filter), active = selected loop.
+ */
+export function renderLoopBar(el, { db, fleet }, { attr = "loop-jump", active = null, hint = "" } = {}) {
+  const cells = fleetLoopCells(db, fleet);
+  const full = Object.values(cells).filter((c) => c.level === "full").length;
+  el.innerHTML = loopBar(db, cells, { attr, active, label: t("loopbar_title"), summary: t("loopbar_sum", { n: full, total: db.loops.length }) + hint });
+}

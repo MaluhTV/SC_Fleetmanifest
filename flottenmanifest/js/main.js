@@ -19,7 +19,7 @@ import { renderKpis } from "./views/kpis.js";
 import { renderLoops, renderLoopBar } from "./views/loops.js";
 import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
-import { renderOverlaps, renderOvDetails } from "./views/overlaps.js";
+import { renderOverlaps, renderOvDetails, renderOverlapBar } from "./views/overlaps.js";
 import { renderCompare, renderCompareSelect } from "./views/compare.js";
 import { renderPlanner, renderPlannerForm, planText } from "./views/planner.js";
 
@@ -50,6 +50,9 @@ const el = {
   compareBadge: $("#compareBadge"),
   loopCards: $("#loopCards"),
   loopBar: $("#loopBar"),
+  matrixBar: $("#matrixBar"),
+  listBar: $("#listBar"),
+  overlapBar: $("#overlapBar"),
   plannerForm: $("#plannerForm"),
   plannerLoop: $("#plannerLoop"),
   plannerMin: $("#plannerMin"),
@@ -117,13 +120,25 @@ function renderAll() {
   renderKpis(el.kpis, ctx());
   renderLoops(el.loopCards, ctx());
   renderLoopBar(el.loopBar, ctx());
-  renderMatrix(el.matrixTable, ctx());
+  renderMatrixArea();
   renderListFilters({ loopSelect: el.filterLoop, sizeSelect: el.filterSize }, ctx());
-  renderList(el.shipTable, ctx(), listFilter());
+  renderListArea();
   renderOverlaps(el.overlapCards, ctx());
+  renderOverlapBar(el.overlapBar, ctx());
   renderOvDetails(el.ovDetailsBar, state);
   renderCompareArea();
   renderPlannerArea();
+}
+
+/* Loop bars above the matrix (highlight a column) and the ship list (filter by loop) */
+let matrixHl = null;
+function renderMatrixArea() {
+  renderLoopBar(el.matrixBar, ctx(), { attr: "matrix-hl", active: matrixHl });
+  renderMatrix(el.matrixTable, ctx(), matrixHl);
+}
+function renderListArea() {
+  renderLoopBar(el.listBar, ctx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
+  renderList(el.shipTable, ctx(), listFilter());
 }
 
 function renderPlannerArea() {
@@ -222,6 +237,7 @@ function setMarks(marked, chosen) {
   save.marked(state);
   renderLoops(el.loopCards, ctx());
   renderOverlaps(el.overlapCards, ctx());
+  renderOverlapBar(el.overlapBar, ctx()); // marked ships change overlaps and gaps
 }
 /** Plain click on a name: toggle red. A ship turning red can no longer be anyone's substitute. */
 function toggleMark(name) {
@@ -508,7 +524,28 @@ function wireEvents() {
   });
 
   // Ship list: filters and sorting via click/Enter on the column header
-  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", () => renderList(el.shipTable, ctx(), listFilter())));
+  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", renderListArea));
+  // loop bars: matrix = highlight the column, ship list = filter (second click clears), overlaps = jump to the card
+  el.matrixBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-matrix-hl]");
+    if (!b) return;
+    matrixHl = matrixHl === b.dataset.matrixHl ? null : b.dataset.matrixHl;
+    renderMatrixArea();
+    const th = el.matrixTable.querySelector("th.col-hl");
+    if (th) th.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  });
+  el.listBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-list-filter]");
+    if (!b) return;
+    el.filterLoop.value = el.filterLoop.value === b.dataset.listFilter ? "" : b.dataset.listFilter;
+    renderListArea();
+  });
+  el.overlapBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ov-jump]");
+    if (!b) return;
+    const card = document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   const sortBy = (key) => {
     state.list.sortDir = state.list.sortKey === key ? -state.list.sortDir : 1;
     state.list.sortKey = key;

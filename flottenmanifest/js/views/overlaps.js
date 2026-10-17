@@ -3,7 +3,7 @@ import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps } from "../analysis.js";
-import { loopName, loopText, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** From this total crew upwards, the crew requirement of an overlap is mentioned. */
 const CREW_HINT_FROM = 12;
@@ -54,11 +54,38 @@ export function renderOvDetails(el, state) {
     `<button type="button" class="chip" data-ov-detail="${k}" aria-pressed="${state.ovDetails.includes(k)}">${t(d.label)}</button>`).join("");
 }
 
-export function renderOverlaps(el, { db, fleet, state }) {
+/** Marks and picks that still refer to fleet ships, and the analysis for them (shared by the cards and the bar). */
+function analyse({ db, fleet, state }) {
   const inFleet = (n) => fleet.ships.some((s) => s.name === n);
   const marked = state.marked.filter(inFleet);
   const chosen = Object.fromEntries(Object.entries(state.chosen).filter(([a, b]) => inFleet(a) && inFleet(b)));
-  const result = analyseOverlaps(fleet.ships, db.loops, marked, chosen);
+  return { marked, chosen, result: analyseOverlaps(fleet.ships, db.loops, marked, chosen) };
+}
+
+/**
+ * Loop bar above the overlaps tab: filled = overlap (number = ships in a primary role), red dashed = gap,
+ * outline = covered without overlap. Click jumps to the overlap card or the gaps card (main.js → data-ov-jump).
+ */
+export function renderOverlapBar(el, ctx) {
+  const { db, fleet } = ctx;
+  const { marked, result } = analyse(ctx);
+  const overlap = new Map(result.overlaps.map((o) => [o.loopId, o]));
+  const remaining = fleet.ships.filter((s) => !marked.includes(s.name));
+  const cells = {};
+  for (const { id } of db.loops) {
+    const name = loopText(db, id);
+    const primary = remaining.filter((s) => s.loops[id] === "primary").length;
+    if (overlap.has(id)) cells[id] = { n: overlap.get(id).primary.length, level: "full", text: `${name}: ${t("ovbar_overlap", { n: overlap.get(id).primary.length })}` };
+    else if (result.gaps.includes(id)) cells[id] = { n: 0, level: "gap", text: `${name}: ${t("ovbar_gap")}` };
+    else cells[id] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
+  }
+  el.innerHTML = loopBar(db, cells, { attr: "ov-jump", label: t("loopbar_title"),
+    summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length }) });
+}
+
+export function renderOverlaps(el, ctx) {
+  const { db, fleet, state } = ctx;
+  const { marked, chosen, result } = analyse(ctx);
   const sel = { marked, chosen };
   const mark = (s, html) => markable(s, html, sel);
   const choose = (s, forShip) => markable(s, esc(s.name), sel, forShip.name);
@@ -125,7 +152,7 @@ export function renderOverlaps(el, { db, fleet, state }) {
     });
     const title = t("ov_overlap_title", { loop: loopName(db, o.loopId), n: o.primary.length }) +
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
-    parts.push(`<article>
+    parts.push(`<article id="ov-${esc(o.loopId)}">
       <h3>${title}</h3>
       <p class="muted">${t("ov_by_size")}</p>${pics
         ? `<div class="size-groups">${[...groups].map(([size, tiles]) => `<div class="size-group"><b>${size}</b><div class="tiles">${tiles.join("")}</div></div>`).join("")}</div>`
@@ -136,7 +163,7 @@ export function renderOverlaps(el, { db, fleet, state }) {
   }
 
   // Gaps and orphan snubs are computed without the marked ships
-  let gaps = `<article class="is-gap"><h3>${t("ov_gaps_title")}${marked.length ? ` <span class="muted">· ${t("ov_without_marked")}</span>` : ""}</h3>`;
+  let gaps = `<article class="is-gap" id="ov-gaps"><h3>${t("ov_gaps_title")}${marked.length ? ` <span class="muted">· ${t("ov_without_marked")}</span>` : ""}</h3>`;
   gaps += result.gaps.length
     ? `<p>${t("ov_gaps_none")}</p>${list(result.gaps.map((id) => loopName(db, id)))}`
     : `<p>${t("ov_gaps_ok")}</p>`;

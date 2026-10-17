@@ -199,20 +199,28 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}) {
 /* ---------- Fleet planner ---------- */
 
 /**
+ * Crew a ship really needs for proper operation. RSI lists many ships as "1–4" as soon as the pilot can
+ * work one station alone, but they are only effective with a second person. So: minimum crew 1 with
+ * EFFECTIVE_CREW_FROM_MAX or more seats counts as 2 (MOTH 1–4 → 2); 1–1 and 1–2 stay solo ships.
+ */
+export const EFFECTIVE_CREW_FROM_MAX = 3;
+export const effectiveCrew = (s) => (s.crewMin === 1 && s.crewMax >= EFFECTIVE_CREW_FROM_MAX ? 2 : s.crewMin);
+
+/**
  * Ships for one planner slot ({ loop, min, max }; max null = open):
- * the loop as primary or planned role, and a minimum crew within min…max
- * ("Crew 1–2" = can be flown with 1 to 2 people, "2+" = needs at least 2).
+ * the loop as primary or planned role, and an effective crew (effectiveCrew) within min…max
+ * ("Crew 1–2" = can be run properly with 1 to 2 people, "2+" = needs at least 2).
  * Owned ships first (the fleet copy, with quantity and melt status), then flight-ready, then smallest.
  */
 export function plannerSuggestions(dbShips, fleetShips, slot) {
   const owned = new Map(fleetShips.map((s) => [s.name, s]));
   const max = slot.max == null ? Infinity : slot.max;
   return dbShips
-    .filter((s) => (s.loops[slot.loop] === ROLE.PRIMARY || s.loops[slot.loop] === ROLE.PLANNED) && s.crewMin >= slot.min && s.crewMin <= max)
+    .filter((s) => (s.loops[slot.loop] === ROLE.PRIMARY || s.loops[slot.loop] === ROLE.PLANNED) && effectiveCrew(s) >= slot.min && effectiveCrew(s) <= max)
     .map((s) => owned.get(s.name) || s)
     .sort((a, b) =>
       owned.has(b.name) - owned.has(a.name) || isFlightReady(b) - isFlightReady(a) ||
-      sizeRank(a.size) - sizeRank(b.size) || a.crewMin - b.crewMin || b.scu - a.scu || a.name.localeCompare(b.name));
+      sizeRank(a.size) - sizeRank(b.size) || effectiveCrew(a) - effectiveCrew(b) || b.scu - a.scu || a.name.localeCompare(b.name));
 }
 
 /* ---------- Compare ---------- */

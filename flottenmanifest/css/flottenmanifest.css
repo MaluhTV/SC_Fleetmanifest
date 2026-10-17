@@ -364,6 +364,7 @@ tr.row--planned td { color: var(--fut); }
 .plan-metrics div { display: grid; }
 .plan-metrics dt { color: var(--muted); font-size: 11px; }
 .plan-metrics dd { margin: 0; }
+.plan-eff { display: block; color: var(--warn); font-size: 11px; cursor: help; }
 .plan-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
 .plan-foot .cmp-toggle { margin-left: auto; }
 .plan-more summary { cursor: pointer; font-size: 13px; color: var(--muted); margin: 10px 0 6px; }

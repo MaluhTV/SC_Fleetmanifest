@@ -6,7 +6,7 @@
  */
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
-import { plannerSuggestions } from "../analysis.js";
+import { plannerSuggestions, effectiveCrew } from "../analysis.js";
 import { loopName, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away. */
@@ -71,7 +71,7 @@ function planTile(s, isOwned, inCompare, loopId) {
     <dl class="plan-metrics">
       <div><dt>${t("filter_size")}</dt><dd>${sizeLabel(s.size)}</dd></div>
       <div><dt>SCU</dt><dd>${fmt(s.scu)}</dd></div>
-      <div><dt>${t("col_crew")}</dt><dd>${crew(s)}</dd></div>
+      <div><dt>${t("col_crew")}</dt><dd>${crew(s)}${effectiveCrew(s) !== s.crewMin ? `<span class="plan-eff" title="${esc(t("planner_eff_hint"))}">${t("planner_eff", { n: effectiveCrew(s) })}</span>` : ""}</dd></div>
     </dl>
     <div class="plan-foot">${extra}${compareToggle(s.name, inCompare)}</div>
   </div>`;

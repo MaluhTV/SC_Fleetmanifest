@@ -35,16 +35,13 @@ export const loopIconTitle = (loopId) => `<span class="card-loop-icon" aria-hidd
  * level: "full" = filled (accent) · "partial" = dashed · "plain" = outline with grey number · "gap" = red dashed ·
  *        "planned" = violet dashed (only planned / unfinished ships) · "" = empty
  * attr = data attribute name for the click (main.js), label = aria label, summary = text next to the bar (HTML),
- * active = loop ID shown as selected (e.g. the ship list filter). order = loop IDs in card order (default: loops.json).
+ * active = loop ID shown as selected (e.g. the ship list filter).
  * The square of the card currently in view is framed while scrolling (main.js → .is-current). cells[id].changed = true adds a dot (something changes there).
  * Used by the loop tab, matrix, ship list, overlaps (coverage of the fleet) and the fleet planner (coverage of the plan).
  */
 const BAR_LEVELS = { full: " is-filled", partial: " is-partial", plain: " is-plain", gap: " is-gap", planned: " is-planned-only" };
-export function loopBar(db, cells, { attr, label, summary, active = null, order = null }) {
-  // order = loop IDs in the order of the cards below (overlaps, planner); missing loops follow in loops.json order
-  const ids = db.loops.map((l) => l.id);
-  const sorted = order ? [...new Set([...order.filter((id) => ids.includes(id)), ...ids])] : ids;
-  const items = sorted.map((id) => {
+export function loopBar(db, cells, { attr, label, summary, active = null }) {
+  const items = db.loops.map(({ id }) => id).map((id) => {
     const c = cells[id] || { n: 0, level: "", text: loopText(db, id) };
     return `<button type="button" class="cover-item${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === id ? " is-active" : ""}" data-${attr}="${esc(id)}" aria-pressed="${active === id}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
       <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;

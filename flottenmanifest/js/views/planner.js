@@ -42,9 +42,14 @@ export function renderPlanner(el, ctx, barEl = null) {
   }
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
   const byShip = groupByShip(rows);
+  const loopPos = new Map(ctx.db.loops.map((l, i) => [l.id, i]));
   el.innerHTML =
     (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
-    state.planner.map((slot, i) => slotCard(slot, i, ctx, owned, byShip)).join("");
+    // wish cards in the fixed loop order of data/loops.json (same as the bar and the other tabs);
+    // wishes of the same loop keep their entry order, the index stays the slot's position in state
+    state.planner.map((slot, i) => ({ slot, i, pos: loopPos.get(slot.loop) ?? Infinity }))
+      .sort((a, b) => a.pos - b.pos || a.i - b.i)
+      .map(({ slot, i }) => slotCard(slot, i, ctx, owned, byShip)).join("");
 }
 
 /**
@@ -60,8 +65,7 @@ function coverageBar(rows, { db, state }) {
     cells[id] = { n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
   }
   const covered = Object.values(cells).filter((c) => c.n).length;
-  // same order as the wish cards (first wish of each loop), then the remaining loops
-  return loopBar(db, cells, { attr: "cover-loop", order: state.planner.map((s) => s.loop), label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
+  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */

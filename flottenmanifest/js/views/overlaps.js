@@ -98,9 +98,7 @@ export function renderOverlapBar(el, ctx) {
     else if (po) cells[id] = { n: po.ships.length, level: "planned", text: `${name}: ${t("ovbar_planned", { n: po.ships.length })}` };
     else cells[id] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
   }
-  // same order as the cards: overlaps (largest first), then "planned only", then the rest
-  const order = [...result.overlaps.map((o) => o.loopId), ...result.plannedOnly.map((x) => x.loopId)];
-  el.innerHTML = loopBar(db, cells, { attr: "ov-jump", order, label: t("loopbar_title"),
+  el.innerHTML = loopBar(db, cells, { attr: "ov-jump", label: t("loopbar_title"),
     summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length, p: result.plannedOnly.length }) });
 }
 
@@ -196,6 +194,10 @@ export function renderOverlaps(el, ctx) {
     : list([...groups].map(([size, names]) => `<b>${size}</b>: ${names.join(", ")}`));
 
   if (!result.overlaps.length) parts.push(`<article><p>${t("ov_no_overlap")}</p></article>`);
+  // loop cards (overlaps and "planned only") are collected per loop and output in the fixed order of
+  // data/loops.json – the same order as the loop bar and the other tabs
+  const loopCards = new Map();
+  const addCard = (id, html) => { if (!loopCards.has(id)) loopCards.set(id, []); loopCards.get(id).push(html); };
   for (const o of result.overlaps) {
     loopId = o.loopId;
     // group ships by size class, largest first
@@ -228,7 +230,7 @@ export function renderOverlaps(el, ctx) {
     });
     const title = t("ov_overlap_title", { loop: loopName(db, o.loopId), n: o.primary.length }) +
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
-    parts.push(`<article id="ov-${esc(o.loopId)}">
+    addCard(o.loopId, `<article id="ov-${esc(o.loopId)}">
       <h3>${loopIconTitle(o.loopId)}${title}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(groups)}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
@@ -240,12 +242,14 @@ export function renderOverlaps(el, ctx) {
   // same card layout as an overlap (tiles by size, violet notes), without candidates
   for (const x of result.plannedOnly) {
     loopId = x.loopId;
-    parts.push(`<article class="is-planned-only" id="ov-${esc(x.loopId)}">
+    addCard(x.loopId, `<article class="is-planned-only" id="ov-${esc(x.loopId)}">
       <h3>${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: loopName(db, x.loopId), n: x.ships.length })}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(sizeGroups(x.ships))}
       <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>
     </article>`);
   }
+
+  for (const { id } of db.loops) parts.push(...(loopCards.get(id) || []));
 
   // Gaps and orphan snubs are computed without the marked ships
   let gaps = `<article class="is-gap" id="ov-gaps"><h3>${t("ov_gaps_title")}${marked.length ? ` <span class="muted">· ${t("ov_without_marked")}</span>` : ""}</h3>`;

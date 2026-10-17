@@ -196,6 +196,25 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}) {
   return { overlaps, gaps, orphanSnubs };
 }
 
+/* ---------- Fleet planner ---------- */
+
+/**
+ * Ships for one planner slot ({ loop, min, max }; max null = open):
+ * the loop as primary or planned role, and a minimum crew within min…max
+ * ("Crew 1–2" = can be flown with 1 to 2 people, "2+" = needs at least 2).
+ * Owned ships first (the fleet copy, with quantity and melt status), then flight-ready, then smallest.
+ */
+export function plannerSuggestions(dbShips, fleetShips, slot) {
+  const owned = new Map(fleetShips.map((s) => [s.name, s]));
+  const max = slot.max == null ? Infinity : slot.max;
+  return dbShips
+    .filter((s) => (s.loops[slot.loop] === ROLE.PRIMARY || s.loops[slot.loop] === ROLE.PLANNED) && s.crewMin >= slot.min && s.crewMin <= max)
+    .map((s) => owned.get(s.name) || s)
+    .sort((a, b) =>
+      owned.has(b.name) - owned.has(a.name) || isFlightReady(b) - isFlightReady(a) ||
+      sizeRank(a.size) - sizeRank(b.size) || a.crewMin - b.crewMin || b.scu - a.scu || a.name.localeCompare(b.name));
+}
+
 /* ---------- Compare ---------- */
 
 /**

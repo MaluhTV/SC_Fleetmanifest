@@ -13,7 +13,7 @@ import { loadShipDb, createShipDb, applyOverrides } from "./shipdb.js";
 import { renderEditor, readEditor, diffFromOriginal, downloadShipsJson } from "./views/editor.js";
 import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet } from "./analysis.js";
-import { loadState, save, exampleItems, MAX_COMPARE, VIEWS } from "./state.js";
+import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis } from "./views/kpis.js";
 import { renderLoops } from "./views/loops.js";
@@ -21,6 +21,7 @@ import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
 import { renderOverlaps, renderOvDetails } from "./views/overlaps.js";
 import { renderCompare, renderCompareSelect } from "./views/compare.js";
+import { renderPlanner, renderPlannerForm } from "./views/planner.js";
 
 /** All elements the script uses (IDs from index.html). */
 const el = {
@@ -48,6 +49,13 @@ const el = {
   tabs: $$("#tabs [data-view]"),
   compareBadge: $("#compareBadge"),
   loopCards: $("#loopCards"),
+  plannerForm: $("#plannerForm"),
+  plannerLoop: $("#plannerLoop"),
+  plannerMin: $("#plannerMin"),
+  plannerMax: $("#plannerMax"),
+  plannerPresets: $("#plannerPresets"),
+  plannerClear: $("#plannerClear"),
+  plannerSlots: $("#plannerSlots"),
   matrixTable: $("#matrixTable"),
   filterLoop: $("#filterLoop"),
   filterSize: $("#filterSize"),
@@ -113,6 +121,13 @@ function renderAll() {
   renderOverlaps(el.overlapCards, ctx());
   renderOvDetails(el.ovDetailsBar, state);
   renderCompareArea();
+  renderPlannerArea();
+}
+
+function renderPlannerArea() {
+  renderPlannerForm({ loopSelect: el.plannerLoop, presets: el.plannerPresets }, ctx());
+  el.plannerMax.placeholder = t("planner_open");
+  renderPlanner(el.plannerSlots, ctx());
 }
 
 function showView(view) {
@@ -154,6 +169,17 @@ function toggleCompare(name) {
   save.compare(state);
   $$(".cmp-toggle[data-compare]").forEach((b) => b.setAttribute("aria-pressed", state.compare.includes(b.dataset.compare)));
   renderCompareArea();
+}
+
+/* Fleet planner: wishes { loop, min, max } (state.planner, fm_planner) */
+function addPlannerSlot() {
+  const max = el.plannerMax.value === "" ? null : Number(el.plannerMax.value);
+  const slot = sanitizeSlot({ loop: el.plannerLoop.value, min: Number(el.plannerMin.value), max });
+  if (!slot || (max !== null && slot.max === null)) return toast(t("planner_bad_crew"), true);
+  if (state.planner.length >= PLANNER_MAX_SLOTS) return toast(t("planner_full", { max: PLANNER_MAX_SLOTS }), true);
+  state.planner.push(slot);
+  save.planner(state);
+  renderPlanner(el.plannerSlots, ctx());
 }
 
 /* Replacement planning: red = marked to replace (state.marked), green = chosen substitute (state.chosen) */
@@ -385,6 +411,32 @@ function wireEvents() {
     if (e.target.closest("[data-clear-marks]")) setMarks([], {});
 
   });
+  // Fleet planner: add a wish, crew presets, remove, compare toggles on the tiles
+  el.plannerForm.addEventListener("submit", (e) => { e.preventDefault(); addPlannerSlot(); });
+  el.plannerPresets.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-crew-preset]");
+    if (!b) return;
+    const [min, max] = b.dataset.crewPreset.split("-");
+    el.plannerMin.value = min;
+    el.plannerMax.value = max;
+  });
+  el.plannerClear.addEventListener("click", () => {
+    if (!state.planner.length || !confirm(t("planner_clear_confirm"))) return;
+    state.planner = [];
+    save.planner(state);
+    renderPlanner(el.plannerSlots, ctx());
+  });
+  el.plannerSlots.addEventListener("click", (e) => {
+    const r = e.target.closest("[data-planner-remove]");
+    if (r) {
+      state.planner.splice(Number(r.dataset.plannerRemove), 1);
+      save.planner(state);
+      return renderPlanner(el.plannerSlots, ctx());
+    }
+    const b = e.target.closest(".cmp-toggle[data-compare]");
+    if (b) toggleCompare(b.dataset.compare);
+  });
+
   el.compareAdd.addEventListener("change", (e) => { if (e.target.value) toggleCompare(e.target.value); });
   el.compareBody.addEventListener("click", (e) => {
     const b = e.target.closest("[data-remove]");

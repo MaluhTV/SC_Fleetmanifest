@@ -7,7 +7,10 @@ import { sanitizeOverride } from "./shipdb.js";
 import { MELT_STATES } from "./analysis.js";
 
 export const MAX_COMPARE = 4;
-export const VIEWS = ["loops", "matrix", "list", "overlaps", "compare"];
+export const VIEWS = ["loops", "matrix", "list", "overlaps", "compare", "planner"];
+/** Fleet planner: at most this many wishes, crew numbers between 1 and PLANNER_CREW_LIMIT. */
+export const PLANNER_MAX_SLOTS = 20;
+export const PLANNER_CREW_LIMIT = 99;
 
 /*
  * Everything in localStorage can be edited by anyone with access to the browser, so every value is
@@ -30,6 +33,7 @@ export function loadState(example) {
   const overrides = storage.get("overrides", {});
   const melt = storage.get("melt", {});
   const ovDetails = storage.get("ovdetails", []);
+  const planner = storage.get("planner", []);
   return {
     lang: lang === "en" ? "en" : "de",
     username: typeof storage.get("name", null) === "string" ? storage.get("name").slice(0, 40) : example.username,
@@ -42,6 +46,7 @@ export function loadState(example) {
     overrides: Object.fromEntries(Object.entries(strMap(overrides, isObj)).map(([k, o]) => [k, sanitizeOverride(o)]).filter(([, o]) => o)), // edits from the in-page editor
     ovDetails: strList(ovDetails), // extra data shown in the overlaps tab, e.g. ["scu"]
     melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: "meltable"|"upgrade"|"locked" }
+    planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
   };
 }
@@ -61,6 +66,16 @@ export function sanitizeItem(i) {
   };
 }
 
+/** Planner wish { loop, min, max }: loop ID, crew 1…99, max null = open. Anything else is dropped. */
+export function sanitizeSlot(x) {
+  if (!x || typeof x !== "object" || typeof x.loop !== "string" || !/^[a-z-]{1,40}$/.test(x.loop)) return null;
+  const min = Number.isInteger(x.min) && x.min >= 1 && x.min <= PLANNER_CREW_LIMIT ? x.min : null;
+  if (min === null) return null;
+  const max = x.max === null || x.max === undefined ? null
+    : Number.isInteger(x.max) && x.max >= min && x.max <= PLANNER_CREW_LIMIT ? x.max : null;
+  return { loop: x.loop, min, max };
+}
+
 /** Insurance is "LTI" or a number of months; anything else is dropped (also used by the importers). */
 export const cleanInsurance = (v) => {
   const s = String(v ?? "").trim();
@@ -78,5 +93,6 @@ export const save = {
   overrides: (state) => storage.set("overrides", state.overrides),
   melt: (state) => storage.set("melt", state.melt),
   ovDetails: (state) => storage.set("ovdetails", state.ovDetails),
+  planner: (state) => storage.set("planner", state.planner),
   resetFleet: () => storage.set("fleet", null),
 };

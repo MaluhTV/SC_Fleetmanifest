@@ -69,6 +69,7 @@
     <button role="tab" data-view="list" aria-selected="false"><span data-i18n="tab_list"></span></button>
     <button role="tab" data-view="overlaps" aria-selected="false"><span data-i18n="tab_overlaps"></span></button>
     <button role="tab" data-view="compare" aria-selected="false"><span data-i18n="tab_compare"></span><span class="fm-badge" id="compareBadge" hidden></span></button>
+    <button role="tab" data-view="planner" aria-selected="false"><span data-i18n="tab_planner"></span></button>
   </nav>
 
   <!-- Legend -->
@@ -123,6 +124,23 @@
       <button class="btn" type="button" id="compareClear" data-i18n="compare_clear"></button>
     </div>
     <div id="compareBody"></div>
+  </section>
+
+  <!-- Fleet planner: wishes "loop + crew range" → matching ships (js/views/planner.js, wired in main.js) -->
+  <section id="view-planner" hidden>
+    <p class="muted plan-intro" data-i18n="planner_intro"></p>
+    <form class="filters plan-form" id="plannerForm">
+      <label for="plannerLoop" data-i18n="filter_loop"></label>
+      <select id="plannerLoop"></select>
+      <label for="plannerMin" data-i18n="planner_crew"></label>
+      <input id="plannerMin" type="number" min="1" max="99" step="1" value="1" required>
+      <span aria-hidden="true">–</span>
+      <input id="plannerMax" type="number" min="1" max="99" step="1">
+      <span class="plan-presets" id="plannerPresets"></span>
+      <button class="btn btn--primary" type="submit" data-i18n="planner_add"></button>
+      <button class="btn" type="button" id="plannerClear" data-i18n="planner_clear"></button>
+    </form>
+    <div id="plannerSlots"></div>
   </section>
 
   <footer class="fm-footer">

@@ -37,6 +37,7 @@ file / text box ── importers.importFile() ──► items [{ name, qty, insu
 | change an icon (roles, locks) | `ICONS` in `views/common.js`, role marks via `.mk--*::before` in the CSS; legend icons use `<span data-icon="…">` in `index.html` |
 | change the max. number of compared ships | `MAX_COMPARE` in `state.js` |
 | add extra data to the overlaps tab (chips) | `OV_DETAILS` in `views/overlaps.js` + label in `i18n.js` |
+| change the fleet planner rule or presets | `plannerSuggestions()` in `analysis.js`; `PLANNER_PRESETS` / `PLAN_VISIBLE` in `views/planner.js` |
 | change what the ship editor can edit | `EDITABLE_FIELDS` in `shipdb.js` + form in `views/editor.js` |
 
 Adding a tab takes these steps:
@@ -65,6 +66,7 @@ All rules live in one place, `js/analysis.js`:
 - **Chosen substitutes** (`state.chosen` = `{ shipToReplace: substitute }`, stored as `fm_chosen`): clicking a suggested substitute (`data-choose` + `data-for`) picks it in green and marks the replaced ship red; a second click undoes both. A green ship cannot be red at the same time – marking it red drops the pick. `analyseOverlaps(…, chosen)` lists a valid pick first ("replaced by").
 - **Marked ships** (`state.marked`, stored as `fm_marked`): clicking a ship name (`data-mark`) in the overlaps tab or a loop card marks it "to replace". `analyseOverlaps(ships, loops, marked)` then never offers marked ships as substitutes, lists marked ships first (or "no substitute left"), and computes gaps and orphan snubs as if the marked ships were gone. Import and "Load example" clear the marks.
 - **Gaps:** a loop has no ship in a primary or planned role (marked ships excluded). Planned ships count like flight-ready ones because several loops are not fully in the game yet.
+- **Fleet planner** (`plannerSuggestions()`): a wish `{ loop, min, max }` matches every database ship with the loop as primary or planned role whose minimum crew lies in `min…max` (`max` null = open). Owned ships come first, then flight-ready, then smallest. Wishes are validated by `sanitizeSlot()` (`state.js`).
 - **Snubs without mothership:** this check uses `motherships` from `ships.json`.
 - **Crew hint:** from `CREW_HINT_FROM` (12) crew seats upwards, an overlap card mentions the crew requirement (`views/overlaps.js`).
 
@@ -93,6 +95,7 @@ All rules live in one place, `js/analysis.js`:
 | `fm_marked` / `fm_chosen` | replacement planning (red / green) |
 | `fm_melt` | melt status chosen by clicking a lock icon: `{ shipName: "meltable" \| "upgrade" \| "locked" }` |
 | `fm_ovdetails` | extra data switched on in the overlaps tab, e.g. `["scu", "crew"]` |
+| `fm_planner` | fleet planner wishes: `[{ loop, min, max }]` (`max: null` = open) |
 | `fm_overrides` | edits from the ship editor: `{ shipName: { field: value } }` |
 
 "Load example" clears `fm_fleet` and resets the name and the comparison to `data/example-fleet.json`.

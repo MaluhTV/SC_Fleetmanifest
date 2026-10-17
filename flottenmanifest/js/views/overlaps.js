@@ -98,7 +98,9 @@ export function renderOverlapBar(el, ctx) {
     else if (po) cells[id] = { n: po.ships.length, level: "planned", text: `${name}: ${t("ovbar_planned", { n: po.ships.length })}` };
     else cells[id] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
   }
-  el.innerHTML = loopBar(db, cells, { attr: "ov-jump", label: t("loopbar_title"),
+  // same order as the cards: overlaps (largest first), then "planned only", then the rest
+  const order = [...result.overlaps.map((o) => o.loopId), ...result.plannedOnly.map((x) => x.loopId)];
+  el.innerHTML = loopBar(db, cells, { attr: "ov-jump", order, label: t("loopbar_title"),
     summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length, p: result.plannedOnly.length }) });
 }
 

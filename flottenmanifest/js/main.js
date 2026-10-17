@@ -157,6 +157,7 @@ function showView(view) {
   VIEWS.forEach((v) => { $("#view-" + v).hidden = v !== view; });
   el.ovDetailsBar.hidden = view !== "overlaps"; // chips only belong to the overlaps tab
   el.bars.forEach((b) => { b.hidden = b.dataset.barFor !== view; }); // the loop bar of the open tab (sticky quick navigation)
+  queueSpy(); // frame the square of the card in view right away
 }
 
 let toastTimer;
@@ -336,7 +337,33 @@ function saveOverride(name, diff, message) {
   toast(t(message, { s: name }));
 }
 
+/**
+ * Scroll spy: frames the loop-bar square of the card currently at the top of the view
+ * (loop tab, overlaps, planner – tabs whose cards belong to one loop each).
+ */
+const SPY = {
+  loops: { cards: "#loopCards .loop-card[id^='loop-']", id: (c) => c.id.slice(5), bar: "loopBar", attr: "loopJump" },
+  overlaps: { cards: "#overlapCards article[id^='ov-']:not(#ov-gaps)", id: (c) => c.id.slice(3), bar: "overlapBar", attr: "ovJump" },
+  planner: { cards: "#plannerSlots .plan-card[data-loop]", id: (c) => c.dataset.loop, bar: "plannerBar", attr: "coverLoop" },
+};
+function spyCurrent() {
+  const spy = SPY[state.view];
+  if (!spy) return;
+  const line = el.sticky.getBoundingClientRect().bottom + 24;
+  const cards = $$(spy.cards);
+  // last card whose top has passed the line under the sticky area, otherwise the first one
+  let current = cards[0];
+  for (const c of cards) if (c.getBoundingClientRect().top <= line) current = c;
+  const id = current ? spy.id(current) : null;
+  el[spy.bar].querySelectorAll(".cover-item").forEach((b) => b.classList.toggle("is-current", b.dataset[spy.attr] === id));
+}
+let spyQueued = false;
+const queueSpy = () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spyCurrent(); }); } };
+
 function wireEvents() {
+  addEventListener("scroll", queueSpy, { passive: true });
+  // bars are re-rendered often – frame the current square again afterwards
+  new MutationObserver(queueSpy).observe(el.sticky, { childList: true, subtree: true });
   // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it
   const stickyHeight = () => document.documentElement.style.setProperty("--fm-sticky-h", el.sticky.offsetHeight + "px");
   if (window.ResizeObserver) new ResizeObserver(stickyHeight).observe(el.sticky);

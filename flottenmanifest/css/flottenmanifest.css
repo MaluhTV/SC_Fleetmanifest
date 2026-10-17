@@ -373,7 +373,8 @@ tr.row--planned td { color: var(--fut); }
 .card-loop-icon svg { width: 18px; height: 18px; }
 .is-planned-only .card-loop-icon { color: var(--fut); }
 .plan-note-planned { font-size: 13px; max-width: 90ch; }
-.cover-item.is-active .cover-cell { outline: 2px solid var(--fg); outline-offset: 2px; }
+.cover-item.is-active .cover-cell, .cover-item.is-current .cover-cell { outline: 2px solid var(--fg); outline-offset: 2px; }
+.cover-item.is-current .cover-icon { color: var(--fg); }
 .cover-item.is-active { color: var(--fg); }
 .cover-cell { position: relative; }
 .cover-item.is-changed .cover-cell::after { content: ""; position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 2px var(--panel); }

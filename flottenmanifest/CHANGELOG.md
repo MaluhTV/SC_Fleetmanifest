@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.20.0 – 2026-10-17
+- Loop bars follow the card order (overlaps: overlaps by size, then "planned only", then the rest; planner: wish order), and the square of the card currently in view is framed while scrolling (scroll spy in `main.js`).
 - The loop bar of the open tab is part of the sticky area (tabs, legend) and works as quick navigation while scrolling; jump targets land below it (`--fm-sticky-h`, measured in `main.js`). Planner bar: click picks the loop in the form and jumps to its first wish.
 - Loop icon in front of the card titles (overlaps, loop cards, fleet planner wishes) – the same icon as in the loop bar (`loopIconTitle()`).
 - Overlaps count every ship: concepts, ships in production and roles whose function is not in the game yet (planned) count for overlaps, substitutes and the result. They are marked violet: unreleased ships with their status ("Concept", "In production"), released ships whose role is not in the game yet with "function planned". Option "Playable ships first" (chip next to the extra data, off by default, `fm_ovready`) suggests ships usable today first. Loops covered only by planned ships get a card like an overlap (tiles by size, no candidates) (e.g. support with a concept Vulcan and the Carrack's planned repair) and a violet dashed square in the loop bar; the card links the RSI Loaner Ship Matrix (RSI usually lends a ship that covers the loop today).

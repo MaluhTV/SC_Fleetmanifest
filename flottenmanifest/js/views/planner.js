@@ -52,7 +52,7 @@ export function renderPlanner(el, ctx, barEl = null) {
  * Filled = at least one ship is selected for a wish of that loop; the number = distinct ships.
  * Clicking a square picks that loop in the form (main.js → data-cover-loop).
  */
-function coverageBar(rows, { db }) {
+function coverageBar(rows, { db, state }) {
   const cells = {};
   for (const { id } of db.loops) {
     const n = new Set(rows.filter((r) => r.slot.loop === id).map((r) => r.ship.name)).size;
@@ -60,7 +60,8 @@ function coverageBar(rows, { db }) {
     cells[id] = { n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
   }
   const covered = Object.values(cells).filter((c) => c.n).length;
-  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
+  // same order as the wish cards (first wish of each loop), then the remaining loops
+  return loopBar(db, cells, { attr: "cover-loop", order: state.planner.map((s) => s.loop), label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */

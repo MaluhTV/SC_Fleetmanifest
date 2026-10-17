@@ -32,10 +32,13 @@ export const OV_DETAILS = {
   dims: { label: "ov_detail_dims", value: (s) => (s.length == null ? "" : `${dims(s)} m`) },
   status: { label: "ov_detail_status", value: (s) => t("status_" + s.status) },
 };
-/** Why a ship is not usable today in this loop: ["Konzept" / "In Produktion", "function planned"] (may be empty). */
+/**
+ * Why a ship is not usable today in this loop – one reason only:
+ * not released yet → its status ("Konzept" / "In Produktion"); released, but the role is planned → "function planned".
+ */
 const pendingParts = (s, loopId) =>
   !loopId || !isPending(s, loopId) ? []
-    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned")].filter(Boolean);
+    : [!isFlightReady(s) ? t("status_" + s.status) : t("ov_role_planned")];
 const pendingText = (s, loopId) => pendingParts(s, loopId).join(" · ");
 
 const detailsOf = (s, keys, loopId) => {

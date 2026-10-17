@@ -11,6 +11,7 @@ export const VIEWS = ["loops", "matrix", "list", "overlaps", "compare", "planner
 /** Fleet planner: at most this many wishes, crew numbers between 1 and PLANNER_CREW_LIMIT. */
 export const PLANNER_MAX_SLOTS = 20;
 export const PLANNER_CREW_LIMIT = 99;
+export const PLANNER_MAX_PICKS = 20;
 
 /*
  * Everything in localStorage can be edited by anyone with access to the browser, so every value is
@@ -66,14 +67,16 @@ export function sanitizeItem(i) {
   };
 }
 
-/** Planner wish { loop, min, max }: loop ID, crew 1…99, max null = open. Anything else is dropped. */
+/** Planner wish { loop, min, max, picks }: loop ID, crew 1…99, max null = open, chosen ship names. Anything else is dropped. */
 export function sanitizeSlot(x) {
   if (!x || typeof x !== "object" || typeof x.loop !== "string" || !/^[a-z-]{1,40}$/.test(x.loop)) return null;
   const min = Number.isInteger(x.min) && x.min >= 1 && x.min <= PLANNER_CREW_LIMIT ? x.min : null;
   if (min === null) return null;
   const max = x.max === null || x.max === undefined ? null
     : Number.isInteger(x.max) && x.max >= min && x.max <= PLANNER_CREW_LIMIT ? x.max : null;
-  return { loop: x.loop, min, max };
+  // picks = ships chosen for this wish (names; checked against the database when shown)
+  const picks = Array.isArray(x.picks) ? [...new Set(x.picks.filter((n) => typeof n === "string" && n.length > 0 && n.length <= 100))].slice(0, PLANNER_MAX_PICKS) : [];
+  return { loop: x.loop, min, max, picks };
 }
 
 /** Insurance is "LTI" or a number of months; anything else is dropped (also used by the importers). */

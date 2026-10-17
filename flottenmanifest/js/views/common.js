@@ -50,6 +50,9 @@ export const ICONS = {
     '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
 };
 export const LOCK_ICON = ICONS.lock;
+/** Hangar (rounded hall with an open gate) – "in your fleet"; check mark – "selected" (fleet planner). */
+ICONS.hangar = svg('<path d="M.8 11.2V6.6a5.2 5.2 0 0 1 10.4 0v4.6H8.4V7.6H3.6v3.6Z" fill="currentColor"/>');
+ICONS.check = svg('<path d="M2.2 6.3 4.9 9l5-5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>');
 
 /**
  * Melt / upgrade pair (two independent yes/no marks):

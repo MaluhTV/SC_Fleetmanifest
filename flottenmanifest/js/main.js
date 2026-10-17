@@ -13,7 +13,7 @@ import { loadShipDb, createShipDb, applyOverrides } from "./shipdb.js";
 import { renderEditor, readEditor, diffFromOriginal, downloadShipsJson } from "./views/editor.js";
 import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet } from "./analysis.js";
-import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, sanitizeSlot } from "./state.js";
+import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis } from "./views/kpis.js";
 import { renderLoops } from "./views/loops.js";
@@ -21,7 +21,7 @@ import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
 import { renderOverlaps, renderOvDetails } from "./views/overlaps.js";
 import { renderCompare, renderCompareSelect } from "./views/compare.js";
-import { renderPlanner, renderPlannerForm } from "./views/planner.js";
+import { renderPlanner, renderPlannerForm, planText } from "./views/planner.js";
 
 /** All elements the script uses (IDs from index.html). */
 const el = {
@@ -171,13 +171,44 @@ function toggleCompare(name) {
   renderCompareArea();
 }
 
-/* Fleet planner: wishes { loop, min, max } (state.planner, fm_planner) */
+/* Fleet planner: wishes { loop, min, max, picks } (state.planner, fm_planner) */
+function togglePick(index, name) {
+  const slot = state.planner[index];
+  if (!slot || !name) return;
+  const i = slot.picks.indexOf(name);
+  if (i >= 0) slot.picks.splice(i, 1);
+  else if (slot.picks.length >= PLANNER_MAX_PICKS) return toast(t("planner_picks_full", { max: PLANNER_MAX_PICKS }), true);
+  else slot.picks.push(name);
+  save.planner(state);
+  const y = scrollY;
+  renderPlanner(el.plannerSlots, ctx());
+  scrollTo(0, y); // the overview may appear above – keep the tile where it was clicked
+  const again = el.plannerSlots.querySelector(`.plan-tile[data-plan-pick="${index}"][data-ship="${CSS.escape(name)}"]`);
+  if (again) again.focus({ preventScroll: true });
+}
+
+/** Copies "My plan" as plain text; falls back to a hidden text area where the Clipboard API is not allowed. */
+async function copyPlan() {
+  const text = planText(ctx());
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.style.position = "fixed"; area.style.opacity = "0";
+    document.body.append(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  toast(t("planner_copied"));
+}
 function addPlannerSlot() {
   const max = el.plannerMax.value === "" ? null : Number(el.plannerMax.value);
   const slot = sanitizeSlot({ loop: el.plannerLoop.value, min: Number(el.plannerMin.value), max });
   if (!slot || (max !== null && slot.max === null)) return toast(t("planner_bad_crew"), true);
   if (state.planner.length >= PLANNER_MAX_SLOTS) return toast(t("planner_full", { max: PLANNER_MAX_SLOTS }), true);
-  state.planner.push(slot);
+  state.planner.push({ ...slot, picks: [] });
   save.planner(state);
   renderPlanner(el.plannerSlots, ctx());
 }
@@ -434,7 +465,22 @@ function wireEvents() {
       return renderPlanner(el.plannerSlots, ctx());
     }
     const b = e.target.closest(".cmp-toggle[data-compare]");
-    if (b) toggleCompare(b.dataset.compare);
+    if (b) return toggleCompare(b.dataset.compare);
+    if (e.target.closest("[data-plan-copy]")) return copyPlan();
+    if (e.target.closest("[data-plan-clear]")) {
+      state.planner.forEach((slot) => { slot.picks = []; });
+      save.planner(state);
+      return renderPlanner(el.plannerSlots, ctx());
+    }
+    const p = e.target.closest("[data-plan-pick]");
+    if (p) togglePick(Number(p.dataset.planPick), p.dataset.ship);
+  });
+  // tiles are checkboxes: Enter / Space toggle them
+  el.plannerSlots.addEventListener("keydown", (e) => {
+    const p = e.target.closest && e.target.closest(".plan-tile[data-plan-pick]");
+    if (!p || e.target !== p || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    togglePick(Number(p.dataset.planPick), p.dataset.ship);
   });
 
   el.compareAdd.addEventListener("change", (e) => { if (e.target.value) toggleCompare(e.target.value); });

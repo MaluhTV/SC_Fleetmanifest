@@ -95,7 +95,7 @@ All rules live in one place, `js/analysis.js`:
 | `fm_marked` / `fm_chosen` | replacement planning (red / green) |
 | `fm_melt` | melt status chosen by clicking a lock icon: `{ shipName: "meltable" \| "upgrade" \| "locked" }` |
 | `fm_ovdetails` | extra data switched on in the overlaps tab, e.g. `["scu", "crew"]` |
-| `fm_planner` | fleet planner wishes: `[{ loop, min, max }]` (`max: null` = open) |
+| `fm_planner` | fleet planner wishes: `[{ loop, min, max, picks }]` (`max: null` = open, `picks` = selected ship names) |
 | `fm_overrides` | edits from the ship editor: `{ shipName: { field: value } }` |
 
 "Load example" clears `fm_fleet` and resets the name and the comparison to `data/example-fleet.json`.

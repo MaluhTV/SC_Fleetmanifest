@@ -4,7 +4,10 @@ import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps, loopStats, isPending, isFlightReady } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
-import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass, loanerText } from "./common.js";
+import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+
+/** RSI's list of loaner ships for ships that are not flight-ready – linked from the "covered only by planned ships" card. */
+const LOANER_MATRIX_URL = "https://support.robertsspaceindustries.com/hc/en-us/articles/360003093114-Loaner-Ship-Matrix";
 
 /** From this total crew upwards, the crew requirement of an overlap is mentioned. */
 const CREW_HINT_FROM = 12;
@@ -30,11 +33,10 @@ export const OV_DETAILS = {
   status: { label: "ov_detail_status", value: (s) => t("status_" + s.status) },
 };
 /** Why a ship is not usable today in this loop: ["Konzept" / "In Produktion", "function planned"] (may be empty). */
-const pendingParts = (s, loopId, withLoaner = true) =>
+const pendingParts = (s, loopId) =>
   !loopId || !isPending(s, loopId) ? []
-    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned"),
-      withLoaner && !isFlightReady(s) && loanerText(s) && t("loaner_short", { x: loanerText(s) })].filter(Boolean);
-const pendingText = (s, loopId, withLoaner = true) => pendingParts(s, loopId, withLoaner).join(" · ");
+    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned")].filter(Boolean);
+const pendingText = (s, loopId) => pendingParts(s, loopId).join(" · ");
 
 const detailsOf = (s, keys, loopId) => {
   const parts = keys.map((k) => OV_DETAILS[k] && OV_DETAILS[k].value(s)).filter(Boolean);
@@ -222,21 +224,10 @@ export function renderOverlaps(el, ctx) {
     </article>`);
   }
 
-  // Does one of the ship's loaners (RSI Loaner Ship Matrix) cover the loop today (primary role, flight-ready)?
-  const loanerCover = (s, loopId) => {
-    if (isFlightReady(s) || !s.loaners?.length) return "";
-    const today = s.loaners.map((l) => l.ship && db.byName(l.ship)).filter((o) => o && isFlightReady(o) && o.loops[loopId] === "primary");
-    return today.length ? ` <span class="good">· ${t("loaner_covers", { x: today.map((o) => esc(o.name)).join(", ") })}</span>` : "";
-  };
-
   // Loops covered only by ships that are not usable today (planned role or not flight-ready)
   if (result.plannedOnly.length) {
-    parts.push(`<article class="is-planned-only" id="ov-planned"><h3>${t("ov_planned_title")}</h3><p class="muted">${t("ov_planned_text")}</p>${list(result.plannedOnly.map((x) =>
-      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => {
-        // the loaner is named once: "loaner X covers the loop today" if it does, otherwise "Loaner: X"
-        const cover = loanerCover(s, x.loopId);
-        return `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId, !cover))}</span>${cover}`;
-      }).join(", ")}`))}</article>`);
+    parts.push(`<article class="is-planned-only" id="ov-planned"><h3>${t("ov_planned_title")}</h3><p class="muted">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>${list(result.plannedOnly.map((x) =>
+      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId))}</span>`).join(", ")}`))}</article>`);
   }
 
   // Gaps and orphan snubs are computed without the marked ships

@@ -3,7 +3,7 @@ import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { swapBalance } from "../analysis.js";
 import { editButton } from "./list.js";
-import { loopName, sizeLabel, roleMark, statusPill, fighterClass, loanerText, meltBadge, num, crew, insuranceText, note, thumb } from "./common.js";
+import { loopName, sizeLabel, roleMark, statusPill, fighterClass, meltBadge, num, crew, insuranceText, note, thumb } from "./common.js";
 
 /** Fills the "Add ship" dropdown with every ship in the database (✓ = in fleet). */
 export function renderCompareSelect(select, { db, fleet, state }) {
@@ -38,7 +38,6 @@ export function renderCompare(el, { db, fleet, state }) {
     [t("col_scu"), (s) => highlight(s.scu === maxScu && maxScu > 0, fmt(s.scu))],
     [t("col_crew"), (s) => highlight(s.crewMin === minCrew, crew(s))],
     [t("col_status"), (s) => statusPill(s.status)],
-    ...(ships.some((s) => s.loaners && s.loaners.length) ? [[t("col_loaners"), (s) => esc(loanerText(s)) || "–"]] : []),
     [t("col_insurance"), (s) => (s.insurance ? insuranceText(s) : "–")],
     [t("col_note"), (s) => esc(note(s)) || "–"],
   ];

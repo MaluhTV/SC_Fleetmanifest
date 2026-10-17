@@ -28,14 +28,12 @@ async function loadJson(file) {
  * @returns {Promise<ShipDb>}
  */
 export async function loadShipDb() {
-  const [shipsDoc, loopsDoc, example, imageUrls, loanersDoc] = await Promise.all([
+  const [shipsDoc, loopsDoc, example, imageUrls] = await Promise.all([
     loadJson("ships.json"),
     loadJson("loops.json"),
     loadJson("example-fleet.json"),
     // optional: links to the RSI store images (tools/fetch-ship-images.mjs); missing file = no fallback
     loadJson("image-urls.json").catch(() => ({ urls: {} })),
-    // optional: RSI Loaner Ship Matrix (data/loaners.json); missing file = no loaner info
-    loadJson("loaners.json").catch(() => ({ loaners: [] })),
   ]);
   // untouched copy for the editor export (js/views/editor.js) – keeps the relative image paths
   const rawShipsDoc = JSON.parse(JSON.stringify(shipsDoc));
@@ -49,8 +47,8 @@ export async function loadShipDb() {
       if (s.image) s.imageFallback = remote; else s.image = remote;
     }
   }
-  const db = createShipDb(shipsDoc, loopsDoc, example, loanersDoc);
-  db.source = { shipsDoc, rawShipsDoc, loopsDoc, example, loanersDoc };
+  const db = createShipDb(shipsDoc, loopsDoc, example);
+  db.source = { shipsDoc, rawShipsDoc, loopsDoc, example };
   return db;
 }
 
@@ -109,7 +107,7 @@ export function applyOverrides(shipsDoc, overrides) {
 }
 
 /** Builds the database from already loaded data (also usable in tests). */
-export function createShipDb(shipsDoc, loopsDoc, example, loanersDoc = null) {
+export function createShipDb(shipsDoc, loopsDoc, example) {
   const ships = shipsDoc.ships.map((s) => ({
     aliases: [],
     note: { de: "", en: "" },
@@ -129,8 +127,6 @@ export function createShipDb(shipsDoc, loopsDoc, example, loanersDoc = null) {
     const k = normalizeName(a);
     if (!index.has(k)) index.set(k, s);
   }));
-  attachLoaners(ships, loanersDoc);
-
   // For prefix matching: longest keys first, so "Cyclone AA" wins over "Cyclone".
   const keysByLength = [...index.keys()].sort((a, b) => b.length - a.length);
 
@@ -158,26 +154,6 @@ export function createShipDb(shipsDoc, loopsDoc, example, loanersDoc = null) {
       return hit ? index.get(hit) : null;
     },
   };
-}
-
-/**
- * Loaners from the RSI Loaner Ship Matrix (data/loaners.json) → ship.loaners = [{ name, ship }]
- * (name as RSI writes it, ship = matching ships.json entry or null). If a ship appears in several rows
- * (e.g. "Carrack / Carrack Expedition" and "Carrack w/ C8X / …"), the row whose label contains the ship's
- * exact name wins. Rows are data from a file, so only strings are taken over.
- */
-function attachLoaners(ships, loanersDoc) {
-  const rows = Array.isArray(loanersDoc?.loaners) ? loanersDoc.loaners.filter((r) => r && Array.isArray(r.ships) && Array.isArray(r.loaners)) : [];
-  const known = new Set(ships.map((s) => s.name));
-  for (const s of ships) {
-    let mine = rows.filter((r) => r.ships.includes(s.name));
-    const exact = mine.filter((r) => normalizeName(r.label).includes(normalizeName(s.name)));
-    if (exact.length) mine = exact;
-    const seen = new Set();
-    s.loaners = mine.flatMap((r) => r.loaners)
-      .filter((l) => l && typeof l.name === "string" && !seen.has(l.name) && seen.add(l.name))
-      .map((l) => ({ name: l.name, ship: typeof l.ship === "string" && known.has(l.ship) ? l.ship : null }));
-  }
 }
 
 /** Size class as a number for comparisons (ground vehicle = 0, snub = 1 … capital = 6). */

@@ -63,9 +63,6 @@ export const note = (ship) => (ship.note && (ship.note[getLang()] || ship.note.d
 // Role marks are drawn in CSS (.mk::before), so they are centred regardless of the font.
 export const roleMark = (role) => `<span class="mk mk--${role}" role="img" title="${esc(t("legend_" + role))}" aria-label="${esc(t("legend_" + role))}"></span>`;
 
-/** Loaners from the RSI Loaner Ship Matrix as text ("Starfarer, Cutlass Red"), empty if none. */
-export const loanerText = (s) => (s.loaners && s.loaners.length ? s.loaners.map((l) => l.name).join(", ") : "");
-
 /** Fighter class label ("Heavy fighter"), empty for ships without one. Classes: FIGHTER_CLASSES in shipdb.js. */
 export const fighterClass = (s) => (s.fighterClass ? t("fc_" + s.fighterClass) : "");
 

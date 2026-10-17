@@ -126,19 +126,6 @@ How it works:
 
 Note: the images belong to Cloud Imperium Games. Check CIG's fan content guidelines before publishing the site.
 
-## Loaner ships (`data/loaners.json`)
-
-Copy of the [RSI Loaner Ship Matrix](https://support.robertsspaceindustries.com/hc/en-us/articles/360003093114-Loaner-Ship-Matrix): which ships RSI lends while a pledged ship is not flight-ready. One entry per row of the RSI table:
-
-```json
-{ "label": "Vulcan", "ships": ["Vulcan"], "loaners": [{ "name": "Starfarer", "ship": "Starfarer" }] }
-```
-
-- `label`: the row as RSI writes it. `ships`: matching `ships.json` names (exact name or alias). `loaners[].name`: as RSI writes it, `loaners[].ship`: the matching `ships.json` entry or `null`.
-- If a ship is in several rows, the row whose label contains the exact ship name wins.
-- Update: compare with the RSI page, edit the rows, set `meta.updated` to RSI's "Last Updated" date and run the validator, which checks every name.
-- The page shows the loaners for ships that are not flight-ready (overlaps, fleet planner), as a column in the ship list and a row in the compare tab, and says in "Covered only by planned ships" whether a loaner covers the loop today.
-
 ## Validator
 
 ```bash

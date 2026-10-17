@@ -53,7 +53,7 @@ Adding a tab takes these steps:
 
 All rules live in one place, `js/analysis.js`:
 
-- **Overlap:** a loop has at least `OVERLAP_MIN_SHIPS` (3) ships in a primary or planned role – all statuses count (concepts, in production), because several loops and ships are not finished yet. Such ships are "pending" (`isPending()`): marked violet in the view, with their loaners from `data/loaners.json`. The option "Playable ships first" (`readyFirst`, `fm_ovready`, off by default) ranks substitutes usable today first.
+- **Overlap:** a loop has at least `OVERLAP_MIN_SHIPS` (3) ships in a primary or planned role – all statuses count (concepts, in production), because several loops and ships are not finished yet. Such ships are "pending" (`isPending()`): marked violet in the view. The option "Playable ships first" (`readyFirst`, `fm_ovready`, off by default) ranks substitutes usable today first. The "covered only by planned ships" card links the RSI Loaner Ship Matrix.
 - **Planned only** (`plannedOnly`): loops covered only by pending ships get their own card and a violet dashed square in the bar.
 - **Per category:** each overlap card is evaluated on its own. Ship O can replace ship S in loop L (`substitutesInLoop()`) when:
   - O has L as a primary or planned role

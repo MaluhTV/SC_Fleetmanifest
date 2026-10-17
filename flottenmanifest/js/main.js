@@ -107,7 +107,7 @@ function renderCompareArea() {
 /** Rebuilds the ship database from ships.json plus the user's local edits (state.overrides). */
 function rebuildDb() {
   const { source } = db;
-  db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example, source.loanersDoc);
+  db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
   db.source = source;
 }
 

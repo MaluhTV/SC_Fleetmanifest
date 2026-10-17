@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.20.0 – 2026-10-17
+- Import: "Where do I get the file?" under the toolbar links the export tools for each format – Hangar XPLORer (browser extension for the RSI hangar, CSV; Chrome, Firefox, GitHub), Hangar.link (pledge CSV) and the STARJUMP Fleetviewer (JSON).
 - Fleet planner: button "All categories" adds one wish per gameplay loop with the crew range in the form (default 1 – open = every ship), in loop order; loops already planned with that range or without a matching ship are skipped, the 20-wish limit applies.
 - Design: overlap cards two per row on wide screens (≥ 1400 px; explanation, result, gaps stay full width); the scroll spy picks the card clicked in the bar when two cards share a row (otherwise the left one). Minimum font size 13 px for text (12 px for uppercase mono labels and pills). Light theme accent darkened to #9a5a00 (white text on it and accent text on the page now meet WCAG AA 4.5:1; before 3.4:1). The toolbar folds into one line "Your own fleet: n entries … · Import & settings" once an own fleet is loaded (replaces the blue banner); on phones the page explanation is hidden then.
 - Import refuses files over 2 MB (a hangar export is a few KB) instead of freezing the tab.

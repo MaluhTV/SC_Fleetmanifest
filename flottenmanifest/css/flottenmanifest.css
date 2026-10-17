@@ -184,6 +184,10 @@
 .fm-tools__sum:hover { color: var(--fg); }
 .has-own-fleet .fm-tools__sum { color: var(--fg); }
 .fm-tools[open] .fm-tools__sum { margin-bottom: 6px; }
+.fm-sources { display: grid; gap: 3px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.fm-sources > span:first-child { font-weight: 600; color: var(--fg); }
+.fm-sources a { color: var(--prim); }
+.fm-src b { color: var(--fg); font-weight: 600; }
 .fm-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 10px 12px; }
 .fm-toolbar__name { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
 .fm-toolbar__spacer { flex: 1; }

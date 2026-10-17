@@ -30,6 +30,15 @@ python3 -m http.server 8000      # or: npx serve .
 node tools/build-standalone.mjs   # → dist/flottenmanifest.html
 ```
 
+### Getting your hangar file
+
+- **Hangar XPLORer** (browser extension for the RSI "My Hangar" page, CSV export): [Chrome](https://chromewebstore.google.com/detail/bhkgemjdepodofcnmekdobmmbifemhkc) · [Firefox](https://addons.mozilla.org/firefox/addon/star-citizen-hangar-xplorer/) · [GitHub](https://github.com/dolkensp/HangarXPLOR)
+- **Hangar.link** (CSV export of your pledges): https://hangar.link/pledges/all
+- **STARJUMP Fleetviewer** (saved fleet layout as JSON): https://hangar.link/fleet/canvas
+- Or paste a plain list of ship names ("Paste list").
+
+Only ship names and quantities are used; prices and pledge IDs in these files are ignored.
+
 ## Folder structure
 
 ```

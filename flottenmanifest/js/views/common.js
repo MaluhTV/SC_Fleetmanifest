@@ -32,14 +32,14 @@ export const loopIcon = (loopId) => LOOP_ICONS[loopId] || LOOP_ICON_FALLBACK;
  * cells = { loopId: { n, level, text } } – n is shown in the square, text is the tooltip (plain text).
  * level: "full" = filled (accent) · "partial" = dashed · "plain" = outline with grey number · "gap" = red dashed · "" = empty
  * attr = data attribute name for the click (main.js), label = aria label, summary = text next to the bar (HTML),
- * active = loop ID shown as selected (e.g. the ship list filter).
+ * active = loop ID shown as selected (e.g. the ship list filter). cells[id].changed = true adds a dot (something changes there).
  * Used by the loop tab, matrix, ship list, overlaps (coverage of the fleet) and the fleet planner (coverage of the plan).
  */
 const BAR_LEVELS = { full: " is-filled", partial: " is-partial", plain: " is-plain", gap: " is-gap" };
 export function loopBar(db, cells, { attr, label, summary, active = null }) {
   const items = db.loops.map(({ id }) => {
     const c = cells[id] || { n: 0, level: "", text: loopText(db, id) };
-    return `<button type="button" class="cover-item${BAR_LEVELS[c.level] || ""}${active === id ? " is-active" : ""}" data-${attr}="${esc(id)}" aria-pressed="${active === id}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
+    return `<button type="button" class="cover-item${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === id ? " is-active" : ""}" data-${attr}="${esc(id)}" aria-pressed="${active === id}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
       <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
   }).join("");
   return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${items}</div><span class="muted cover-sum">${summary}</span></div>`;

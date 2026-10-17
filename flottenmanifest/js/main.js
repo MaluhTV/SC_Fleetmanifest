@@ -460,6 +460,13 @@ function wireEvents() {
     renderOverlaps(el.overlapCards, ctx());
   });
   el.overlapCards.addEventListener("click", (e) => {
+    // loop bar inside the "result after the changes" card: jump like the bar above the tab
+    const j = e.target.closest("[data-ov-jump]");
+    if (j) {
+      const card = document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     const m = e.target.closest("[data-mark]");
     if (m) toggleMark(m.dataset.mark);
     const c = e.target.closest("[data-choose]");

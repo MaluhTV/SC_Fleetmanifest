@@ -2,7 +2,8 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
-import { analyseOverlaps } from "../analysis.js";
+import { analyseOverlaps, loopStats } from "../analysis.js";
+import { fleetLoopCells } from "./loops.js";
 import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** From this total crew upwards, the crew requirement of an overlap is mentioned. */
@@ -83,6 +84,57 @@ export function renderOverlapBar(el, ctx) {
     summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length }) });
 }
 
+/**
+ * "Result after the changes": shown as soon as ships are marked red. Compares the fleet now with the fleet
+ * without the marked ships – ship count, what the given-away ships can do (exchange / CCU only), new or
+ * closed gaps, a loop bar of the result (changed loops carry a dot) and a table of every loop that changes.
+ * The swap list "A → B" with the button to clear all marks is part of it.
+ */
+function resultCard({ db, fleet }, marked, chosen, result, mark) {
+  const markedSet = new Set(marked);
+  const remaining = fleet.ships.filter((s) => !markedSet.has(s.name));
+  const gone = fleet.ships.filter((s) => markedSet.has(s.name));
+  const copies = (list) => list.reduce((a, s) => a + s.qty, 0);
+  const exchange = gone.filter((s) => s.melt === "meltable" || s.melt === "meltOnly").length;
+  const ccuOnly = gone.filter((s) => s.melt === "upgrade" || s.melt === "locked").length;
+  const unknown = gone.length - exchange - ccuOnly;
+  const gapsBefore = analyseOverlaps(fleet.ships, db.loops, [], {}).gaps;
+  const newGaps = result.gaps.filter((id) => !gapsBefore.includes(id));
+  const overlapBefore = new Set(analyseOverlaps(fleet.ships, db.loops, [], {}).overlaps.map((o) => o.loopId));
+  const overlapAfter = new Set(result.overlaps.map((o) => o.loopId));
+
+  // per loop: primary and secondary/planned before → after
+  const changes = db.loops.map(({ id }) => {
+    const a = loopStats(fleet.ships, id), b = loopStats(remaining, id);
+    const note = newGaps.includes(id) ? `<span class="bad">${t("res_new_gap")}</span>`
+      : overlapBefore.has(id) && !overlapAfter.has(id) ? `<span class="good">${t("res_overlap_solved")}</span>` : "";
+    return { id, p0: a.primary.length, p1: b.primary.length, o0: a.all.length - a.primary.length, o1: b.all.length - b.primary.length, note };
+  }).filter((c) => c.p0 !== c.p1 || c.o0 !== c.o1);
+
+  // loop bar of the result; changed loops get a dot and "before → after" in the tooltip
+  const cells = fleetLoopCells(db, { ships: remaining });
+  for (const c of changes) {
+    cells[c.id].changed = true;
+    cells[c.id].text = `${loopText(db, c.id)}: ${t("res_bar_change", { a: c.p0, b: c.p1 })}`;
+  }
+  for (const id of result.gaps) cells[id] = { ...cells[id], level: "gap" };
+
+  const arrow = (a, b) => (a === b ? `${a}` : `${a} → <b class="${b < a ? "warn" : "good"}">${b}</b>`);
+  const rows = changes.map((c) => `<tr><td>${loopName(db, c.id)}</td><td class="num">${arrow(c.p0, c.p1)}</td><td class="num">${arrow(c.o0, c.o1)}</td><td>${c.note}</td></tr>`).join("");
+  const swaps = marked.map((n) => mark({ name: n }, esc(n)) + (chosen[n] ? ` → ${mark({ name: chosen[n] }, esc(chosen[n]))}` : ""));
+  const meltLine = [exchange && t("res_exchange", { n: exchange }), ccuOnly && t("res_ccu", { n: ccuOnly }), unknown && t("res_unknown", { n: unknown })].filter(Boolean).join(", ");
+
+  return `<article class="is-marked-summary res-card">
+    <h3>${t("res_title")}</h3>
+    <p class="res-head"><b>${t("res_ships", { a: copies(fleet.ships), b: copies(remaining) })}</b> · ${t("res_gone", { n: copies(gone) })}${meltLine ? ` (${meltLine})` : ""} ·
+      ${newGaps.length ? `<span class="bad">${t("res_gaps_new", { n: newGaps.length })}</span>` : `<span class="good">${t("res_gaps_none")}</span>`}</p>
+    ${loopBar(db, cells, { attr: "ov-jump", label: t("res_title"), summary: t("res_bar_sum") })}
+    ${rows ? `<div class="table-wrap"><table class="res-table"><thead><tr><th>${t("filter_loop")}</th><th class="num">${t("legend_primary")}</th><th class="num">${t("res_other_roles")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
+    <p><b>${t("ov_marked_title", { n: marked.length })}</b> ${swaps.join(", ")}
+      <button type="button" class="btn" data-clear-marks>${t("ov_marked_clear")}</button></p>
+  </article>`;
+}
+
 export function renderOverlaps(el, ctx) {
   const { db, fleet, state } = ctx;
   const { marked, chosen, result } = analyse(ctx);
@@ -103,12 +155,7 @@ export function renderOverlaps(el, ctx) {
   // explanation folded away by default – one line, opens on click
   const parts = [`<details class="ov-help"><summary>${t("ov_help")}</summary><p>${t("ov_intro")}</p><p>${t("ov_mark_hint")}</p>${meltNote ? `<p>${meltNote}</p>` : ""}</details>`];
 
-  if (marked.length) {
-    // summary: "A → B" for chosen substitutes, plain name for ships marked without a pick
-    const items = marked.map((n) => mark({ name: n }, esc(n)) + (chosen[n] ? ` → ${mark({ name: chosen[n] }, esc(chosen[n]))}` : ""));
-    parts.push(`<article class="is-marked-summary"><p><b>${t("ov_marked_title", { n: marked.length })}</b> ${items.join(", ")}
-      <button type="button" class="btn" data-clear-marks>${t("ov_marked_clear")}</button></p></article>`);
-  }
+  if (marked.length) parts.push(resultCard({ db, fleet }, marked, chosen, result, mark));
 
   if (fleet.unknown.length) {
     parts.push(`<article class="is-gap"><h3>${t("unknown_title")}</h3><p>${t("unknown_text")}</p>${list(fleet.unknown.map(esc))}</article>`);

@@ -36,6 +36,7 @@ export function loadState(example) {
   const ovDetails = storage.get("ovdetails", []);
   const planner = storage.get("planner", []);
   const ovReadyFirst = storage.get("ovready", false);
+  const rsiImages = storage.get("rsiimg", null);
   return {
     lang: lang === "en" ? "en" : "de",
     username: typeof storage.get("name", null) === "string" ? storage.get("name").slice(0, 40) : example.username,
@@ -49,6 +50,7 @@ export function loadState(example) {
     ovDetails: strList(ovDetails),
     ovReadyFirst: ovReadyFirst === true, // overlaps option: ships usable today first (off by default) // extra data shown in the overlaps tab, e.g. ["scu"]
     melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: "meltable"|"upgrade"|"locked" }
+    rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: true = load, false = no, null = not asked yet
     planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
   };
@@ -100,5 +102,6 @@ export const save = {
   ovDetails: (state) => storage.set("ovdetails", state.ovDetails),
   ovReadyFirst: (state) => storage.set("ovready", state.ovReadyFirst),
   planner: (state) => storage.set("planner", state.planner),
+  rsiImages: (state) => storage.set("rsiimg", state.rsiImages),
   resetFleet: () => storage.set("fleet", null),
 };

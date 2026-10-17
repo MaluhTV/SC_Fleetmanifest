@@ -195,6 +195,11 @@
 .fm-banner { font-size: 13px; padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--accent-soft); }
 .fm-banner--own { border-left-color: var(--prim); background: var(--prim-soft); }
 .fm-toast { font-size: 13px; color: var(--prim); }
+/* cut-outs inside the SVG icons (ICONS in js/views/common.js) */
+.ic-cut { stroke: var(--panel); }
+.ic-dot { fill: var(--panel); }
+.fm-consent { display: grid; gap: 8px; padding: 12px 14px; font-size: 14px; }
+#imgToggle[aria-pressed="true"] { border-color: var(--prim); }
 .fm-toast--error { color: var(--bad); }
 
 /* 4. KPIs and tabs ----------------------------------------------------------- */

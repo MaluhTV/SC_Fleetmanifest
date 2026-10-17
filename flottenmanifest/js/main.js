@@ -42,6 +42,8 @@ const el = {
   pasteApply: $("#pasteApply"),
   pasteCancel: $("#pasteCancel"),
   resetExample: $("#resetExample"),
+  imgConsent: $("#imgConsent"),
+  imgToggle: $("#imgToggle"),
   dbInfo: $("#dbInfo"),
   banner: $("#banner"),
   toast: $("#toast"),
@@ -97,6 +99,7 @@ function renderHeader() {
   el.banner.className = "fm-banner" + (state.ownFleet ? " fm-banner--own" : "");
   el.banner.textContent = state.ownFleet ? t("banner_own", { n: state.items.length }) : t("banner_example");
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
+  renderImageConsent();
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
 }
 
@@ -108,10 +111,38 @@ function renderCompareArea() {
 }
 
 /** Rebuilds the ship database from ships.json plus the user's local edits (state.overrides). */
+const isRemote = (url) => typeof url === "string" && /^https?:/i.test(url);
+
 function rebuildDb() {
   const { source } = db;
   db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
   db.source = source;
+  // Images hotlinked from robertsspaceindustries.com send the visitor's IP address to RSI, so they are only
+  // used after the visitor agreed (state.rsiImages). Local and embedded (data:) images need no consent.
+  db.hasRemoteImages = db.ships.some((s) => isRemote(s.image) || isRemote(s.imageFallback));
+  if (state.rsiImages !== true) {
+    for (const s of db.ships) {
+      if (isRemote(s.imageFallback)) delete s.imageFallback;
+      if (isRemote(s.image)) s.image = null;
+    }
+  }
+}
+
+/** Notice + toolbar switch for the RSI images (only when the data has remote images). */
+function renderImageConsent() {
+  const show = db.hasRemoteImages;
+  el.imgConsent.hidden = !show || state.rsiImages !== null;
+  el.imgToggle.hidden = !show || state.rsiImages === null;
+  el.imgToggle.textContent = t(state.rsiImages ? "img_toggle_on" : "img_toggle_off");
+  el.imgToggle.setAttribute("aria-pressed", String(state.rsiImages === true));
+  el.imgToggle.title = t("img_toggle_title");
+}
+
+function setRsiImages(on) {
+  state.rsiImages = on;
+  save.rsiImages(state);
+  rebuildDb();
+  renderAll();
 }
 
 function renderAll() {
@@ -521,6 +552,9 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
+  $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
+  $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
+  el.imgToggle.addEventListener("click", () => setRsiImages(!state.rsiImages));
 
   // Loop bar: jump to the card of that loop
   el.loopBar.addEventListener("click", (e) => {

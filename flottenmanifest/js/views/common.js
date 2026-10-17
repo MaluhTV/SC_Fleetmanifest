@@ -91,12 +91,12 @@ export const ICONS = {
   lock: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
   lockOpen: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
   warn: svg('<circle cx="6" cy="6" r="5.6" fill="currentColor"/>' +
-    '<path d="M6 3.1v3.7" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round"/>' +
-    '<circle cx="6" cy="8.9" r="0.9" style="fill:var(--panel)"/>'),
+    '<path d="M6 3.1v3.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/>' +
+    '<circle cx="6" cy="8.9" r="0.9" class="ic-dot"/>'),
   lockAlert: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 6.8v2" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="10" r=".75" style="fill:var(--panel)"/>'),
+    '<path d="M6 6.8v2" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="10" r=".75" class="ic-dot"/>'),
   lockUpgrade: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
+    '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
 };
 export const LOCK_ICON = ICONS.lock;
 /** Hangar (rounded hall with an open gate) – "in your fleet"; check mark – "selected" (fleet planner). */

@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.19.0 – 2026-10-17
-- Fleet planner: click a tile to select the ship for that wish (orange frame with a check mark, Enter/Space work too). "My plan" at the top lists all selections per wish with size, SCU, crew and "in your fleet" / "missing", plus totals (distinct ships, owned, missing, SCU); "Copy as text" puts the plan on the clipboard. Selections are stored with the wish (`picks`).
+- Fleet planner: click a tile to select the ship for that wish (orange frame with a check mark, Enter/Space work too). "My plan" at the top lists all selections per wish with size, SCU, crew and "in your fleet" / "missing", plus the number of ships (distinct, owned, missing); "Copy as text" puts the plan on the clipboard. Selections are stored with the wish (`picks`).
 - "My plan" has one row per ship with the scenarios it was chosen for (each with ×). A ship already chosen for another wish shows green hatching and "Already planned: …" in the other suggestions.
 - Owned ships are marked with a green hangar icon (also in the legend) instead of a green frame, so the frame is free for the selection.
 - New tab "Fleet planner": add wishes "gameplay loop + crew range" (e.g. salvage, crew 1–2 and salvage, crew 2+; presets 1, 1–2, 2–4, 4+, 8+). Each wish shows matching ships from the whole database as tiles with size, SCU and crew; owned ships come first and are framed green, with a line "in your fleet". The first 12 are shown, the rest folds out. Wishes are saved in the browser (`fm_planner`).

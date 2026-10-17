@@ -75,7 +75,7 @@ export function planText(ctx) {
   return `${t("planner_plan_title")}\n\n${lines.join("\n")}`;
 }
 
-/** "My plan": one row per selected ship with the scenarios it was chosen for, then totals. */
+/** "My plan": one row per selected ship with the scenarios it was chosen for, then the number of ships. */
 function planOverview(byShip, owned, { db }) {
   const entries = [...byShip.values()];
   const have = entries.filter((e) => owned.has(e.ship.name));
@@ -92,7 +92,6 @@ function planOverview(byShip, owned, { db }) {
       <td>${isOwned ? `<span class="good">${t("planner_in_fleet")}</span>` : `<span class="warn">${t("planner_missing")}</span>`}</td>
     </tr>`;
   }).join("");
-  const scu = entries.reduce((a, e) => a + e.ship.scu, 0);
   return `<article class="plan-card plan-overview">
     <div class="plan-head">
       <h3>${t("planner_plan_title")}</h3>
@@ -105,7 +104,7 @@ function planOverview(byShip, owned, { db }) {
     <div class="table-wrap"><table class="plan-table">
       <thead><tr><th>${t("col_ship")}</th><th>${t("planner_for")}</th><th>${t("filter_size")}</th><th class="num">SCU</th><th class="num">${t("col_crew")}</th><th>${t("col_status")}</th></tr></thead>
       <tbody>${body}</tbody>
-      <tfoot><tr><td>${t("planner_plan_ships", { n: entries.length })}</td><td></td><td></td><td class="num"><b>${fmt(scu)}</b></td><td></td><td></td></tr></tfoot>
+      <tfoot><tr><td colspan="6">${t("planner_plan_ships", { n: entries.length })}</td></tr></tfoot>
     </table></div>
   </article>`;
 }

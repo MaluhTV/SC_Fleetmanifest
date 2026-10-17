@@ -3,7 +3,7 @@ import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps } from "../analysis.js";
-import { loopName, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopName, loopText, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** From this total crew upwards, the crew requirement of an overlap is mentioned. */
 const CREW_HINT_FROM = 12;
@@ -39,7 +39,7 @@ const detailsOf = (s, keys, loopId) => {
 /** Yellow (!) with a tooltip listing the loops the substitute does not cover. */
 function lostHint(c, db) {
   if (!c.lost.length) return "";
-  const names = (items) => items.map((l) => loopName(db, l.loopId)).join(", ");
+  const names = (items) => items.map((l) => loopText(db, l.loopId)).join(", "); // plain text: icon() escapes the tooltip
   const uncovered = c.lost.filter((l) => !l.coveredElsewhere);
   let text = t("ov_lost", { o: c.replacement.name, x: names(c.lost) });
   if (uncovered.length) text += " " + t("ov_lost_uncovered", { x: names(uncovered) });

@@ -3,10 +3,37 @@ import { t, fmt, getLang } from "../i18n.js";
 import { esc } from "../util.js";
 
 /** Loop name in the current language (falls back to German). */
-export function loopName(db, loopId) {
+/**
+ * One small line icon per gameplay loop (16×16, stroke = currentColor), keyed by the loop ID in data/loops.json.
+ * New loop: add an entry here, otherwise LOOP_ICON_FALLBACK (a dot) is shown.
+ */
+const loopSvg = (inner) => `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+export const LOOP_ICONS = {
+  cargo: loopSvg('<path d="M2 5l6-3 6 3v6l-6 3-6-3z M2 5l6 3 6-3 M8 8v6"/>'),
+  "vehicle-transport": loopSvg('<path d="M1 4h9v7H1z M10 7h3l2 2v2h-5"/><circle cx="4" cy="12.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/>'),
+  mining: loopSvg('<path d="M4.5 2h7L15 6l-7 8-7-8z M1 6h14 M6 2 5 6l3 8 3-8-1-4"/>'),
+  salvage: loopSvg('<path d="M3 2v6a5 5 0 0 0 10 0V2 M6 2v6a2 2 0 0 0 4 0V2 M3 5h3 M10 5h3"/>'),
+  medical: loopSvg('<path d="M6 2h4v4h4v4h-4v4H6v-4H2V6h4z"/>'),
+  fighter: loopSvg('<circle cx="8" cy="8" r="5"/><path d="M8 1v4 M8 11v4 M1 8h4 M11 8h4"/>'),
+  gunship: loopSvg('<path d="M8 1.5 14 4v3.5c0 3.4-2.6 6-6 7-3.4-1-6-3.6-6-7V4z M8 5v5 M5.5 7.5h5"/>'),
+  dropship: loopSvg('<path d="M2 7a6 6 0 0 1 12 0z M2 7l6 6 6-6 M8 7v6"/>'),
+  exploration: loopSvg('<circle cx="8" cy="8" r="6.5"/><path d="M10.6 5.4 9 9 5.4 10.6 7 7z"/>'),
+  support: loopSvg('<path d="M10.2 2.2a3.3 3.3 0 0 0-3.7 4.4L2 11.1 4.9 14l4.5-4.5a3.3 3.3 0 0 0 4.4-3.7l-2 2-2.3-.6-.6-2.3z"/>'),
+  touring: loopSvg('<path d="M2 8l6-5.5L14 8 M4 6.5V14h8V6.5 M7 14v-4h2v4"/>'),
+  snub: loopSvg('<path d="M8 1.5 11 10 8 8.5 5 10z M3.5 13.5h9"/>'),
+  ground: loopSvg('<path d="M2 10h12l-1.5-4.5h-9z"/><circle cx="4.5" cy="12" r="1.7"/><circle cx="11.5" cy="12" r="1.7"/>'),
+  racing: loopSvg('<path d="M3 15V2 M3 2.5h10l-2 3 2 3H3"/>'),
+};
+const LOOP_ICON_FALLBACK = loopSvg('<circle cx="8" cy="8" r="2.5"/>');
+export const loopIcon = (loopId) => LOOP_ICONS[loopId] || LOOP_ICON_FALLBACK;
+
+/** Loop name as plain text – for title/aria attributes (escape there with esc()) and the clipboard. */
+export function loopText(db, loopId) {
   const loop = db.loops.find((l) => l.id === loopId);
-  return loop ? esc(loop[getLang()] || loop.de) : esc(loopId);
+  return loop ? loop[getLang()] || loop.de : String(loopId);
 }
+/** Loop name ready for HTML (escaped). Never pass this into esc()/icon()/title again – use loopText() there. */
+export const loopName = (db, loopId) => esc(loopText(db, loopId));
 
 /** Size class for display ("Ground vehicle" is translated). */
 export const sizeLabel = (size) => (size === "Ground vehicle" ? t("size_ground") : size);
@@ -15,7 +42,7 @@ export const note = (ship) => (ship.note && (ship.note[getLang()] || ship.note.d
 
 /** Role mark ● ○ ◇ */
 // Role marks are drawn in CSS (.mk::before), so they are centred regardless of the font.
-export const roleMark = (role) => `<span class="mk mk--${role}" role="img" aria-label="${t("legend_" + role)}"></span>`;
+export const roleMark = (role) => `<span class="mk mk--${role}" role="img" title="${esc(t("legend_" + role))}" aria-label="${esc(t("legend_" + role))}"></span>`;
 
 /** Fighter class label ("Heavy fighter"), empty for ships without one. Classes: FIGHTER_CLASSES in shipdb.js. */
 export const fighterClass = (s) => (s.fighterClass ? t("fc_" + s.fighterClass) : "");
@@ -129,9 +156,11 @@ export function markable(ship, html, { marked, chosen }, choose = null) {
   const isRed = marked.includes(ship.name);
   const isGreen = Object.values(chosen).includes(ship.name);
   const cls = "ship-mark" + (isRed ? " is-marked" : "") + (isGreen ? " is-chosen" : "");
+  // the tooltip names the current state first (the legend is folded away), then what a click does
+  const stateText = isRed ? t("legend_marked") + " – " : isGreen ? t("legend_chosen") + " – " : "";
   const action = choose
-    ? `data-choose="${esc(ship.name)}" data-for="${esc(choose)}" aria-pressed="${chosen[choose] === ship.name}" title="${esc(t("choose_title", { s: choose }))}"`
-    : `data-mark="${esc(ship.name)}" aria-pressed="${isRed}" title="${esc(t("mark_title"))}"`;
+    ? `data-choose="${esc(ship.name)}" data-for="${esc(choose)}" aria-pressed="${chosen[choose] === ship.name}" title="${esc(stateText + t("choose_title", { s: choose }))}"`
+    : `data-mark="${esc(ship.name)}" aria-pressed="${isRed}" title="${esc(stateText + t("mark_title"))}"`;
   return `<button type="button" class="${cls}" ${action}>${html}</button>`;
 }
 

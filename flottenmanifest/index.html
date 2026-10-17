@@ -72,7 +72,9 @@
     <button role="tab" data-view="planner" aria-selected="false"><span data-i18n="tab_planner"></span></button>
   </nav>
 
-  <!-- Legend -->
+  <!-- Legend: folded away by default – every symbol on the page also explains itself on hover (title) -->
+  <details class="fm-legend-box">
+    <summary data-i18n="legend_title"></summary>
   <div class="fm-legend">
     <span><span class="mk mk--primary" aria-hidden="true"></span> <span data-i18n="legend_primary"></span></span>
     <span><span class="mk mk--secondary" aria-hidden="true"></span> <span data-i18n="legend_secondary"></span></span>
@@ -86,6 +88,8 @@
     <span><span class="ship-mark is-chosen legend-mark">Name</span> <span data-i18n="legend_chosen"></span></span>
     <span><span class="icon--hangar" data-icon="hangar"></span> <span data-i18n="legend_hangar"></span></span>
   </div>
+
+  </details>
 
   <!-- Extra-data chips for the overlaps tab (js/views/overlaps.js → renderOvDetails) -->
   <div class="ov-details" id="ovDetailsBar" hidden></div>

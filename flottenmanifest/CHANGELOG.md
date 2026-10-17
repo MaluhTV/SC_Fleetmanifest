@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2.19.0 – 2026-10-17
+- One line icon per gameplay loop (`LOOP_ICONS` in `js/views/common.js`), shown above the squares of the planner's coverage bar.
+- The legend is folded away ("Legend", click to open); every symbol explains itself on hover instead (role marks, marked/chosen ships now name their state in the tooltip).
+- Fixed: loop names with "&" showed "&amp;" in tooltips (planner coverage bar, overlaps "(!)" hints) and in the copied plan. `loopText()` returns plain text for attributes and the clipboard, `loopName()` the escaped HTML.
 - Fleet planner: click a tile to select the ship for that wish (orange frame with a check mark, Enter/Space work too). "My plan" at the top lists all selections per wish with size, SCU, crew and "in your fleet" / "missing", plus the number of ships (distinct, owned, missing); "Copy as text" puts the plan on the clipboard. Selections are stored with the wish (`picks`).
 - "My plan" has one row per ship with the scenarios it was chosen for (each with ×). A ship already chosen for another wish shows green hatching and "Already planned: …" in the other suggestions.
 - Owned ships are marked with a green hangar icon (also in the legend) instead of a green frame, so the frame is free for the selection.

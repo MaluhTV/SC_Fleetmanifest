@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, loopIcon, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -55,9 +55,10 @@ function coverageBar(rows, { db }) {
   const counts = db.loops.map((l) => [l.id, count(l.id)]);
   const covered = counts.filter(([, n]) => n).length;
   const cells = counts.map(([id, n]) => {
-    const name = loopName(db, id);
+    const name = loopText(db, id); // plain text, escaped once below
     const text = n ? `${name}: ${t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n })}` : `${name}: ${t("planner_cover_none")}`;
-    return `<button type="button" class="cover-cell${n ? " is-filled" : ""}" data-cover-loop="${esc(id)}" title="${esc(text)}" aria-label="${esc(text)}">${n || ""}</button>`;
+    return `<button type="button" class="cover-item${n ? " is-filled" : ""}" data-cover-loop="${esc(id)}" title="${esc(text)}" aria-label="${esc(text)}">
+      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${n || ""}</span></button>`;
   }).join("");
   return `<div class="cover-bar" role="group" aria-label="${esc(t("planner_cover_title"))}">
     <div class="cover-cells">${cells}</div>
@@ -65,8 +66,9 @@ function coverageBar(rows, { db }) {
   </div>`;
 }
 
-/** Short name of a wish, e.g. "Bergung (Salvage) · 1–2". */
-const wishLabel = (db, slot) => `${loopName(db, slot.loop)} · ${crewRange(slot.min, slot.max)}`;
+/** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */
+const wishText = (db, slot) => `${loopText(db, slot.loop)} · ${crewRange(slot.min, slot.max)}`;
+const wishLabel = (db, slot) => esc(wishText(db, slot));
 
 /** Picks grouped by ship: Map name → { ship, wishes: [{ slot, index }] }, in the order of first selection. */
 function groupByShip(rows) {
@@ -92,7 +94,7 @@ export function planText(ctx) {
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
   const lines = [...groupByShip(planRows(ctx)).values()].map(({ ship: s, wishes }) =>
     `- ${s.name} (${sizeLabel(s.size)}, ${fmt(s.scu)} SCU, ${t("col_crew")} ${crew(s)}) – ${owned.has(s.name) ? t("planner_in_fleet") : t("planner_missing")}\n` +
-    `    ${t("planner_for")}: ${wishes.map((w) => `${wishLabel(db, w.slot)}`).join("; ")}`);
+    `    ${t("planner_for")}: ${wishes.map((w) => wishText(db, w.slot)).join("; ")}`);
   return `${t("planner_plan_title")}\n\n${lines.join("\n")}`;
 }
 
@@ -103,7 +105,7 @@ function planOverview(byShip, owned, { db }) {
   const body = entries.map(({ ship, wishes }) => {
     const isOwned = owned.has(ship.name);
     const chips = wishes.map((w) =>
-      `<span class="plan-wish">${wishLabel(db, w.slot)}<button type="button" data-plan-pick="${w.index}" data-ship="${esc(ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + ship.name + " – " + wishLabel(db, w.slot))}">×</button></span>`).join("");
+      `<span class="plan-wish">${wishLabel(db, w.slot)}<button type="button" data-plan-pick="${w.index}" data-ship="${esc(ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + ship.name + " – " + wishText(db, w.slot))}">×</button></span>`).join("");
     return `<tr>
       <td class="plan-ov-ship">${thumb(ship, "xs")}${shipLabel(ship, { lock: false })}${isOwned ? hangarIcon() : ""}</td>
       <td><div class="plan-ov-wishes">${chips}</div></td>

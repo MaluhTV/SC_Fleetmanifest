@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.19.0 – 2026-10-17
+- Tab order: the fleet planner sits between "Overlaps" and "Compare"; "Compare" is the last tab.
 - One line icon per gameplay loop (`LOOP_ICONS` in `js/views/common.js`), shown above the squares of the planner's coverage bar.
 - The legend is folded away ("Legend", click to open); every symbol explains itself on hover instead (role marks, marked/chosen ships now name their state in the tooltip).
 - Fixed: loop names with "&" showed "&amp;" in tooltips (planner coverage bar, overlaps "(!)" hints) and in the copied plan. `loopText()` returns plain text for attributes and the clipboard, `loopName()` the escaped HTML.

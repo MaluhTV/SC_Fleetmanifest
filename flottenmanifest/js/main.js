@@ -463,7 +463,7 @@ function wireEvents() {
     // loop bar inside the "result after the changes" card: jump like the bar above the tab
     const j = e.target.closest("[data-ov-jump]");
     if (j) {
-      const card = document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+      const card = document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps")) || (j.classList.contains("is-planned-only") && document.getElementById("ov-planned"));
       if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
@@ -550,7 +550,7 @@ function wireEvents() {
   el.overlapBar.addEventListener("click", (e) => {
     const b = e.target.closest("[data-ov-jump]");
     if (!b) return;
-    const card = document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+    const card = document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps")) || (b.classList.contains("is-planned-only") && document.getElementById("ov-planned"));
     if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   const sortBy = (key) => {

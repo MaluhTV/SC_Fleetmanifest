@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.20.0 – 2026-10-17
+- Overlaps count every ship: concepts, ships in production and roles whose function is not in the game yet (planned) count for overlaps, substitutes and the result. They are marked violet ("Concept", "function planned") and suggested after ships usable today. New card "Covered only by planned ships" (e.g. support with a concept Vulcan and the Carrack's planned repair) and a violet dashed square in the loop bar.
 - Overlaps: "Result after the changes" card as soon as ships are marked red – ships before → after, what is given away (exchange possible / CCU only / unknown), new gaps, a loop bar of the result (changed loops carry a dot, tooltip "primary role 7 → 5"), a table of every loop that changes (primary and secondary/planned before → after, "new gap" / "overlap resolved") and the swap list A → B.
 - Loop bar in more tabs: loop matrix (click highlights the column), ship list (click filters by that loop, second click clears; the active loop is outlined) and overlaps (filled = overlap with the number of primary ships, red dashed = gap, outline = covered without overlap; click jumps to the card). `loopBar()` got the levels "plain" and "gap" and an `active` option.
 - "By gameplay loop" tab: quick overview bar above the cards (same component as the planner's coverage bar, `loopBar()` in `js/views/common.js`). Filled = ships in a primary role (number = count), dashed = secondary or planned roles only, empty = none; hover shows the breakdown, click jumps to the card.

@@ -362,6 +362,11 @@ tr.row--planned td { color: var(--fut); }
 .cover-item.is-plain .cover-cell { color: var(--muted); }
 .cover-item.is-gap { color: var(--bad); }
 .cover-item.is-gap .cover-cell { border: 1.5px dashed var(--bad); }
+.cover-item.is-planned-only { color: var(--fut); }
+.cover-item.is-planned-only .cover-cell { border: 1.5px dashed var(--fut); color: var(--fut); background: var(--fut-soft); }
+.ov-pending { color: var(--fut); }
+.ship-meta > span.ov-pending { white-space: normal; }
+.is-planned-only h3 { color: var(--fut); }
 .cover-item.is-active .cover-cell { outline: 2px solid var(--fg); outline-offset: 2px; }
 .cover-item.is-active { color: var(--fg); }
 .cover-cell { position: relative; }

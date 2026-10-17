@@ -2,7 +2,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
-import { analyseOverlaps, loopStats } from "../analysis.js";
+import { analyseOverlaps, loopStats, isPending, isFlightReady } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
 import { loopName, loopText, loopBar, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
@@ -29,12 +29,20 @@ export const OV_DETAILS = {
   dims: { label: "ov_detail_dims", value: (s) => (s.length == null ? "" : `${dims(s)} m`) },
   status: { label: "ov_detail_status", value: (s) => t("status_" + s.status) },
 };
+/** Why a ship is not usable today in this loop: ["Konzept" / "In Produktion", "function planned"] (may be empty). */
+const pendingParts = (s, loopId) =>
+  !loopId || !isPending(s, loopId) ? []
+    : [!isFlightReady(s) && t("status_" + s.status), s.loops[loopId] === "planned" && t("ov_role_planned")].filter(Boolean);
+const pendingText = (s, loopId) => pendingParts(s, loopId).join(" · ");
+
 const detailsOf = (s, keys, loopId) => {
   const parts = keys.map((k) => OV_DETAILS[k] && OV_DETAILS[k].value(s)).filter(Boolean);
   // fighter card: the class is always shown, because the substitute rule depends on it
   if (loopId === "fighter" && s.fighterClass) parts.unshift(fighterClass(s));
   // each value in its own span so it never breaks inside ("Crew 1–4"); tiles put them on separate lines
-  return parts.length ? ` <span class="ship-meta">${parts.map((p) => `<span>${esc(p)}</span>`).join('<span class="sep"> · </span>')}</span>` : "";
+  // one span per reason, so tiles show them on separate lines
+  const html = [...pendingParts(s, loopId).map((p) => `<span class="ov-pending">${esc(p)}</span>`), ...parts.map((p) => `<span>${esc(p)}</span>`)];
+  return html.length ? ` <span class="ship-meta">${html.join('<span class="sep"> · </span>')}</span>` : "";
 };
 
 /** Yellow (!) with a tooltip listing the loops the substitute does not cover. */
@@ -75,13 +83,15 @@ export function renderOverlapBar(el, ctx) {
   const cells = {};
   for (const { id } of db.loops) {
     const name = loopText(db, id);
-    const primary = remaining.filter((s) => s.loops[id] === "primary").length;
+    const primary = remaining.filter((s) => s.loops[id] === "primary" || s.loops[id] === "planned").length;
+    const po = result.plannedOnly.find((x) => x.loopId === id);
     if (overlap.has(id)) cells[id] = { n: overlap.get(id).primary.length, level: "full", text: `${name}: ${t("ovbar_overlap", { n: overlap.get(id).primary.length })}` };
     else if (result.gaps.includes(id)) cells[id] = { n: 0, level: "gap", text: `${name}: ${t("ovbar_gap")}` };
+    else if (po) cells[id] = { n: po.ships.length, level: "planned", text: `${name}: ${t("ovbar_planned", { n: po.ships.length })}` };
     else cells[id] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
   }
   el.innerHTML = loopBar(db, cells, { attr: "ov-jump", label: t("loopbar_title"),
-    summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length }) });
+    summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length, p: result.plannedOnly.length }) });
 }
 
 /**
@@ -207,6 +217,12 @@ export function renderOverlaps(el, ctx) {
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
       <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}
     </article>`);
+  }
+
+  // Loops covered only by ships that are not usable today (planned role or not flight-ready)
+  if (result.plannedOnly.length) {
+    parts.push(`<article class="is-planned-only" id="ov-planned"><h3>${t("ov_planned_title")}</h3><p class="muted">${t("ov_planned_text")}</p>${list(result.plannedOnly.map((x) =>
+      `<b>${loopName(db, x.loopId)}</b>: ${x.ships.map((s) => `${mark(s, shipWithMelt(s))} <span class="ov-pending">${esc(pendingText(s, x.loopId))}</span>`).join(", ")}`))}</article>`);
   }
 
   // Gaps and orphan snubs are computed without the marked ships

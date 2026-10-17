@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2.20.0 – 2026-10-17
+- Phones (≤ 640 px): the page never gets wider than the screen (grid items may shrink, wide tables scroll inside their box). Only the tabs (one row, swipeable, active tab scrolled into view) and the loop bar (two rows of 7 full-width squares) stay fixed – the legend, chips and texts scroll away (`.fm-sticky { display: contents }`, `--fm-tabs-h`); the fixed area went from about half the screen to about a quarter. Loop cards show each ship as a two/three-line row, the ship list shows one card per ship with the sortable headings as sort chips, overlaps stack the size label above the tiles and fit the candidate rows to the width, KPIs two per row. Ship names break between words, not inside them.
+- Touch screens: tapping anything with a tooltip shows its text in a small bubble (title texts never appear without hover; the tap still does its normal job), larger tap targets (buttons 40 px, chips, compare toggle, invisible larger hit areas around the small icons), 16 px input fonts (iOS Safari zooms into smaller ones).
+- Bar summaries only carry the numbers; the meaning of the squares moved into the legend ("Loop bar: …" with sample squares).
 - One fixed loop order (data/loops.json) in every tab: the overlap cards ("planned only" included) and the planner wish cards are now sorted like the loop bar, and the square of the card currently in view is framed while scrolling (scroll spy in `main.js`).
 - The loop bar of the open tab is part of the sticky area (tabs, legend) and works as quick navigation while scrolling; jump targets land below it (`--fm-sticky-h`, measured in `main.js`). Planner bar: click picks the loop in the form and jumps to its first wish.
 - Loop icon in front of the card titles (overlaps, loop cards, fleet planner wishes) – the same icon as in the loop bar (`loopIconTitle()`).

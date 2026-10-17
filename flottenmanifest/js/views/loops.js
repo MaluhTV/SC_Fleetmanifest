@@ -1,5 +1,6 @@
 /** "By gameplay loop" tab: one card per loop with every fleet ship in it. */
 import { t, fmt } from "../i18n.js";
+import { esc } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
 import { loopStats } from "../analysis.js";
 import { ROLE } from "../shipdb.js";
@@ -23,13 +24,13 @@ function loopCard(loopId, db, ships, state, thumbs) {
     .map((s) => {
       const role = s.loops[loopId];
       return `<tr class="row--${role}">
-        <td>${roleMark(role)}</td>
+        <td class="c-mark">${roleMark(role)}</td>
         ${thumbs ? `<td class="thumb-cell">${thumb(s)}</td>` : ""}
         <td class="ship-name">${markable(s, shipLabel(s), state)}</td>
-        <td>${sizeLabel(s.size)}${loopId === "fighter" && s.fighterClass ? `<br><span class="muted fc-label">${fighterClass(s)}</span>` : ""}</td>
-        <td class="num">${fmt(s.scu)}</td>
-        <td class="num">${crew(s)}</td>
-        <td>${compareToggle(s.name, compare.includes(s.name))}</td>
+        <td class="c-size">${sizeLabel(s.size)}${loopId === "fighter" && s.fighterClass ? `<br><span class="muted fc-label">${fighterClass(s)}</span>` : ""}</td>
+        <td class="num c-scu" data-label="SCU">${fmt(s.scu)}</td>
+        <td class="num c-crew" data-label="${esc(t("col_crew"))}">${crew(s)}</td>
+        <td class="c-cmp">${compareToggle(s.name, compare.includes(s.name))}</td>
       </tr>`;
     })
     .join("");

@@ -68,7 +68,7 @@ export function renderList(table, { db, fleet, state }, filter) {
   }).join("");
 
   const body = rows
-    .map((s) => `<tr>${cols.map((c) => `<td class="${[c.numeric && "num", c.wrap && "wrap"].filter(Boolean).join(" ")}">${c.cell(s, db, state)}</td>`).join("")}</tr>`)
+    .map((s) => `<tr>${cols.map((c) => `<td class="${[c.numeric && "num", c.wrap && "wrap", "col-" + c.key].filter(Boolean).join(" ")}" data-label="${esc(t(c.label))}">${c.cell(s, db, state)}</td>`).join("")}</tr>`)
     .join("");
 
   const foot = `<tr>${cols[0].key === "image" ? "<td></td>" : ""}<td>${sum(rows, (s) => s.qty)} ${t("ships")}</td><td></td><td></td>

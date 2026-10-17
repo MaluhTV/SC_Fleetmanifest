@@ -158,6 +158,11 @@ function showView(view) {
   el.ovDetailsBar.hidden = view !== "overlaps"; // chips only belong to the overlaps tab
   el.bars.forEach((b) => { b.hidden = b.dataset.barFor !== view; }); // the loop bar of the open tab (sticky quick navigation)
   queueSpy(); // frame the square of the card in view right away
+  // phones: the tab row scrolls sideways – bring the active tab into view (without scrolling the page)
+  const nav = $("#tabs"), active = el.tabs.find((b) => b.dataset.view === view);
+  if (nav && active && nav.scrollWidth > nav.clientWidth) {
+    nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+  }
 }
 
 let toastTimer;
@@ -346,10 +351,23 @@ const SPY = {
   overlaps: { cards: "#overlapCards article[id^='ov-']:not(#ov-gaps)", id: (c) => c.id.slice(3), bar: "overlapBar", attr: "ovJump" },
   planner: { cards: "#plannerSlots .plan-card[data-loop]", id: (c) => c.dataset.loop, bar: "plannerBar", attr: "coverLoop" },
 };
+/** Height of what stays fixed at the top: the whole sticky block, or on phones (display: contents) tabs + loop bar. */
+function stickyArea() {
+  if (getComputedStyle(el.sticky).display !== "contents") return el.sticky.offsetHeight;
+  const bar = el.bars.find((b) => !b.hidden);
+  return $("#tabs").offsetHeight + (bar ? bar.offsetHeight : 0);
+}
+/** Viewport y of the lower edge of the fixed top area. */
+function stickyBottom() {
+  if (getComputedStyle(el.sticky).display !== "contents") return el.sticky.getBoundingClientRect().bottom;
+  const bar = el.bars.find((b) => !b.hidden);
+  return Math.max($("#tabs").getBoundingClientRect().bottom, bar ? bar.getBoundingClientRect().bottom : 0);
+}
+
 function spyCurrent() {
   const spy = SPY[state.view];
   if (!spy) return;
-  const line = el.sticky.getBoundingClientRect().bottom + 24;
+  const line = stickyBottom() + 24;
   const cards = $$(spy.cards);
   // last card whose top has passed the line under the sticky area, otherwise the first one
   let current = cards[0];
@@ -364,10 +382,45 @@ function wireEvents() {
   addEventListener("scroll", queueSpy, { passive: true });
   // bars are re-rendered often – frame the current square again afterwards
   new MutationObserver(queueSpy).observe(el.sticky, { childList: true, subtree: true });
-  // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it
-  const stickyHeight = () => document.documentElement.style.setProperty("--fm-sticky-h", el.sticky.offsetHeight + "px");
-  if (window.ResizeObserver) new ResizeObserver(stickyHeight).observe(el.sticky);
+  // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it;
+  // on phones only the tabs and the loop bar stick (CSS), the tab height positions the bar below them
+  const stickyHeight = () => {
+    const root = document.documentElement.style;
+    root.setProperty("--fm-tabs-h", $("#tabs").offsetHeight + "px");
+    root.setProperty("--fm-sticky-h", stickyArea() + "px");
+  };
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(stickyHeight);
+    [el.sticky, $("#tabs"), ...el.bars].forEach((x) => ro.observe(x));
+  }
   stickyHeight();
+
+  // Touch screens have no hover, so title texts never show up: a tap shows them in a small bubble instead
+  // (the tap still does its normal job, e.g. jump to a loop or mark a ship)
+  const noHover = window.matchMedia ? matchMedia("(hover: none)") : { matches: false };
+  let tip = null, tipTimer, tipSticky = false; // tipSticky: host stays in place while the page scrolls (loop bar)
+  const hideTip = () => { if (tip) { tip.remove(); tip = null; } clearTimeout(tipTimer); };
+  document.addEventListener("click", (e) => {
+    hideTip();
+    if (!noHover.matches) return;
+    const host = e.target.closest("[title]");
+    if (!host || host.matches("input, select, textarea, [data-melt]") || host.closest(".fm-melt-menu, dialog")) return;
+    const text = host.getAttribute("title");
+    if (!text) return;
+    tipSticky = !!host.closest(".fm-bar");
+    tip = document.createElement("div");
+    tip.className = "fm-tip";
+    tip.setAttribute("role", "status");
+    tip.textContent = text; // plain text – never parsed as HTML
+    document.body.append(tip);
+    const r = host.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+    const top = r.top - h - 8 > 8 ? r.top - h - 8 : r.bottom + 8;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+    tipTimer = setTimeout(hideTip, 3500);
+  }, true);
+  addEventListener("scroll", () => { if (!tipSticky) hideTip(); }, { passive: true });
 
   // Melt icons sit inside clickable ship names, so they are handled first (capture) and stop the click there
   document.addEventListener("click", (e) => {

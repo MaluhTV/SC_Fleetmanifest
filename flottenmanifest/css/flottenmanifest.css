@@ -109,6 +109,7 @@
      5. Shared building blocks (role marks, tables, pills)
      6. Views: loop cards, matrix, ship list, overlaps, compare
      7. Footer and helper classes
+     8. Phones (max-width: 640px) and touch screens (pointer: coarse)
    Always set colours via the tokens in section 1, never directly in components.
    ========================================================================== */
 
@@ -156,6 +157,7 @@
 .fm { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
 .fm-wrap {
   max-width: 1880px; margin: 0 auto; display: grid; gap: 18px;
+  grid-template-columns: minmax(0, 1fr); /* never wider than the screen – wide tables scroll inside their box */
   padding-block: 24px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -164,6 +166,7 @@
 .fm h3 { font-family: var(--f-display); font-weight: 500; font-size: 21px; margin: 0; line-height: 1.1; }
 .fm p { margin: 0; max-width: 72ch; }
 .fm section { display: grid; gap: 16px; }
+.fm-wrap > *, .fm section > * { min-width: 0; }
 .muted { color: var(--muted); }
 
 /* 3. Header, toolbar, notices ----------------------------------------------- */
@@ -455,7 +458,7 @@ tr.row--planned td { color: var(--fut); }
 }
 .thumb--broken { visibility: hidden; }
 .loop-card td.thumb-cell { padding-right: 0; }
-.loop-card td.ship-name { white-space: normal; overflow-wrap: anywhere; width: 100%; }
+.loop-card td.ship-name { white-space: normal; overflow-wrap: break-word; hyphens: auto; width: 100%; } /* break between words, not inside them */
 
 /* 6b. Loop matrix */
 .matrix th.vertical { writing-mode: vertical-rl; transform: rotate(180deg); height: 130px; text-align: left; padding: 6px 4px; }
@@ -485,3 +488,121 @@ tr.row--planned td { color: var(--fut); }
 .fm-footer a { color: var(--prim); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 [hidden] { display: none !important; }
+
+/* Legend: sample squares of the loop bar */
+.legend-bar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.legend-bar .cover-item { cursor: default; display: inline-grid; }
+.legend-bar .cover-cell { width: 20px; height: 20px; font-size: 11px; }
+
+/* Tap bubble for title texts on touch screens (main.js) */
+.fm-tip {
+  position: fixed; z-index: 60; max-width: min(320px, calc(100vw - 16px)); box-sizing: border-box;
+  padding: 7px 10px; border-radius: 6px; background: var(--fg); color: var(--bg);
+  font: 13px/1.35 var(--f-body); box-shadow: 0 6px 18px rgb(0 0 0 / .35); pointer-events: none;
+}
+
+/* 8. Phones and touch screens -------------------------------------------------- */
+@media (max-width: 640px) {
+  .fm-wrap { gap: 14px; padding-block: 16px 32px; }
+  .fm-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .fm-kpi b { font-size: 26px; }
+
+  /* Only the tabs and the loop bar stay fixed; explanation, legend and chips scroll away with the page.
+     display: contents lets both stick on their own (main.js measures --fm-tabs-h / --fm-sticky-h). */
+  .fm-sticky { display: contents; }
+  .fm-tabs {
+    position: sticky; top: var(--fm-sticky-top, 0px); z-index: 21; background: var(--bg);
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  }
+  .fm-tabs::-webkit-scrollbar { display: none; }
+  .fm-tabs button { flex: none; white-space: nowrap; padding: 11px 12px; margin-bottom: 0; border-bottom: 0; }
+  .fm-tabs button[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
+  .fm-bar { position: sticky; top: calc(var(--fm-sticky-top, 0px) + var(--fm-tabs-h, 44px)); z-index: 20; background: var(--bg); padding: 6px 0 8px; box-shadow: 0 1px 0 var(--line); }
+  .fm-bar[hidden] { display: none; }
+  .fm-bar .cover-bar { gap: 4px; }
+  /* 14 loops = two rows of 7, every square a full-width tap target */
+  .fm-bar .cover-cells { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; width: 100%; }
+  .fm-bar .cover-item { padding: 2px 0; }
+  .fm-bar .cover-cell { width: 100%; height: 28px; box-sizing: border-box; }
+  .cover-sum { font-size: 12px; padding: 0; }
+  #view-overlaps .cards > article, .loop-card, .plan-card, .plan-form { scroll-margin-top: calc(var(--fm-sticky-top, 0px) + var(--fm-sticky-h, 150px) + 8px); }
+
+  /* Loop cards: each ship is a two-line row instead of a wide table row */
+  .loop-card { padding: 12px; }
+  .loop-card table, .loop-card tbody { display: block; }
+  .loop-card thead { display: none; }
+  .loop-card tr {
+    display: grid; align-items: center; column-gap: 8px; row-gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line);
+    grid-template-columns: 22px auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "mark thumb name name cmp" "mark thumb size size cmp" "mark thumb scu crew cmp";
+  }
+  .loop-card tr:last-child { border-bottom: 0; }
+  .loop-card td { border: 0; padding: 0 !important; white-space: normal; text-align: left !important; }
+  .loop-card .c-mark { grid-area: mark; }
+  .loop-card .thumb-cell { grid-area: thumb; }
+  .loop-card .thumb-cell .thumb--s { width: 88px; height: 50px; }
+  .loop-card .ship-name { grid-area: name; }
+  .loop-card .c-size { grid-area: size; font-size: 13px; color: var(--muted); }
+  .loop-card .c-size br { display: none; } /* fighter class on the same line */
+  .loop-card .c-size .fc-label::before { content: " · "; }
+  .loop-card .c-scu, .loop-card .c-crew { white-space: nowrap; }
+  .loop-card .c-scu { grid-area: scu; font-size: 13px; }
+  .loop-card .c-crew { grid-area: crew; font-size: 13px; }
+  .loop-card .c-scu::before, .loop-card .c-crew::before { content: attr(data-label) " "; color: var(--muted); font: 11px var(--f-mono); }
+  .loop-card .c-cmp { grid-area: cmp; }
+
+  /* Ship list: one card per ship; the sortable headings become sort chips */
+  #shipTable, #shipTable thead, #shipTable tbody, #shipTable tfoot { display: block; }
+  #shipTable thead tr { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; }
+  #shipTable thead th { position: static; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  #shipTable thead th:not(.sortable) { display: none; }
+  #shipTable tbody tr {
+    position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1fr); gap: 6px 10px;
+    padding: 12px 10px; border-top: 1px solid var(--line);
+  }
+  #shipTable td { border: 0; padding: 0; white-space: normal; text-align: left; min-width: 0; overflow-wrap: break-word; }
+  #shipTable td::before { content: attr(data-label); display: block; font: 600 10px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  #shipTable td.col-image { grid-column: 1; grid-row: 1 / span 3; }
+  #shipTable td.col-image .thumb { width: 96px; height: 54px; }
+  #shipTable td.col-name { grid-column: 2 / -1; grid-row: 1; padding-right: 48px; min-height: 40px; font-weight: 600; }
+  #shipTable tbody td:empty { display: none; }
+  #shipTable td.col-dims { grid-column: span 2; }
+  #shipTable td.col-image::before, #shipTable td.col-name::before, #shipTable td.col-edit::before { display: none; }
+  #shipTable td.col-edit { position: absolute; top: 8px; right: 8px; }
+  #shipTable td.col-loops, #shipTable td.col-note { grid-column: 1 / -1; }
+  #shipTable td.col-note:has(.muted:empty) { display: none; }
+  #shipTable tfoot tr { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 10px; border-top: 2px solid var(--line); }
+  #shipTable tfoot td { border: 0; padding: 0; }
+  #shipTable tfoot td:empty { display: none; }
+
+  /* Overlaps: size label above the tiles, candidate rows in three narrow columns */
+  .cards article { padding: 12px; }
+  .size-group { grid-template-columns: 1fr; gap: 4px; }
+  .cand-row { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); gap: 6px; }
+  .cand-row .ship-tile { width: 100%; max-width: 130px; }
+  .cand-also { grid-column: 1 / -1; grid-template-columns: 1fr; gap: 4px; }
+  .cand-also > small { padding-top: 0; }
+  .cand-also .ship-tile { width: 96px; }
+  .cand-arrow small { font-size: 11px; }
+  .plan-tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .plan-card { padding: 12px; }
+}
+
+/* Touch screens (phones, tablets): larger tap targets, 16px inputs (iOS Safari zooms into smaller ones) */
+@media (pointer: coarse) {
+  .fm select, .fm input[type=search], .fm input[type=text], .fm input[type=number], .ed-field input, .ed-field select, .fm-paste textarea { font-size: 16px; }
+  .btn { min-height: 40px; }
+  .btn--icon { min-width: 40px; justify-content: center; }
+  .chip { padding: 8px 14px; }
+  .fm-lang button { padding: 9px 16px; }
+  .cmp-toggle { width: 38px; height: 34px; }
+  .fm-legend-box > summary, .ov-help summary, .plan-more summary { padding: 10px 0; }
+  .plan-head .remove, .compare th .remove { min-width: 40px; min-height: 40px; }
+  .plan-wish button { min-width: 32px; min-height: 32px; }
+  .cover-cell { width: 34px; height: 34px; }
+  .fm-bar .cover-cell { width: 100%; }
+  .legend-bar .cover-cell { width: 20px; height: 20px; }
+  /* small icons keep their look but get an invisible, larger hit area */
+  .melt-icon, .icon--warn, .mk[title], .plan-eff { position: relative; }
+  .melt-icon::after, .icon--warn::after, .mk[title]::after, .plan-eff::after { content: ""; position: absolute; inset: -10px; }
+}

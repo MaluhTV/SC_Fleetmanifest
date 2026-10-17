@@ -358,6 +358,8 @@ tr.row--planned td { color: var(--fut); }
 .cover-item:hover { color: var(--fg); }
 .cover-item.is-filled { color: var(--accent); }
 .cover-item.is-filled .cover-cell { background: var(--accent); border-color: var(--accent); }
+.cover-item.is-partial .cover-cell { border: 1.5px dashed var(--accent); color: var(--accent); }
+.loop-card { scroll-margin-top: calc(var(--fm-sticky-top, 0px) + 120px); } /* jump target below the sticky bar */
 .cover-sum { font-size: 13px; align-self: end; padding-bottom: 5px; }
 .plan-intro { max-width: 90ch; font-size: 13px; }
 .plan-form input[type="number"] { width: 4.5em; }

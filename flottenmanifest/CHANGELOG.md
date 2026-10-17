@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.20.0 – 2026-10-17
+- "By gameplay loop" tab: quick overview bar above the cards (same component as the planner's coverage bar, `loopBar()` in `js/views/common.js`). Filled = ships in a primary role (number = count), dashed = secondary or planned roles only, empty = none; hover shows the breakdown, click jumps to the card.
+
 ## 2.19.1 – 2026-10-17
 - Validator: a missing local image is only reported when `data/image-urls.json` has no RSI link for the ship either (the repository has no `images/` folder, so every ship used to be reported).
 

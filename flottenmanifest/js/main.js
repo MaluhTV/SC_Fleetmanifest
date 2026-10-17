@@ -16,7 +16,7 @@ import { buildFleet } from "./analysis.js";
 import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis } from "./views/kpis.js";
-import { renderLoops } from "./views/loops.js";
+import { renderLoops, renderLoopBar } from "./views/loops.js";
 import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
 import { renderOverlaps, renderOvDetails } from "./views/overlaps.js";
@@ -49,6 +49,7 @@ const el = {
   tabs: $$("#tabs [data-view]"),
   compareBadge: $("#compareBadge"),
   loopCards: $("#loopCards"),
+  loopBar: $("#loopBar"),
   plannerForm: $("#plannerForm"),
   plannerLoop: $("#plannerLoop"),
   plannerMin: $("#plannerMin"),
@@ -115,6 +116,7 @@ function renderAll() {
   el.editExport.disabled = el.editDiscard.disabled = !edits;
   renderKpis(el.kpis, ctx());
   renderLoops(el.loopCards, ctx());
+  renderLoopBar(el.loopBar, ctx());
   renderMatrix(el.matrixTable, ctx());
   renderListFilters({ loopSelect: el.filterLoop, sizeSelect: el.filterSize }, ctx());
   renderList(el.shipTable, ctx(), listFilter());
@@ -414,6 +416,13 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
+
+  // Loop bar: jump to the card of that loop
+  el.loopBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-loop-jump]");
+    const card = b && document.getElementById("loop-" + b.dataset.loopJump);
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
   // Compare: toggles in the loop cards, dropdown, remove button, clear
   el.loopCards.addEventListener("click", (e) => {

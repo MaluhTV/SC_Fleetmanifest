@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, loopIcon, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, loopBar, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -51,19 +51,14 @@ export function renderPlanner(el, ctx) {
  * Clicking a square picks that loop in the form (main.js → data-cover-loop).
  */
 function coverageBar(rows, { db }) {
-  const count = (loopId) => new Set(rows.filter((r) => r.slot.loop === loopId).map((r) => r.ship.name)).size;
-  const counts = db.loops.map((l) => [l.id, count(l.id)]);
-  const covered = counts.filter(([, n]) => n).length;
-  const cells = counts.map(([id, n]) => {
-    const name = loopText(db, id); // plain text, escaped once below
-    const text = n ? `${name}: ${t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n })}` : `${name}: ${t("planner_cover_none")}`;
-    return `<button type="button" class="cover-item${n ? " is-filled" : ""}" data-cover-loop="${esc(id)}" title="${esc(text)}" aria-label="${esc(text)}">
-      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${n || ""}</span></button>`;
-  }).join("");
-  return `<div class="cover-bar" role="group" aria-label="${esc(t("planner_cover_title"))}">
-    <div class="cover-cells">${cells}</div>
-    <span class="muted cover-sum">${t("planner_cover_sum", { n: covered, total: db.loops.length })}</span>
-  </div>`;
+  const cells = {};
+  for (const { id } of db.loops) {
+    const n = new Set(rows.filter((r) => r.slot.loop === id).map((r) => r.ship.name)).size;
+    const name = loopText(db, id); // plain text – loopBar escapes the tooltip
+    cells[id] = { n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
+  }
+  const covered = Object.values(cells).filter((c) => c.n).length;
+  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */

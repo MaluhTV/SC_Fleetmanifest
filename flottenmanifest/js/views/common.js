@@ -27,6 +27,22 @@ export const LOOP_ICONS = {
 const LOOP_ICON_FALLBACK = loopSvg('<circle cx="8" cy="8" r="2.5"/>');
 export const loopIcon = (loopId) => LOOP_ICONS[loopId] || LOOP_ICON_FALLBACK;
 
+/**
+ * Loop bar: one icon + square per gameplay loop, always in the order of data/loops.json.
+ * cells = { loopId: { n, level: "full" | "partial" | "", text } } – n is shown in the square,
+ * level "full" fills it (accent), "partial" draws it dashed, text is the tooltip (plain text).
+ * attr = data attribute name for the click (main.js), label = aria label, summary = text next to the bar (HTML).
+ * Used by the fleet planner (coverage of the plan) and the "By gameplay loop" tab (coverage of the fleet).
+ */
+export function loopBar(db, cells, { attr, label, summary }) {
+  const items = db.loops.map(({ id }) => {
+    const c = cells[id] || { n: 0, level: "", text: loopText(db, id) };
+    return `<button type="button" class="cover-item${c.level === "full" ? " is-filled" : c.level === "partial" ? " is-partial" : ""}" data-${attr}="${esc(id)}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
+      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
+  }).join("");
+  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${items}</div><span class="muted cover-sum">${summary}</span></div>`;
+}
+
 /** Loop name as plain text – for title/aria attributes (escape there with esc()) and the clipboard. */
 export function loopText(db, loopId) {
   const loop = db.loops.find((l) => l.id === loopId);

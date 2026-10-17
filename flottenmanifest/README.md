@@ -95,10 +95,18 @@ This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imper
 
 Star Citizen®, Squadron 42®, Roberts Space Industries® and Cloud Imperium® are registered trademarks of Cloud Imperium Rights LLC. Official site: https://robertsspaceindustries.com
 
-Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content). ### Building a release
+Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content).
+
+### Building a release
 
 Double-click `tools/build-release.cmd` (Windows) or run `sh tools/build-release.sh`. It fetches the list of RSI image links into `data/image-urls.json` and builds `dist/flottenmanifest.html` with `--remote-images`: the file contains only links, and the browser loads each thumbnail straight from robertsspaceindustries.com when the page is opened. Attach that file to a GitHub release.
 
 Committing `data/image-urls.json` (links only) also lets the source version show the images without an `images/` folder.
 
-Privacy note: with linked images the browser contacts RSI's image server, so RSI sees the visitor's IP address. Builds with `--no-images` make no external requests at all.
+## Privacy and security
+
+- **RSI images with a notice.** Linked images make the browser contact RSI's image server, so RSI sees the visitor's IP address. They load by default; a notice says so until it is acknowledged ("Got it" / "Switch images off", stored as `fm_rsiimg` in the browser), and the toolbar button "Images: on/off" changes the choice at any time. Local or embedded images need no consent. Builds with `--no-images` make no external requests at all.
+- **No server, no tracking.** Fleet, edits and settings stay in the visitor's `localStorage`; nothing is sent anywhere. Fonts are self-hosted.
+- **Content Security Policy.** `index.html` only allows scripts and styles from its own origin and images from itself and `media.robertsspaceindustries.com`. The standalone build replaces this with a policy that allows exactly its own inline script and style blocks (sha256 hashes, computed by `tools/build-standalone.mjs`) and blocks every other request. Even if a value ever slipped through unescaped, injected scripts, event handlers and inline styles would not run. Never use `style="…"` or `on…=` attributes in markup — use classes and `addEventListener`.
+- **Escaping.** All data reaches the page through `esc()` (`js/util.js`); stored values are validated when loaded (`js/state.js`).
+- Found a security problem? See [SECURITY.md](../SECURITY.md).

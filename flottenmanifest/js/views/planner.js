@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, loopIcon, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -31,18 +31,25 @@ export function renderPlannerForm({ loopSelect, presets }, { db }) {
     `<button type="button" class="chip" data-crew-preset="${a}-${b ?? ""}">${crewRange(a, b)}</button>`).join("");
 }
 
-export function renderPlanner(el, ctx) {
+/** barEl = the planner's loop bar in the sticky area (#plannerBar). */
+export function renderPlanner(el, ctx, barEl = null) {
   const { state } = ctx;
   const rows = planRows(ctx);
+  if (barEl) barEl.innerHTML = coverageBar(rows, ctx);
   if (!state.planner.length) {
-    el.innerHTML = coverageBar(rows, ctx) + `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
+    el.innerHTML = `<div class="cards"><article class="is-info"><p>${t("planner_empty")}</p></article></div>`;
     return;
   }
   const owned = new Set(ctx.fleet.ships.map((s) => s.name));
   const byShip = groupByShip(rows);
-  el.innerHTML = coverageBar(rows, ctx) +
+  const loopPos = new Map(ctx.db.loops.map((l, i) => [l.id, i]));
+  el.innerHTML =
     (rows.length ? planOverview(byShip, owned, ctx) : `<p class="muted plan-hint">${t("planner_pick_hint")}</p>`) +
-    state.planner.map((slot, i) => slotCard(slot, i, ctx, owned, byShip)).join("");
+    // wish cards in the fixed loop order of data/loops.json (same as the bar and the other tabs);
+    // wishes of the same loop keep their entry order, the index stays the slot's position in state
+    state.planner.map((slot, i) => ({ slot, i, pos: loopPos.get(slot.loop) ?? Infinity }))
+      .sort((a, b) => a.pos - b.pos || a.i - b.i)
+      .map(({ slot, i }) => slotCard(slot, i, ctx, owned, byShip)).join("");
 }
 
 /**
@@ -50,20 +57,15 @@ export function renderPlanner(el, ctx) {
  * Filled = at least one ship is selected for a wish of that loop; the number = distinct ships.
  * Clicking a square picks that loop in the form (main.js → data-cover-loop).
  */
-function coverageBar(rows, { db }) {
-  const count = (loopId) => new Set(rows.filter((r) => r.slot.loop === loopId).map((r) => r.ship.name)).size;
-  const counts = db.loops.map((l) => [l.id, count(l.id)]);
-  const covered = counts.filter(([, n]) => n).length;
-  const cells = counts.map(([id, n]) => {
-    const name = loopText(db, id); // plain text, escaped once below
-    const text = n ? `${name}: ${t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n })}` : `${name}: ${t("planner_cover_none")}`;
-    return `<button type="button" class="cover-item${n ? " is-filled" : ""}" data-cover-loop="${esc(id)}" title="${esc(text)}" aria-label="${esc(text)}">
-      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${n || ""}</span></button>`;
-  }).join("");
-  return `<div class="cover-bar" role="group" aria-label="${esc(t("planner_cover_title"))}">
-    <div class="cover-cells">${cells}</div>
-    <span class="muted cover-sum">${t("planner_cover_sum", { n: covered, total: db.loops.length })}</span>
-  </div>`;
+function coverageBar(rows, { db, state }) {
+  const cells = {};
+  for (const { id } of db.loops) {
+    const n = new Set(rows.filter((r) => r.slot.loop === id).map((r) => r.ship.name)).size;
+    const name = loopText(db, id); // plain text – loopBar escapes the tooltip
+    cells[id] = { n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
+  }
+  const covered = Object.values(cells).filter((c) => c.n).length;
+  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */
@@ -148,9 +150,9 @@ function slotCard(slot, index, { db, fleet, state }, owned, byShip) {
     : `<p class="plan-owned warn">${t("planner_none_owned")}</p>`;
   const pickCount = slot.picks.filter((n) => ships.some((s) => s.name === n)).length;
 
-  return `<article class="plan-card">
+  return `<article class="plan-card" data-loop="${esc(slot.loop)}">
     <div class="plan-head">
-      <h3>${loopName(db, slot.loop)} <span class="muted">· ${t("col_crew")} ${crewRange(slot.min, slot.max)}</span></h3>
+      <h3>${loopIconTitle(slot.loop)}${loopName(db, slot.loop)} <span class="muted">· ${t("col_crew")} ${crewRange(slot.min, slot.max)}</span></h3>
       <span class="muted">${ships.length === 1 ? t("planner_count_one") : t("planner_count", { n: ships.length })}${pickCount ? ` · <b class="plan-picked-count">${t("planner_picked", { n: pickCount })}</b>` : ""}</span>
       <button type="button" class="remove" data-planner-remove="${index}" title="${esc(t("planner_remove"))}" aria-label="${esc(t("planner_remove"))}">×</button>
     </div>

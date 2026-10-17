@@ -16,10 +16,10 @@ import { buildFleet } from "./analysis.js";
 import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis } from "./views/kpis.js";
-import { renderLoops } from "./views/loops.js";
+import { renderLoops, renderLoopBar } from "./views/loops.js";
 import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
-import { renderOverlaps, renderOvDetails } from "./views/overlaps.js";
+import { renderOverlaps, renderOvDetails, renderOverlapBar } from "./views/overlaps.js";
 import { renderCompare, renderCompareSelect } from "./views/compare.js";
 import { renderPlanner, renderPlannerForm, planText } from "./views/planner.js";
 
@@ -42,6 +42,10 @@ const el = {
   pasteApply: $("#pasteApply"),
   pasteCancel: $("#pasteCancel"),
   resetExample: $("#resetExample"),
+  imgConsent: $("#imgConsent"),
+  tools: $("#tools"),
+  toolsSummary: $("#toolsSummary"),
+  imgToggle: $("#imgToggle"),
   dbInfo: $("#dbInfo"),
   banner: $("#banner"),
   toast: $("#toast"),
@@ -49,6 +53,13 @@ const el = {
   tabs: $$("#tabs [data-view]"),
   compareBadge: $("#compareBadge"),
   loopCards: $("#loopCards"),
+  loopBar: $("#loopBar"),
+  matrixBar: $("#matrixBar"),
+  listBar: $("#listBar"),
+  overlapBar: $("#overlapBar"),
+  plannerBar: $("#plannerBar"),
+  sticky: $(".fm-sticky"),
+  bars: $$(".fm-bar[data-bar-for]"),
   plannerForm: $("#plannerForm"),
   plannerLoop: $("#plannerLoop"),
   plannerMin: $("#plannerMin"),
@@ -87,9 +98,14 @@ function renderHeader() {
   el.filterText.setAttribute("aria-label", t("search"));
   el.pasteText.placeholder = "Caterpillar\n2x Golem\nStarlancer MAX";
   el.dbInfo.textContent = t("db_info", { n: db.ships.length, date: db.meta.updated });
-  el.banner.className = "fm-banner" + (state.ownFleet ? " fm-banner--own" : "");
-  el.banner.textContent = state.ownFleet ? t("banner_own", { n: state.items.length }) : t("banner_example");
+  // own fleet: the folded toolbar line says it all; example fleet: banner invites to import
+  el.banner.hidden = state.ownFleet;
+  el.banner.className = "fm-banner";
+  el.banner.textContent = state.ownFleet ? "" : t("banner_example");
+  el.toolsSummary.textContent = state.ownFleet ? t("tools_summary_own", { n: state.items.length }) : t("tools_summary");
+  document.body.classList.toggle("has-own-fleet", state.ownFleet);
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
+  renderImageConsent();
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
 }
 
@@ -101,10 +117,44 @@ function renderCompareArea() {
 }
 
 /** Rebuilds the ship database from ships.json plus the user's local edits (state.overrides). */
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+// another site's image (RSI): needs consent. Own files (resolved to this origin by loadShipDb) and data: URIs do not.
+const isRemote = (url) => {
+  if (typeof url !== "string" || !/^https?:/i.test(url)) return false;
+  try { return new URL(url).origin !== location.origin; } catch { return true; }
+};
+
 function rebuildDb() {
   const { source } = db;
   db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
   db.source = source;
+  // Images hotlinked from robertsspaceindustries.com send the visitor's IP address to RSI: they load by default,
+  // a notice says so, and the visitor can switch them off (state.rsiImages = false). Local and data: images stay.
+  db.hasRemoteImages = db.ships.some((s) => isRemote(s.image) || isRemote(s.imageFallback));
+  if (state.rsiImages === false) {
+    for (const s of db.ships) {
+      if (isRemote(s.imageFallback)) delete s.imageFallback;
+      if (isRemote(s.image)) s.image = null;
+    }
+  }
+}
+
+/** Notice (until acknowledged) + toolbar switch for the RSI images (only when the data has remote images). */
+function renderImageConsent() {
+  const show = db.hasRemoteImages;
+  const on = state.rsiImages !== false;
+  el.imgConsent.hidden = !show || state.rsiImages !== null;
+  el.imgToggle.hidden = !show;
+  el.imgToggle.textContent = t(on ? "img_toggle_on" : "img_toggle_off");
+  el.imgToggle.setAttribute("aria-pressed", String(on));
+  el.imgToggle.title = t("img_toggle_title");
+}
+
+function setRsiImages(on) {
+  state.rsiImages = on;
+  save.rsiImages(state);
+  rebuildDb();
+  renderAll();
 }
 
 function renderAll() {
@@ -115,19 +165,32 @@ function renderAll() {
   el.editExport.disabled = el.editDiscard.disabled = !edits;
   renderKpis(el.kpis, ctx());
   renderLoops(el.loopCards, ctx());
-  renderMatrix(el.matrixTable, ctx());
+  renderLoopBar(el.loopBar, ctx());
+  renderMatrixArea();
   renderListFilters({ loopSelect: el.filterLoop, sizeSelect: el.filterSize }, ctx());
-  renderList(el.shipTable, ctx(), listFilter());
+  renderListArea();
   renderOverlaps(el.overlapCards, ctx());
+  renderOverlapBar(el.overlapBar, ctx());
   renderOvDetails(el.ovDetailsBar, state);
   renderCompareArea();
   renderPlannerArea();
 }
 
+/* Loop bars above the matrix (highlight a column) and the ship list (filter by loop) */
+let matrixHl = null;
+function renderMatrixArea() {
+  renderLoopBar(el.matrixBar, ctx(), { attr: "matrix-hl", active: matrixHl });
+  renderMatrix(el.matrixTable, ctx(), matrixHl);
+}
+function renderListArea() {
+  renderLoopBar(el.listBar, ctx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
+  renderList(el.shipTable, ctx(), listFilter());
+}
+
 function renderPlannerArea() {
   renderPlannerForm({ loopSelect: el.plannerLoop, presets: el.plannerPresets }, ctx());
   el.plannerMax.placeholder = t("planner_open");
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
 }
 
 function showView(view) {
@@ -136,6 +199,13 @@ function showView(view) {
   el.tabs.forEach((b) => b.setAttribute("aria-selected", b.dataset.view === view));
   VIEWS.forEach((v) => { $("#view-" + v).hidden = v !== view; });
   el.ovDetailsBar.hidden = view !== "overlaps"; // chips only belong to the overlaps tab
+  el.bars.forEach((b) => { b.hidden = b.dataset.barFor !== view; }); // the loop bar of the open tab (sticky quick navigation)
+  queueSpy(); // frame the square of the card in view right away
+  // phones: the tab row scrolls sideways – bring the active tab into view (without scrolling the page)
+  const nav = $("#tabs"), active = el.tabs.find((b) => b.dataset.view === view);
+  if (nav && active && nav.scrollWidth > nav.clientWidth) {
+    nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+  }
 }
 
 let toastTimer;
@@ -158,6 +228,7 @@ function applyFleet(items, format) {
   save.fleet(state);
   save.compare(state);
   renderAll();
+  el.tools.open = false; // fleet is in – fold the toolbar into one line
   toast(t("import_ok", { n: items.length, u: fleet.unknown.length, format }));
 }
 
@@ -181,7 +252,7 @@ function togglePick(index, name) {
   else slot.picks.push(name);
   save.planner(state);
   const y = scrollY;
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
   scrollTo(0, y); // the overview may appear above – keep the tile where it was clicked
   const again = el.plannerSlots.querySelector(`.plan-tile[data-plan-pick="${index}"][data-ship="${CSS.escape(name)}"]`);
   if (again) again.focus({ preventScroll: true });
@@ -210,7 +281,7 @@ function addPlannerSlot() {
   if (state.planner.length >= PLANNER_MAX_SLOTS) return toast(t("planner_full", { max: PLANNER_MAX_SLOTS }), true);
   state.planner.push({ ...slot, picks: [] });
   save.planner(state);
-  renderPlanner(el.plannerSlots, ctx());
+  renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
 }
 
 /* Replacement planning: red = marked to replace (state.marked), green = chosen substitute (state.chosen) */
@@ -220,6 +291,7 @@ function setMarks(marked, chosen) {
   save.marked(state);
   renderLoops(el.loopCards, ctx());
   renderOverlaps(el.overlapCards, ctx());
+  renderOverlapBar(el.overlapBar, ctx()); // marked ships change overlaps and gaps
 }
 /** Plain click on a name: toggle red. A ship turning red can no longer be anyone's substitute. */
 function toggleMark(name) {
@@ -256,6 +328,7 @@ function resetToExample() {
   save.username(state);
   save.compare(state);
   renderAll();
+  el.tools.open = true;
 }
 
 /* ---------- Events ---------- */
@@ -314,7 +387,95 @@ function saveOverride(name, diff, message) {
   toast(t(message, { s: name }));
 }
 
+/**
+ * Scroll spy: frames the loop-bar square of the card currently at the top of the view
+ * (loop tab, overlaps, planner – tabs whose cards belong to one loop each).
+ */
+const SPY = {
+  loops: { cards: "#loopCards .loop-card[id^='loop-']", id: (c) => c.id.slice(5), bar: "loopBar", attr: "loopJump" },
+  overlaps: { cards: "#overlapCards article[id^='ov-']:not(#ov-gaps)", id: (c) => c.id.slice(3), bar: "overlapBar", attr: "ovJump" },
+  planner: { cards: "#plannerSlots .plan-card[data-loop]", id: (c) => c.dataset.loop, bar: "plannerBar", attr: "coverLoop" },
+};
+/** Height of what stays fixed at the top: the whole sticky block, or on phones (display: contents) tabs + loop bar. */
+function stickyArea() {
+  if (getComputedStyle(el.sticky).display !== "contents") return el.sticky.offsetHeight;
+  const bar = el.bars.find((b) => !b.hidden);
+  return $("#tabs").offsetHeight + (bar ? bar.offsetHeight : 0);
+}
+/** Viewport y of the lower edge of the fixed top area. */
+function stickyBottom() {
+  if (getComputedStyle(el.sticky).display !== "contents") return el.sticky.getBoundingClientRect().bottom;
+  const bar = el.bars.find((b) => !b.hidden);
+  return Math.max($("#tabs").getBoundingClientRect().bottom, bar ? bar.getBoundingClientRect().bottom : 0);
+}
+
+function spyCurrent() {
+  const spy = SPY[state.view];
+  if (!spy) return;
+  const line = stickyBottom() + 24;
+  const cards = $$(spy.cards);
+  // the last row of cards whose top has passed the line under the sticky area (otherwise the first card);
+  // cards side by side share a row – then the one picked in the bar wins, else the leftmost
+  let rowTop = null;
+  for (const c of cards) { const top = c.getBoundingClientRect().top; if (top <= line && (rowTop === null || top > rowTop)) rowTop = top; }
+  const row = rowTop === null ? cards.slice(0, 1) : cards.filter((c) => Math.abs(c.getBoundingClientRect().top - rowTop) < 2);
+  const current = row.find((c) => spy.id(c) === spyPicked) || row[0];
+  const id = current ? spy.id(current) : null;
+  el[spy.bar].querySelectorAll(".cover-item").forEach((b) => b.classList.toggle("is-current", b.dataset[spy.attr] === id));
+}
+let spyPicked = null; // loop last clicked in a bar
+let spyQueued = false;
+const queueSpy = () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spyCurrent(); }); } };
+
 function wireEvents() {
+  addEventListener("scroll", queueSpy, { passive: true });
+  document.addEventListener("click", (e) => {
+    const item = e.target.closest(".fm-bar .cover-item");
+    const spy = SPY[state.view];
+    if (item && spy) spyPicked = item.dataset[spy.attr];
+  }, true);
+  // bars are re-rendered often – frame the current square again afterwards
+  new MutationObserver(queueSpy).observe(el.sticky, { childList: true, subtree: true });
+  // height of the sticky area (tabs, legend, loop bar) as --fm-sticky-h, so jump targets land below it;
+  // on phones only the tabs and the loop bar stick (CSS), the tab height positions the bar below them
+  const stickyHeight = () => {
+    const root = document.documentElement.style;
+    root.setProperty("--fm-tabs-h", $("#tabs").offsetHeight + "px");
+    root.setProperty("--fm-sticky-h", stickyArea() + "px");
+  };
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(stickyHeight);
+    [el.sticky, $("#tabs"), ...el.bars].forEach((x) => ro.observe(x));
+  }
+  stickyHeight();
+
+  // Touch screens have no hover, so title texts never show up: a tap shows them in a small bubble instead
+  // (the tap still does its normal job, e.g. jump to a loop or mark a ship)
+  const noHover = window.matchMedia ? matchMedia("(hover: none)") : { matches: false };
+  let tip = null, tipTimer, tipSticky = false; // tipSticky: host stays in place while the page scrolls (loop bar)
+  const hideTip = () => { if (tip) { tip.remove(); tip = null; } clearTimeout(tipTimer); };
+  document.addEventListener("click", (e) => {
+    hideTip();
+    if (!noHover.matches) return;
+    const host = e.target.closest("[title]");
+    if (!host || host.matches("input, select, textarea, [data-melt]") || host.closest(".fm-melt-menu, dialog")) return;
+    const text = host.getAttribute("title");
+    if (!text) return;
+    tipSticky = !!host.closest(".fm-bar");
+    tip = document.createElement("div");
+    tip.className = "fm-tip";
+    tip.setAttribute("role", "status");
+    tip.textContent = text; // plain text – never parsed as HTML
+    document.body.append(tip);
+    const r = host.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+    const top = r.top - h - 8 > 8 ? r.top - h - 8 : r.bottom + 8;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+    tipTimer = setTimeout(hideTip, 3500);
+  }, true);
+  addEventListener("scroll", () => { if (!tipSticky) hideTip(); }, { passive: true });
+
   // Melt icons sit inside clickable ship names, so they are handled first (capture) and stop the click there
   document.addEventListener("click", (e) => {
     const iconEl = e.target.closest("[data-melt]");
@@ -388,6 +549,8 @@ function wireEvents() {
   el.importFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // a hangar export is a few KB – refuse huge files instead of freezing the tab
+    if (file.size > MAX_IMPORT_BYTES) { e.target.value = ""; return toast(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 }), true); }
     const reader = new FileReader();
     reader.onload = () => {
       let result;
@@ -414,6 +577,16 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
+  $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
+  $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
+  el.imgToggle.addEventListener("click", () => setRsiImages(state.rsiImages === false));
+
+  // Loop bar: jump to the card of that loop
+  el.loopBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-loop-jump]");
+    const card = b && document.getElementById("loop-" + b.dataset.loopJump);
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
   // Compare: toggles in the loop cards, dropdown, remove button, clear
   el.loopCards.addEventListener("click", (e) => {
@@ -426,6 +599,13 @@ function wireEvents() {
   // Overlaps: click a ship name to mark it "to replace"; the analysis is recomputed without it
   // Extra-data chips (sticky bar, overlaps tab)
   el.ovDetailsBar.addEventListener("click", (e) => {
+    if (e.target.closest('[data-ov-option="readyFirst"]')) {
+      state.ovReadyFirst = !state.ovReadyFirst;
+      save.ovReadyFirst(state);
+      renderOvDetails(el.ovDetailsBar, state);
+      renderOverlaps(el.overlapCards, ctx());
+      return;
+    }
     const d = e.target.closest("[data-ov-detail]");
     if (!d) return;
     const k = d.dataset.ovDetail;
@@ -435,6 +615,13 @@ function wireEvents() {
     renderOverlaps(el.overlapCards, ctx());
   });
   el.overlapCards.addEventListener("click", (e) => {
+    // loop bar inside the "result after the changes" card: jump like the bar above the tab
+    const j = e.target.closest("[data-ov-jump]");
+    if (j) {
+      const card = document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     const m = e.target.closest("[data-mark]");
     if (m) toggleMark(m.dataset.mark);
     const c = e.target.closest("[data-choose]");
@@ -455,14 +642,14 @@ function wireEvents() {
     if (!state.planner.length || !confirm(t("planner_clear_confirm"))) return;
     state.planner = [];
     save.planner(state);
-    renderPlanner(el.plannerSlots, ctx());
+    renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
   });
   el.plannerSlots.addEventListener("click", (e) => {
     const r = e.target.closest("[data-planner-remove]");
     if (r) {
       state.planner.splice(Number(r.dataset.plannerRemove), 1);
       save.planner(state);
-      return renderPlanner(el.plannerSlots, ctx());
+      return renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
     }
     const b = e.target.closest(".cmp-toggle[data-compare]");
     if (b) return toggleCompare(b.dataset.compare);
@@ -470,13 +657,18 @@ function wireEvents() {
     if (e.target.closest("[data-plan-clear]")) {
       state.planner.forEach((slot) => { slot.picks = []; });
       save.planner(state);
-      return renderPlanner(el.plannerSlots, ctx());
+      return renderPlanner(el.plannerSlots, ctx(), el.plannerBar);
     }
     const p = e.target.closest("[data-plan-pick]");
     if (p) return togglePick(Number(p.dataset.planPick), p.dataset.ship);
-    // coverage bar: pick that loop in the form
+  });
+  // planner loop bar: pick that loop in the form and jump to its first wish (or to the form)
+  el.plannerBar.addEventListener("click", (e) => {
     const c = e.target.closest("[data-cover-loop]");
-    if (c) { el.plannerLoop.value = c.dataset.coverLoop; el.plannerLoop.focus(); }
+    if (!c) return;
+    el.plannerLoop.value = c.dataset.coverLoop;
+    const card = el.plannerSlots.querySelector(`.plan-card[data-loop="${CSS.escape(c.dataset.coverLoop)}"]`);
+    (card || el.plannerForm).scrollIntoView({ behavior: "smooth", block: "start" });
   });
   // tiles are checkboxes: Enter / Space toggle them
   el.plannerSlots.addEventListener("keydown", (e) => {
@@ -499,7 +691,28 @@ function wireEvents() {
   });
 
   // Ship list: filters and sorting via click/Enter on the column header
-  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", () => renderList(el.shipTable, ctx(), listFilter())));
+  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", renderListArea));
+  // loop bars: matrix = highlight the column, ship list = filter (second click clears), overlaps = jump to the card
+  el.matrixBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-matrix-hl]");
+    if (!b) return;
+    matrixHl = matrixHl === b.dataset.matrixHl ? null : b.dataset.matrixHl;
+    renderMatrixArea();
+    const th = el.matrixTable.querySelector("th.col-hl");
+    if (th) th.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  });
+  el.listBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-list-filter]");
+    if (!b) return;
+    el.filterLoop.value = el.filterLoop.value === b.dataset.listFilter ? "" : b.dataset.listFilter;
+    renderListArea();
+  });
+  el.overlapBar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ov-jump]");
+    if (!b) return;
+    const card = document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps"));
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   const sortBy = (key) => {
     state.list.sortDir = state.list.sortKey === key ? -state.list.sortDir : 1;
     state.list.sortKey = key;
@@ -533,6 +746,7 @@ async function start() {
 
   wireEvents();
   renderAll();
+  el.tools.open = !state.ownFleet; // own fleet loaded before: toolbar folded into one line
   showView(state.view);
 }
 

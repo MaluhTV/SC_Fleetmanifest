@@ -53,9 +53,10 @@ Adding a tab takes these steps:
 
 All rules live in one place, `js/analysis.js`:
 
-- **Overlap:** a loop has at least `OVERLAP_MIN_SHIPS` (3) flight-ready ships in a primary role.
+- **Overlap:** a loop has at least `OVERLAP_MIN_SHIPS` (3) ships in a primary or planned role – all statuses count (concepts, in production), because several loops and ships are not finished yet. Such ships are "pending" (`isPending()`): marked violet in the view. The option "Playable ships first" (`readyFirst`, `fm_ovready`, off by default) ranks substitutes usable today first. The "covered only by planned ships" card links the RSI Loaner Ship Matrix.
+- **Planned only** (`plannedOnly`): loops covered only by pending ships get their own card and a violet dashed square in the bar.
 - **Per category:** each overlap card is evaluated on its own. Ship O can replace ship S in loop L (`substitutesInLoop()`) when:
-  - O has L as a primary role
+  - O has L as a primary or planned role
   - O is at least as large
   - for cargo, O has at least as much SCU
   - for fighters, O has at least S's fighter class (`fighterClassAcceptable()`): snub < light < medium < heavy; interceptor, stealth, interdiction and bomber only by the same class. Ships without a class are compared by size only. Substitutes of the nearest class are named first.
@@ -95,6 +96,7 @@ All rules live in one place, `js/analysis.js`:
 | `fm_marked` / `fm_chosen` | replacement planning (red / green) |
 | `fm_melt` | melt status chosen by clicking a lock icon: `{ shipName: "meltable" \| "upgrade" \| "locked" }` |
 | `fm_ovdetails` | extra data switched on in the overlaps tab, e.g. `["scu", "crew"]` |
+| `fm_ovready` | overlaps option "Playable ships first" (`true` / `false`) |
 | `fm_planner` | fleet planner wishes: `[{ loop, min, max, picks }]` (`max: null` = open, `picks` = selected ship names) |
 | `fm_overrides` | edits from the ship editor: `{ shipName: { field: value } }` |
 

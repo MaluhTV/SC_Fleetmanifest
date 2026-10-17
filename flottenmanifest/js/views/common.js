@@ -26,6 +26,28 @@ export const LOOP_ICONS = {
 };
 const LOOP_ICON_FALLBACK = loopSvg('<circle cx="8" cy="8" r="2.5"/>');
 export const loopIcon = (loopId) => LOOP_ICONS[loopId] || LOOP_ICON_FALLBACK;
+/** Loop icon in front of a card title (same icon as in the loop bar), hidden from screen readers – the title names the loop. */
+export const loopIconTitle = (loopId) => `<span class="card-loop-icon" aria-hidden="true">${loopIcon(loopId)}</span>`;
+
+/**
+ * Loop bar: one icon + square per gameplay loop, always in the order of data/loops.json.
+ * cells = { loopId: { n, level, text } } – n is shown in the square, text is the tooltip (plain text).
+ * level: "full" = filled (accent) · "partial" = dashed · "plain" = outline with grey number · "gap" = red dashed ·
+ *        "planned" = violet dashed (only planned / unfinished ships) · "" = empty
+ * attr = data attribute name for the click (main.js), label = aria label, summary = text next to the bar (HTML),
+ * active = loop ID shown as selected (e.g. the ship list filter).
+ * The square of the card currently in view is framed while scrolling (main.js → .is-current). cells[id].changed = true adds a dot (something changes there).
+ * Used by the loop tab, matrix, ship list, overlaps (coverage of the fleet) and the fleet planner (coverage of the plan).
+ */
+const BAR_LEVELS = { full: " is-filled", partial: " is-partial", plain: " is-plain", gap: " is-gap", planned: " is-planned-only" };
+export function loopBar(db, cells, { attr, label, summary, active = null }) {
+  const items = db.loops.map(({ id }) => id).map((id) => {
+    const c = cells[id] || { n: 0, level: "", text: loopText(db, id) };
+    return `<button type="button" class="cover-item${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === id ? " is-active" : ""}" data-${attr}="${esc(id)}" aria-pressed="${active === id}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
+      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
+  }).join("");
+  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${items}</div><span class="muted cover-sum">${summary}</span></div>`;
+}
 
 /** Loop name as plain text – for title/aria attributes (escape there with esc()) and the clipboard. */
 export function loopText(db, loopId) {
@@ -69,12 +91,12 @@ export const ICONS = {
   lock: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
   lockOpen: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
   warn: svg('<circle cx="6" cy="6" r="5.6" fill="currentColor"/>' +
-    '<path d="M6 3.1v3.7" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round"/>' +
-    '<circle cx="6" cy="8.9" r="0.9" style="fill:var(--panel)"/>'),
+    '<path d="M6 3.1v3.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/>' +
+    '<circle cx="6" cy="8.9" r="0.9" class="ic-dot"/>'),
   lockAlert: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 6.8v2" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="10" r=".75" style="fill:var(--panel)"/>'),
+    '<path d="M6 6.8v2" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="10" r=".75" class="ic-dot"/>'),
   lockUpgrade: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" style="stroke:var(--panel)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
+    '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
 };
 export const LOCK_ICON = ICONS.lock;
 /** Hangar (rounded hall with an open gate) – "in your fleet"; check mark – "selected" (fleet planner). */

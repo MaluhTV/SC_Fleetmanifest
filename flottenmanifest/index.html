@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Content Security Policy: scripts and styles only from this site, images only from here and the RSI media server.
+       The standalone build (tools/build-standalone.mjs) replaces it with hashes of its inline script and style. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://media.robertsspaceindustries.com; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <title>Star Citizen Flottenmanifest</title>
   <link rel="stylesheet" href="css/flottenmanifest.css">
 </head>
@@ -29,7 +33,9 @@
     </div>
   </header>
 
-  <!-- Toolbar: name, import, example -->
+  <!-- Toolbar: name, import, example. Folds into one line once an own fleet is loaded (main.js → setToolsOpen) -->
+  <details class="fm-tools" id="tools" open>
+  <summary class="fm-tools__sum"><span id="toolsSummary"></span></summary>
   <div class="fm-toolbar">
     <label class="fm-toolbar__name" for="usernameInput">
       <span data-i18n="username_label"></span>
@@ -39,9 +45,11 @@
     <input id="importFile" class="visually-hidden" type="file" accept=".csv,.json,text/csv,application/json">
     <button class="btn" type="button" id="pasteToggle" data-i18n="import_text"></button>
     <button class="btn" type="button" id="resetExample" data-i18n="reset_example"></button>
+    <button class="btn" type="button" id="imgToggle" aria-pressed="false" hidden></button>
     <span class="fm-toolbar__spacer"></span>
     <span class="fm-dbinfo" id="dbInfo"></span>
   </div>
+  </details>
 
   <!-- "Paste list" input -->
   <div class="fm-paste" id="pasteBox" hidden>
@@ -50,6 +58,15 @@
     <div class="fm-row">
       <button class="btn btn--primary" type="button" id="pasteApply" data-i18n="paste_apply"></button>
       <button class="btn" type="button" id="pasteCancel" data-i18n="paste_cancel"></button>
+    </div>
+  </div>
+
+  <!-- RSI ship images are hotlinked: notice until acknowledged, with a way to switch them off -->
+  <div class="fm-banner fm-consent" id="imgConsent" role="region" hidden>
+    <p data-i18n="img_consent_text"></p>
+    <div class="fm-row">
+      <button class="btn btn--primary" type="button" id="imgConsentYes" data-i18n="img_consent_yes"></button>
+      <button class="btn" type="button" id="imgConsentNo" data-i18n="img_consent_no"></button>
     </div>
   </div>
 
@@ -87,12 +104,25 @@
     <span><span class="ship-mark is-marked legend-mark">Name</span> <span data-i18n="legend_marked"></span></span>
     <span><span class="ship-mark is-chosen legend-mark">Name</span> <span data-i18n="legend_chosen"></span></span>
     <span><span class="icon--hangar" data-icon="hangar"></span> <span data-i18n="legend_hangar"></span></span>
+    <span class="legend-bar"><span data-i18n="legend_bar"></span>
+      <span class="cover-item is-filled"><span class="cover-cell">2</span></span> <span data-i18n="legend_bar_full"></span>
+      <span class="cover-item is-partial"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_partial"></span>
+      <span class="cover-item is-gap"><span class="cover-cell"></span></span> <span data-i18n="legend_bar_gap"></span>
+      <span class="cover-item is-planned-only"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_planned"></span>
+    </span>
   </div>
 
   </details>
 
   <!-- Extra-data chips for the overlaps tab (js/views/overlaps.js → renderOvDetails) -->
   <div class="ov-details" id="ovDetailsBar" hidden></div>
+
+  <!-- Loop bars (quick navigation), one per tab; main.js → showView() shows the one of the open tab -->
+  <div class="fm-bar" id="loopBar" data-bar-for="loops"></div>
+  <div class="fm-bar" id="matrixBar" data-bar-for="matrix" hidden></div>
+  <div class="fm-bar" id="listBar" data-bar-for="list" hidden></div>
+  <div class="fm-bar" id="overlapBar" data-bar-for="overlaps" hidden></div>
+  <div class="fm-bar" id="plannerBar" data-bar-for="planner" hidden></div>
   </div>
 
   <!-- Views -->
@@ -151,6 +181,7 @@
   <footer class="fm-footer">
     <div><span data-i18n="sources"></span> <a href="https://starcitizen.tools/Ships" target="_blank" rel="noopener">Star Citizen Wiki</a>. <span data-i18n="sources_note"></span></div>
     <div data-i18n="disclaimer"></div>
+    <div data-i18n="footer_images"></div>
     <!-- Required by the RSI Fankit and Fandom FAQ for fan sites: notice in English plus a link to the official site. Keep it visible. -->
     <div class="fm-fan-notice">This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imperium group of companies. All content on this site not authored by its host or users are property of their respective owners. <a href="https://robertsspaceindustries.com" target="_blank" rel="noopener">robertsspaceindustries.com</a></div>
   </footer>
@@ -169,14 +200,7 @@
 <!-- Ship editor dialog, filled by js/views/editor.js -->
 <dialog class="fm fm-dialog" id="editDialog"><form method="dialog" id="editForm"></form></dialog>
 
-<script>
-  /* file-protocol-hint: browsers block ES modules on file://, so main.js never runs when index.html is double-clicked. */
-  if (location.protocol === "file:") {
-    document.getElementById("banner").textContent =
-      "Diese Datei braucht einen Webserver. Zum direkten Öffnen bitte dist/flottenmanifest.html verwenden. · " +
-      "This file needs a web server. To open the page directly, use dist/flottenmanifest.html.";
-  }
-</script>
+<script src="js/file-hint.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

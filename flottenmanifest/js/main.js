@@ -15,7 +15,7 @@ import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet, plannerSuggestions } from "./analysis.js";
 import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
-import { renderKpis } from "./views/kpis.js";
+import { renderKpis, KPI_FILTERS } from "./views/kpis.js";
 import { renderLoops, renderLoopBar } from "./views/loops.js";
 import { renderMatrix } from "./views/matrix.js";
 import { renderList, renderListFilters } from "./views/list.js";
@@ -89,6 +89,13 @@ let fleet;   // current fleet: { ships, unknown } (analysis.js)
 /* ---------- Rendering ---------- */
 
 const ctx = () => ({ db, fleet, state });
+/** Context for the views the KPI tiles filter (loop cards, matrix, ship list): fleet reduced to the tile's ships. */
+const viewCtx = () => {
+  const keep = KPI_FILTERS[state.kpiFilter];
+  return keep ? { db, fleet: { ...fleet, ships: fleet.ships.filter(keep) }, state } : ctx();
+};
+/** Views that follow the KPI filter; from any other tab a tile click opens the ship list. */
+const KPI_VIEWS = ["loops", "matrix", "list"];
 const listFilter = () => ({ loop: el.filterLoop.value, size: el.filterSize.value, text: el.filterText.value });
 
 function renderHeader() {
@@ -176,8 +183,9 @@ function renderAll() {
   el.editCount.textContent = edits ? t("edit_count", { n: edits }) : t("edit_count_none");
   el.editExport.disabled = el.editDiscard.disabled = !edits;
   renderKpis(el.kpis, ctx());
-  renderLoops(el.loopCards, ctx());
-  renderLoopBar(el.loopBar, ctx());
+  renderKpiChips();
+  renderLoops(el.loopCards, viewCtx());
+  renderLoopBar(el.loopBar, viewCtx());
   renderMatrixArea();
   renderListFilters({ loopSelect: el.filterLoop, sizeSelect: el.filterSize }, ctx());
   renderListArea();
@@ -191,15 +199,31 @@ function renderAll() {
 /* Loop bars above the matrix (highlight a column) and the ship list (filter by loop) */
 let matrixHl = null;
 function renderMatrixArea() {
-  renderLoopBar(el.matrixBar, ctx(), { attr: "matrix-hl", active: matrixHl });
-  renderMatrix(el.matrixTable, ctx(), matrixHl);
+  renderLoopBar(el.matrixBar, viewCtx(), { attr: "matrix-hl", active: matrixHl });
+  renderMatrix(el.matrixTable, viewCtx(), matrixHl);
 }
+function setKpiFilter(filter) {
+  state.kpiFilter = filter;
+  renderKpis(el.kpis, ctx());
+  renderLoops(el.loopCards, viewCtx());
+  renderLoopBar(el.loopBar, viewCtx());
+  renderMatrixArea();
+  renderListArea();
+  renderKpiChips();
+  queueSpy();
+}
+/** "Own ships only ×" chips above the filtered views. */
+function renderKpiChips() {
+  document.body.classList.toggle("kpi-filtered", !!state.kpiFilter); // hides empty loop cards while filtering
+  $$("[data-kpi-clear]").forEach((chip) => {
+    chip.hidden = !state.kpiFilter;
+    chip.textContent = state.kpiFilter ? t("kpi_filter_chip_" + state.kpiFilter) + " ×" : "";
+    chip.title = t("kpi_filter_off");
+  });
+}
+
 function renderListArea() {
-  const chip = $("#kpiFilterChip");
-  chip.hidden = !state.kpiFilter;
-  chip.textContent = state.kpiFilter ? t("kpi_filter_chip_" + state.kpiFilter) + " ×" : "";
-  chip.title = t("kpi_filter_off");
-  renderLoopBar(el.listBar, ctx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
+  renderLoopBar(el.listBar, viewCtx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
   renderList(el.shipTable, ctx(), listFilter());
 }
 
@@ -325,7 +349,7 @@ function setMarks(marked, chosen) {
   state.marked = marked;
   state.chosen = chosen;
   save.marked(state);
-  renderLoops(el.loopCards, ctx());
+  renderLoops(el.loopCards, viewCtx());
   renderOverlaps(el.overlapCards, ctx());
   renderOverlapBar(el.overlapBar, ctx()); // marked ships change overlaps and gaps
 }
@@ -448,7 +472,7 @@ function spyCurrent() {
   const spy = SPY[state.view];
   if (!spy) return;
   const line = stickyBottom() + 24;
-  const cards = $$(spy.cards);
+  const cards = $$(spy.cards).filter((c) => c.offsetParent); // hidden cards (KPI filter) do not count
   // the last row of cards whose top has passed the line under the sticky area (otherwise the first card);
   // cards side by side share a row – then the one picked in the bar wins, else the leftmost
   let rowTop = null;
@@ -626,23 +650,15 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
-  // KPI tiles filter the ship list (second click or the chip in the list clears it)
+  // KPI tiles filter the loop cards, matrix and ship list (second click or a "… ×" chip clears it);
+  // from the overlaps, planner or compare tab a click opens the ship list
   el.kpis.addEventListener("click", (e) => {
     const tile = e.target.closest("[data-kpi-filter]");
     if (!tile) return;
-    state.kpiFilter = state.kpiFilter === tile.dataset.kpiFilter ? null : tile.dataset.kpiFilter;
-    renderKpis(el.kpis, ctx());
-    renderListArea();
-    if (state.kpiFilter) {
-      showView("list");
-      $("#view-list").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    setKpiFilter(state.kpiFilter === tile.dataset.kpiFilter ? null : tile.dataset.kpiFilter);
+    if (state.kpiFilter && !KPI_VIEWS.includes(state.view)) showView("list");
   });
-  $("#kpiFilterChip").addEventListener("click", () => {
-    state.kpiFilter = null;
-    renderKpis(el.kpis, ctx());
-    renderListArea();
-  });
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-kpi-clear]")) setKpiFilter(null); });
   $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
   $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
   el.imgToggle.addEventListener("click", () => setRsiImages(state.rsiImages === false));
@@ -753,7 +769,7 @@ function wireEvents() {
   el.compareClear.addEventListener("click", () => {
     state.compare = [];
     save.compare(state);
-    renderLoops(el.loopCards, ctx());
+    renderLoops(el.loopCards, viewCtx());
     renderCompareArea();
   });
 

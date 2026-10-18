@@ -16,7 +16,7 @@ function loopCard(loopId, db, ships, state, thumbs) {
   const { compare } = state;
   const st = loopStats(ships, loopId);
   const head = `<div class="loop-card__head"><h3>${loopIconTitle(loopId)}${loopName(db, loopId)}</h3><span class="muted loop-card__count">${st.all.length} ${t("ships")}</span></div>`;
-  if (!st.all.length) return `<div class="loop-card" id="loop-${loopId}">${head}<p class="muted">${t("loop_empty")}</p></div>`;
+  if (!st.all.length) return `<div class="loop-card is-empty" id="loop-${loopId}">${head}<p class="muted">${t("loop_empty")}</p></div>`;
 
   // Sort: primary, planned, secondary; within each by SCU and crew, descending
   const rows = [...st.all]

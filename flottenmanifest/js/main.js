@@ -195,6 +195,10 @@ function renderMatrixArea() {
   renderMatrix(el.matrixTable, ctx(), matrixHl);
 }
 function renderListArea() {
+  const chip = $("#kpiFilterChip");
+  chip.hidden = !state.kpiFilter;
+  chip.textContent = state.kpiFilter ? t("kpi_filter_chip_" + state.kpiFilter) + " ×" : "";
+  chip.title = t("kpi_filter_off");
   renderLoopBar(el.listBar, ctx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
   renderList(el.shipTable, ctx(), listFilter());
 }
@@ -622,6 +626,23 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
+  // KPI tiles filter the ship list (second click or the chip in the list clears it)
+  el.kpis.addEventListener("click", (e) => {
+    const tile = e.target.closest("[data-kpi-filter]");
+    if (!tile) return;
+    state.kpiFilter = state.kpiFilter === tile.dataset.kpiFilter ? null : tile.dataset.kpiFilter;
+    renderKpis(el.kpis, ctx());
+    renderListArea();
+    if (state.kpiFilter) {
+      showView("list");
+      $("#view-list").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+  $("#kpiFilterChip").addEventListener("click", () => {
+    state.kpiFilter = null;
+    renderKpis(el.kpis, ctx());
+    renderListArea();
+  });
   $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
   $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
   el.imgToggle.addEventListener("click", () => setRsiImages(state.rsiImages === false));

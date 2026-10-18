@@ -53,6 +53,7 @@ export function loadState(example) {
     rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: false = off; true = on (notice acknowledged); null = on, notice not acknowledged yet
     planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
+    kpiFilter: null, // KPI tile filter for the ship list: "owned" | "ready" | "included" (not stored)
   };
 }
 

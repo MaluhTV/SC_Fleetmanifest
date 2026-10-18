@@ -3,6 +3,7 @@ import { t, fmt } from "../i18n.js";
 import { esc, sum } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
 import { ownedOnly } from "../analysis.js";
+import { KPI_FILTERS } from "./kpis.js";
 import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insuranceText, note, thumb, meltIcon, fighterClass } from "./common.js";
 
 /**
@@ -48,8 +49,9 @@ export function renderListFilters({ loopSelect, sizeSelect }, { db, fleet }) {
 export function renderList(table, { db, fleet, state }, filter) {
   const { sortKey, sortDir } = state.list;
   const q = filter.text.toLowerCase();
+  const kpi = KPI_FILTERS[state.kpiFilter]; // tile filter from the KPI row (owned / flight-ready / included)
   const rows = fleet.ships.filter(
-    (s) => (!filter.loop || s.loops[filter.loop]) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
+    (s) => (!kpi || kpi(s)) && (!filter.loop || s.loops[filter.loop]) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
   );
   // the image column is left out if no fleet ship has an image
   // optional columns only appear when at least one fleet ship has a value
@@ -72,7 +74,10 @@ export function renderList(table, { db, fleet, state }, filter) {
     .map((s) => `<tr>${cols.map((c) => `<td class="${[c.numeric && "num", c.wrap && "wrap", "col-" + c.key].filter(Boolean).join(" ")}" data-label="${esc(t(c.label))}">${c.cell(s, db, state)}</td>`).join("")}</tr>`)
     .join("");
 
-  const foot = `<tr>${cols[0].key === "image" ? "<td></td>" : ""}<td>${sum(ownedOnly(rows), (s) => s.qty)} ${t("ships")}</td><td></td><td></td>
+  // owned ships are counted; included vessels (come with a parent ship) are named separately
+  const nOwned = sum(ownedOnly(rows), (s) => s.qty), nIncl = rows.filter((s) => s.includedOnly).length;
+  const shipsLine = [nOwned || !nIncl ? `${nOwned} ${t("ships")}` : "", nIncl ? t("list_included", { n: nIncl }) : ""].filter(Boolean).join(" + ");
+  const foot = `<tr>${cols[0].key === "image" ? "<td></td>" : ""}<td>${shipsLine}</td><td></td><td></td>
     <td class="num"><b>${fmt(sum(ownedOnly(rows), (s) => s.scu * s.qty))}</b></td>
     <td class="num"><b>${sum(ownedOnly(rows), (s) => s.crewMin * s.qty)}–${sum(ownedOnly(rows), (s) => s.crewMax * s.qty)}</b></td>
     <td colspan="${cols.length - 5 - (cols[0].key === "image" ? 1 : 0)}"></td></tr>`;

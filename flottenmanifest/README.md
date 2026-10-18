@@ -32,6 +32,8 @@ node tools/build-standalone.mjs   # → dist/flottenmanifest.html
 
 ### Getting your hangar file
 
+"Import file" opens a dialog with the file picker and these links:
+
 - **Hangar XPLORer** (browser extension for the RSI "My Hangar" page, CSV export): [Chrome](https://chromewebstore.google.com/detail/bhkgemjdepodofcnmekdobmmbifemhkc) · [Firefox](https://addons.mozilla.org/firefox/addon/star-citizen-hangar-xplorer/) · [GitHub](https://github.com/dolkensp/HangarXPLOR)
 - **Hangar.link** (CSV export of your pledges): https://hangar.link/pledges/all
 - **CCU Game** (hangar management and CCU chains): https://ccugame.app/
@@ -115,7 +117,7 @@ Committing `data/image-urls.json` (links only) also lets the source version show
 
 ## Privacy and security
 
-- **RSI images with a notice.** Linked images make the browser contact RSI's image server, so RSI sees the visitor's IP address. They load by default; a notice says so until it is acknowledged ("Got it" / "Switch images off", stored as `fm_rsiimg` in the browser), and the toolbar button "Images: on/off" changes the choice at any time. Local or embedded images need no consent. Builds with `--no-images` make no external requests at all.
+- **RSI images with a notice.** Linked images make the browser contact RSI's image server, so RSI sees the visitor's IP address. They load by default; a notice says so until it is acknowledged ("Got it" / "Switch images off", stored as `fm_rsiimg` in the browser), and the button "Images: on/off" under "More options" changes the choice at any time. Local or embedded images need no consent. Builds with `--no-images` make no external requests at all.
 - **No server, no tracking.** Fleet, edits and settings stay in the visitor's `localStorage`; nothing is sent anywhere. Fonts are self-hosted.
 - **Content Security Policy.** `index.html` only allows scripts and styles from its own origin and images from itself and `media.robertsspaceindustries.com`. The standalone build replaces this with a policy that allows exactly its own inline script and style blocks (sha256 hashes, computed by `tools/build-standalone.mjs`) and blocks every other request. Even if a value ever slipped through unescaped, injected scripts, event handlers and inline styles would not run. Never use `style="…"` or `on…=` attributes in markup — use classes and `addEventListener`.
 - **Escaping.** All data reaches the page through `esc()` (`js/util.js`); stored values are validated when loaded (`js/state.js`).

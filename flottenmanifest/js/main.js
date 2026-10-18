@@ -44,6 +44,8 @@ const el = {
   resetExample: $("#resetExample"),
   imgConsent: $("#imgConsent"),
   tools: $("#tools"),
+  importDialog: $("#importDialog"),
+  importMsg: $("#importMsg"),
   toolsSummary: $("#toolsSummary"),
   imgToggle: $("#imgToggle"),
   dbInfo: $("#dbInfo"),
@@ -152,6 +154,13 @@ function renderImageConsent() {
   el.imgToggle.title = t("img_toggle_title");
 }
 
+/** Import problem: shown in the open import dialog and as a toast. */
+function importError(message) {
+  el.importMsg.textContent = message;
+  el.importMsg.hidden = false;
+  toast(message, true);
+}
+
 function setRsiImages(on) {
   state.rsiImages = on;
   save.rsiImages(state);
@@ -230,7 +239,7 @@ function applyFleet(items, format) {
   save.fleet(state);
   save.compare(state);
   renderAll();
-  el.tools.open = false; // fleet is in – fold the toolbar into one line
+  if (el.importDialog.open) el.importDialog.close();
   toast(t("import_ok", { n: items.length, u: fleet.unknown.length, format }));
 }
 
@@ -350,7 +359,6 @@ function resetToExample() {
   save.username(state);
   save.compare(state);
   renderAll();
-  el.tools.open = true;
 }
 
 /* ---------- Events ---------- */
@@ -572,18 +580,32 @@ function wireEvents() {
     const file = e.target.files[0];
     if (!file) return;
     // a hangar export is a few KB – refuse huge files instead of freezing the tab
-    if (file.size > MAX_IMPORT_BYTES) { e.target.value = ""; return toast(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 }), true); }
+    if (file.size > MAX_IMPORT_BYTES) { e.target.value = ""; return importError(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 })); }
     const reader = new FileReader();
     reader.onload = () => {
       let result;
       try { result = importFile(String(reader.result), db); } catch { result = null; }
-      if (!result) return toast(t("import_error", { formats: IMPORTERS.map((i) => i.label).join(", ") }), true);
-      if (!result.items.length) return toast(t("import_empty"), true);
+      if (!result) return importError(t("import_error", { formats: IMPORTERS.map((i) => i.label).join(", ") }));
+      if (!result.items.length) return importError(t("import_empty"));
       if (result.account) { state.username = result.account; save.username(state); }
       applyFleet(result.items, result.format);
     };
     reader.readAsText(file);
     e.target.value = "";
+  });
+
+  // Import dialog: file picker + where the files come from
+  el.importOpen = $("#importOpen");
+  el.importOpen.addEventListener("click", () => {
+    el.importMsg.hidden = true;
+    el.importDialog.showModal();
+  });
+  $("#importClose").addEventListener("click", () => el.importDialog.close());
+  el.importDialog.addEventListener("click", (e) => { if (e.target === el.importDialog) el.importDialog.close(); }); // click on the backdrop
+  $("#importPaste").addEventListener("click", () => {
+    el.importDialog.close();
+    el.pasteBox.hidden = false;
+    el.pasteText.focus();
   });
 
   el.pasteToggle.addEventListener("click", () => {
@@ -769,7 +791,6 @@ async function start() {
 
   wireEvents();
   renderAll();
-  el.tools.open = !state.ownFleet; // own fleet loaded before: toolbar folded into one line
   showView(state.view);
 }
 

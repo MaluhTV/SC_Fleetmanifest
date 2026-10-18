@@ -1,0 +1,59 @@
+{
+  "source": "https://support.robertsspaceindustries.com/hc/en-us/articles/4408770370455-Included-Vessels-Snub-Fighters-and-Rovers",
+  "checked": "2026-10-18",
+  "note": "Vessels RSI includes with a parent ship (as loaners, only while the parent is in the hangar; they do not stack). Keys are the names RSI uses for the parent; values are names or aliases from ships.json. 600i: RSI lists the G12, currently the Cyclone is handed out. Javelin: in production, the included MPUV comes with the loaner matrix until then. Constellation Mk V Centaurus: the Skylark is its docked snub (starcitizen.tools; not yet on RSI's list).",
+  "parents": {
+    "600i Explorer": [
+      "Cyclone"
+    ],
+    "600i Executive Edition": [
+      "Cyclone"
+    ],
+    "890 Jump": [
+      "85X"
+    ],
+    "Carrack": [
+      "C8 Pisces",
+      "Ursa Rover"
+    ],
+    "Carrack Expedition": [
+      "C8 Pisces",
+      "Ursa Rover"
+    ],
+    "Carrack w/C8X": [
+      "C8X Pisces Expedition",
+      "Ursa Rover"
+    ],
+    "Carrack Expedition w/C8X": [
+      "C8X Pisces Expedition",
+      "Ursa Rover"
+    ],
+    "Constellation Andromeda": [
+      "P-52 Merlin"
+    ],
+    "Constellation Aquila": [
+      "P-52 Merlin",
+      "Ursa Rover"
+    ],
+    "Constellation Phoenix": [
+      "P-72 Archimedes",
+      "Lynx"
+    ],
+    "Constellation Phoenix Emerald": [
+      "P-72 Archimedes",
+      "Lynx"
+    ],
+    "Idris-M": [
+      "MPUV Personnel"
+    ],
+    "Idris-P": [
+      "MPUV Personnel"
+    ],
+    "Javelin": [
+      "MPUV Cargo"
+    ],
+    "Constellation Mk V Centaurus": [
+      "Skylark"
+    ]
+  }
+}

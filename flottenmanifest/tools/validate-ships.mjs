@@ -84,6 +84,17 @@ for (const s of ships) {
   for (const m of s.motherships || []) if (!names.has(m)) err(s.name, `mothership "${m}" does not exist in ships.json`);
 }
 
+// data/included.json (RSI "Included Vessels"): every vessel must be a ship or alias in ships.json;
+// a parent that is unknown only warns (RSI may list variants the database does not have yet)
+const INCLUDED_FILE = join(ROOT, "data", "included.json");
+if (existsSync(INCLUDED_FILE)) {
+  const parents = JSON.parse(readFileSync(INCLUDED_FILE, "utf8")).parents || {};
+  for (const [parent, list] of Object.entries(parents)) {
+    if (!owner.has(norm(parent))) warn(`included.json "${parent}"`, "parent ship is not a ship or alias in ships.json – ignored on import");
+    for (const v of list) if (!owner.has(norm(v))) err(`included.json "${parent}"`, `included vessel "${v}" is not a ship or alias in ships.json`);
+  }
+}
+
 // --- Output ------------------------------------------------------------------
 warnings.forEach((w) => console.log("Warning: " + w));
 errors.forEach((e) => console.log("ERROR:   " + e));

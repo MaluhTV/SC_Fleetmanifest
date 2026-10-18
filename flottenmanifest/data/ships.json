@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "Star Citizen Wiki (starcitizen.tools)",
-    "updated": "2026-10-16",
+    "updated": "2026-10-18",
     "schemaVersion": 1,
     "info": "Field reference: docs/SHIP-DATABASE.md. After changes run: node tools/validate-ships.mjs --format"
   },
@@ -1888,8 +1888,8 @@
       "crewMin": 4, "crewMax": 8,
       "scu": 2880,
       "status": "concept",
-      "loops": {"cargo": "planned", "touring": "planned"},
-      "note": { "de": "Banu-Händler", "en": "Banu trader" },
+      "loops": {"cargo": "planned"},
+      "note": { "de": "Banu-Händler – Handel / Frachttransport", "en": "Banu trader – trading / cargo transport" },
       "motherships": [],
       "upgradeable": true,
       "image": "images/ships/merchantman.jpg"

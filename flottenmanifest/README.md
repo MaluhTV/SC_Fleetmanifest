@@ -50,6 +50,7 @@ css/flottenmanifest.css    all styling, split into numbered sections (tokens →
 data/
   ships.json               ★ ship database – this is where ships are maintained
   loops.json               list of gameplay loops (IDs + German/English names)
+  included.json            vessels RSI includes with a parent ship (Carrack → C8 Pisces + Ursa …), per the RSI support article
   example-fleet.json       example fleet for first-time visitors (username "Citizen")
 js/
   main.js                  entry point: load data, wire events, render everything

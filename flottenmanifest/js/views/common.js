@@ -134,6 +134,7 @@ export const icon = (cls, svgIcon, text) => ` <span class="${cls}" title="${esc(
  */
 const MELT_TEXT = { meltable: "melt_ok", meltOnly: "melt_only", upgrade: "melt_upgrade_only", locked: "melt_locked" };
 export function meltIcon(ship, showMeltable = false) {
+  if (ship.includedOnly) return ""; // comes with its parent ship – cannot be melted on its own
   // unknown (import without melt data): grey "?" pair, so the status can still be set by click –
   // only for fleet ships (they have qty) and only where all states are shown
   if (!ship.melt) {
@@ -155,7 +156,18 @@ export const meltBadge = (ship) => meltIcon(ship, true);
 
 /** Ship name with quantity (×2) and lock icon (lock: false when a meltBadge follows anyway). */
 export const shipLabel = (ship, { lock = true } = {}) =>
-  esc(ship.name) + (ship.qty > 1 ? ` <span class="qty">×${ship.qty}</span>` : "") + (lock ? meltTag(ship) : "");
+  esc(ship.name) + (ship.qty > 1 ? ` <span class="qty">×${ship.qty}</span>` : "") + includedTag(ship) + (lock ? meltTag(ship) : "");
+
+/**
+ * "incl." pill for vessels that come with a parent ship (buildFleet → includedBy / includedOnly):
+ * only included = "incl.", also owned on its own = "+ incl."; the tooltip names the parent ships.
+ */
+export function includedTag(ship) {
+  if (!ship.includedBy || !ship.includedBy.length) return "";
+  const parents = ship.includedBy.join(", ");
+  const text = t(ship.includedOnly ? "incl_title" : "incl_extra_title", { p: parents });
+  return ` <span class="pill pill--incl" title="${esc(text)}">${t(ship.includedOnly ? "incl_tag" : "incl_extra_tag")}</span>`;
+}
 
 /**
  * Ship thumbnail from the `image` field in data/ships.json (RSI store image, hot-linked).
@@ -175,6 +187,8 @@ export const thumb = (ship, size = "s") =>
  * With `choose` = name of the ship to replace, the click picks this ship as its substitute (data-choose / data-for).
  */
 export function markable(ship, html, { marked, chosen }, choose = null) {
+  // included vessels cannot be given away on their own (they leave with the parent) – but can be a substitute
+  if (ship.includedOnly && !choose) return `<span class="ship-mark is-included">${html}</span>`;
   const isRed = marked.includes(ship.name);
   const isGreen = Object.values(chosen).includes(ship.name);
   const cls = "ship-mark" + (isRed ? " is-marked" : "") + (isGreen ? " is-chosen" : "");

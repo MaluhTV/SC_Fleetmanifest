@@ -2,7 +2,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
-import { analyseOverlaps, loopStats, isPending, isFlightReady } from "../analysis.js";
+import { analyseOverlaps, loopStats, isPending, isFlightReady, remainingAfter, ownedOnly } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
 import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
@@ -110,8 +110,8 @@ export function renderOverlapBar(el, ctx) {
  */
 function resultCard({ db, fleet }, marked, chosen, result, mark) {
   const markedSet = new Set(marked);
-  const remaining = fleet.ships.filter((s) => !markedSet.has(s.name));
-  const gone = fleet.ships.filter((s) => markedSet.has(s.name));
+  const remaining = remainingAfter(fleet.ships, marked); // included vessels leave with their parent
+  const gone = ownedOnly(fleet.ships).filter((s) => markedSet.has(s.name));
   const copies = (list) => list.reduce((a, s) => a + s.qty, 0);
   const exchange = gone.filter((s) => s.melt === "meltable" || s.melt === "meltOnly").length;
   const ccuOnly = gone.filter((s) => s.melt === "upgrade" || s.melt === "locked").length;
@@ -144,7 +144,7 @@ function resultCard({ db, fleet }, marked, chosen, result, mark) {
 
   return `<article class="is-marked-summary res-card">
     <h3>${t("res_title")}</h3>
-    <p class="res-head"><b>${t("res_ships", { a: copies(fleet.ships), b: copies(remaining) })}</b> · ${t("res_gone", { n: copies(gone) })}${meltLine ? ` (${meltLine})` : ""} ·
+    <p class="res-head"><b>${t("res_ships", { a: copies(ownedOnly(fleet.ships)), b: copies(ownedOnly(remaining)) })}</b> · ${t("res_gone", { n: copies(gone) })}${meltLine ? ` (${meltLine})` : ""} ·
       ${newGaps.length ? `<span class="bad">${t("res_gaps_new", { n: newGaps.length })}</span>` : `<span class="good">${t("res_gaps_none")}</span>`}</p>
     ${loopBar(db, cells, { attr: "ov-jump", label: t("res_title"), summary: t("res_bar_sum") })}
     ${rows ? `<div class="table-wrap"><table class="res-table"><thead><tr><th>${t("filter_loop")}</th><th class="num">${t("legend_primary")}</th><th class="num">${t("res_other_roles")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
@@ -208,6 +208,8 @@ export function renderOverlaps(el, ctx) {
       markable(s, `<span class="ship-tile">${thumb(s)}<span>${shipLabel(s, { lock: false })}${extra}</span>${meta(s)}</span>`, sel, c.ship.name);
     const candidateRow = (c) => {
       const from = `<div class="cand-from">${tile(c.ship)}</div>`;
+      // own copy of a vessel a parent ship already brings along
+      if (c.includedBy) return `<div class="cand-row">${from}<div class="cand-arrow">→<small class="muted">${t("ov_included_by")}</small></div><div class="cand-incl">${c.includedBy.map(esc).join("<br>")}<small class="muted">${t("ov_included_extra")}</small></div></div>`;
       if (!c.replacement) return `<div class="cand-row">${from}<div class="cand-arrow">→</div><div class="cand-none bad">${t("ov_no_substitute")}</div></div>`;
       const label = t(c.chosen ? "ov_replaced_by" : "ov_covered_by", { o: "" }).trim();
       const alts = c.alternatives.slice(0, ALSO_TILES).map((a) => subTile(a, c)).join("") +
@@ -222,6 +224,7 @@ export function renderOverlaps(el, ctx) {
     // Candidate first with its melt status (melt or only upgrade), then the substitute (stays, so no melt icon)
     const candidates = pics ? o.candidates.map(candidateRow) : o.candidates.map((c) => {
       const who = mark(c.ship, small(c.ship) + shipWithMelt(c.ship) + meta(c.ship));
+      if (c.includedBy) return `${who} → ${t("ov_included_by")} ${c.includedBy.map(esc).join(", ")} <span class="muted">(${t("ov_included_extra")})</span>`;
       if (!c.replacement) return `${who} → <span class="bad">${t("ov_no_substitute")}</span>`;
       // substitute and alternatives are clickable: picking one marks it green and the candidate red
       const sub = markable(c.replacement, small(c.replacement) + shipLabel(c.replacement, { lock: false }) + meta(c.replacement), sel, c.ship.name);

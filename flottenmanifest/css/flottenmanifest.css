@@ -309,6 +309,10 @@
 .pill--flight-ready { background: var(--prim-soft); color: var(--prim); }
 .pill--concept { background: var(--fut-soft); color: var(--fut); }
 .pill--in-production { background: var(--accent-soft); color: var(--accent); }
+.pill--incl { background: var(--prim-soft); color: var(--prim); cursor: help; vertical-align: 1px; margin-left: 4px; }
+.ship-mark.is-included { cursor: default; }
+.ship-mark.is-included:hover { text-decoration: none; }
+.cand-incl { display: grid; gap: 2px; padding-top: 22px; grid-column: 3 / -1; font-size: 14px; }
 
 /* Tables */
 .table-wrap { overflow-x: auto; min-width: 0; }

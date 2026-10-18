@@ -28,12 +28,14 @@ async function loadJson(file) {
  * @returns {Promise<ShipDb>}
  */
 export async function loadShipDb() {
-  const [shipsDoc, loopsDoc, example, imageUrls] = await Promise.all([
+  const [shipsDoc, loopsDoc, example, imageUrls, includedDoc] = await Promise.all([
     loadJson("ships.json"),
     loadJson("loops.json"),
     loadJson("example-fleet.json"),
     // optional: links to the RSI store images (tools/fetch-ship-images.mjs); missing file = no fallback
     loadJson("image-urls.json").catch(() => ({ urls: {} })),
+    // optional: vessels RSI includes with a parent ship (Carrack → C8 Pisces + Ursa …)
+    loadJson("included.json").catch(() => ({ parents: {} })),
   ]);
   // untouched copy for the editor export (js/views/editor.js) – keeps the relative image paths
   const rawShipsDoc = JSON.parse(JSON.stringify(shipsDoc));
@@ -48,8 +50,22 @@ export async function loadShipDb() {
     }
   }
   const db = createShipDb(shipsDoc, loopsDoc, example);
-  db.source = { shipsDoc, rawShipsDoc, loopsDoc, example };
+  db.source = { shipsDoc, rawShipsDoc, loopsDoc, example, includedDoc };
+  db.included = includedIndex(includedDoc);
   return db;
+}
+
+/**
+ * data/included.json → Map normalized parent name → names of the included vessels.
+ * Looked up with the imported name first ("Carrack" includes the C8, "Carrack w/C8X" the C8X), then the database name.
+ */
+export function includedIndex(doc) {
+  const map = new Map();
+  const parents = doc && typeof doc.parents === "object" && doc.parents ? doc.parents : {};
+  for (const [parent, list] of Object.entries(parents)) {
+    if (Array.isArray(list)) map.set(normalizeName(parent), list.filter((n) => typeof n === "string"));
+  }
+  return map;
 }
 
 /**

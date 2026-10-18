@@ -9,7 +9,7 @@
  */
 import { $, $$, storage } from "./util.js";
 import { setLang, t, applyStaticTexts } from "./i18n.js";
-import { loadShipDb, createShipDb, applyOverrides } from "./shipdb.js";
+import { loadShipDb, createShipDb, applyOverrides , includedIndex } from "./shipdb.js";
 import { renderEditor, readEditor, diffFromOriginal, downloadShipsJson } from "./views/editor.js";
 import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet, plannerSuggestions } from "./analysis.js";
@@ -132,6 +132,7 @@ function rebuildDb() {
   const { source } = db;
   db = createShipDb(applyOverrides(source.shipsDoc, state.overrides), source.loopsDoc, source.example);
   db.source = source;
+  db.included = includedIndex(source.includedDoc);
   // Images hotlinked from robertsspaceindustries.com send the visitor's IP address to RSI: they load by default,
   // a notice says so, and the visitor can switch them off (state.rsiImages = false). Local and data: images stay.
   db.hasRemoteImages = db.ships.some((s) => isRemote(s.image) || isRemote(s.imageFallback));

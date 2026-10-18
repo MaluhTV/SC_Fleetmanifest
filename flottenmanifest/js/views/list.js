@@ -2,6 +2,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc, sum } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
+import { ownedOnly } from "../analysis.js";
 import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insuranceText, note, thumb, meltIcon, fighterClass } from "./common.js";
 
 /**
@@ -71,9 +72,9 @@ export function renderList(table, { db, fleet, state }, filter) {
     .map((s) => `<tr>${cols.map((c) => `<td class="${[c.numeric && "num", c.wrap && "wrap", "col-" + c.key].filter(Boolean).join(" ")}" data-label="${esc(t(c.label))}">${c.cell(s, db, state)}</td>`).join("")}</tr>`)
     .join("");
 
-  const foot = `<tr>${cols[0].key === "image" ? "<td></td>" : ""}<td>${sum(rows, (s) => s.qty)} ${t("ships")}</td><td></td><td></td>
-    <td class="num"><b>${fmt(sum(rows, (s) => s.scu * s.qty))}</b></td>
-    <td class="num"><b>${sum(rows, (s) => s.crewMin * s.qty)}–${sum(rows, (s) => s.crewMax * s.qty)}</b></td>
+  const foot = `<tr>${cols[0].key === "image" ? "<td></td>" : ""}<td>${sum(ownedOnly(rows), (s) => s.qty)} ${t("ships")}</td><td></td><td></td>
+    <td class="num"><b>${fmt(sum(ownedOnly(rows), (s) => s.scu * s.qty))}</b></td>
+    <td class="num"><b>${sum(ownedOnly(rows), (s) => s.crewMin * s.qty)}–${sum(ownedOnly(rows), (s) => s.crewMax * s.qty)}</b></td>
     <td colspan="${cols.length - 5 - (cols[0].key === "image" ? 1 : 0)}"></td></tr>`;
   // (the edit column is part of cols, so the colspan above already covers it)
 

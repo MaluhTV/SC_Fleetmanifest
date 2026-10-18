@@ -3,7 +3,7 @@
  * No DOM access – every function can be tested without a browser.
  */
 import { ROLE, STATUS, sizeRank, FIGHTER_LADDER } from "./shipdb.js";
-import { sum } from "./util.js";
+import { sum, normalizeName } from "./util.js";
 
 /**
  * Merges import items into fleet ships.
@@ -27,6 +27,7 @@ export function buildFleet(items, db, meltOverrides = {}) {
     if (item.meltable === false) entry.notMeltable += qty;
     if (item.meltable === true || item.meltable === false) entry.meltKnown += qty;
   }
+  addIncluded(items, db, byShip);
   const ships = [...byShip.values()].sort((a, b) => a.name.localeCompare(b.name));
   for (const s of ships) {
     s.meltManual = MELT_STATES.includes(meltOverrides[s.name]);
@@ -34,6 +35,49 @@ export function buildFleet(items, db, meltOverrides = {}) {
   }
   return { ships, unknown };
 }
+
+/**
+ * Included vessels (data/included.json, RSI "Included Vessels"): a Carrack brings a C8 Pisces and an Ursa, etc.
+ * They are loaners while the parent is in the hangar and do not stack, so each one counts once.
+ *   - not owned on its own → own entry with includedOnly: true (qty 1, cannot be melted or marked)
+ *   - also owned on its own → the owned entry gets includedBy, so the overlaps can say "your own copy is extra"
+ * includedBy = database names of the parent ships.
+ */
+function addIncluded(items, db, byShip) {
+  if (!db.included || !db.included.size) return;
+  for (const item of items) {
+    const parent = db.match(item.name);
+    if (!parent) continue;
+    const list = db.included.get(normalizeName(item.name)) || db.included.get(normalizeName(parent.name)) || [];
+    for (const vesselName of list) {
+      const vessel = db.match(vesselName);
+      if (!vessel || vessel.name === parent.name) continue;
+      if (!byShip.has(vessel.name)) {
+        byShip.set(vessel.name, { ...vessel, qty: 1, insurance: [], notMeltable: 0, meltKnown: 0, includedOnly: true, includedBy: [] });
+      }
+      const entry = byShip.get(vessel.name);
+      entry.includedBy = [...new Set([...(entry.includedBy || []), parent.name])];
+    }
+  }
+}
+
+/**
+ * Fleet after giving away the marked ships. An included vessel stays as long as one of its parents stays
+ * and leaves with them (a red Carrack takes its Pisces and Ursa along); a marked own copy of an included
+ * vessel stays as the included one.
+ */
+export function remainingAfter(fleetShips, marked) {
+  const markedSet = new Set(marked);
+  const parentStays = (s) => (s.includedBy || []).some((p) => !markedSet.has(p));
+  return fleetShips.flatMap((s) => {
+    if (s.includedOnly) return parentStays(s) ? [s] : [];
+    if (markedSet.has(s.name)) return parentStays(s) ? [{ ...s, qty: 1, includedOnly: true }] : [];
+    return [s];
+  });
+}
+
+/** Ships the user actually owns (without the included vessels) – for counts. */
+export const ownedOnly = (ships) => ships.filter((s) => !s.includedOnly);
 
 export const isFlightReady = (s) => s.status === STATUS.FLIGHT_READY;
 
@@ -165,7 +209,7 @@ export const OVERLAP_MIN_SHIPS = 3;
  */
 export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { readyFirst = false } = {}) {
   const markedSet = new Set(marked);
-  const remaining = fleetShips.filter((s) => !markedSet.has(s.name));
+  const remaining = remainingAfter(fleetShips, marked);
   // all ships count – also concepts and ships whose role is only planned (marked as pending in the view)
   const pool = remaining;
 
@@ -176,6 +220,9 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { r
       const candidates = primary
         .map((ship) => {
           const isMarked = markedSet.has(ship.name);
+          if (ship.includedOnly) return null; // comes with its parent – nothing to give away
+          // own copy of a vessel that a parent ship already includes: the own copy is the candidate
+          if (ship.includedBy?.length) return { ship, marked: isMarked, replacement: null, includedBy: ship.includedBy, chosen: false, alternatives: [], lost: [] };
           // ships owned more than once and ground vehicles are only listed if the user marked them
           if (!isMarked && (ship.qty !== 1 || sizeRank(ship.size) === 0)) return null;
           const options = findReplacements(ship, id, pool, isMarked, readyFirst);

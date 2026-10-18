@@ -680,7 +680,7 @@
     },
     {
       "name": "Constellation Mk IV Phoenix",
-      "aliases": ["Constellation Phoenix"],
+      "aliases": ["Constellation Phoenix", "Constellation Phoenix Emerald", "Constellation Mk IV Phoenix Emerald"],
       "size": "S4 Large",
       "length": 61, "beam": 26, "height": 14,
       "crewMin": 3, "crewMax": 4,

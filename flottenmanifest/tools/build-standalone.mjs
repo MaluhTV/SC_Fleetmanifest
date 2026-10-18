@@ -93,6 +93,10 @@ html = html.replace(/<script type="module" src="js\/main\.js"><\/script>/, () =>
   `<script>globalThis.FM_DATA = ${safe(JSON.stringify(data))};</script>\n<script type="module">\n${safe(bundle)}\n</script>`);
 html = html.replace(/<script src="js\/file-hint\.js"><\/script>\s*/, ""); // hint is not needed in the standalone file
 
+// Line endings: Git on Windows checks files out with CRLF. Browsers turn CRLF into LF before they hash an inline
+// script or style, so hashes over CRLF text would never match and the page would stay empty – use LF throughout.
+html = html.replace(/\r\n?/g, "\n");
+
 // Content Security Policy for the single file: only its own inline script/style blocks may run (sha256 hashes),
 // images only embedded (data:) or from the RSI media server, nothing else is loaded or sent anywhere.
 const hash = (text) => `'sha256-${createHash("sha256").update(text, "utf8").digest("base64")}'`;

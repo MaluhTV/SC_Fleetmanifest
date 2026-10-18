@@ -9,7 +9,8 @@
  * phone layout (no page wider than the screen) for index.html and the standalone file.
  * The fixture tests/fixtures/fleet.csv only has names, insurance and meltability – never prices or pledge IDs.
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync, mkdtempSync, cpSync, readdirSync, statSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { createServer } from "node:http";
 import { execFileSync } from "node:child_process";
 import { join, dirname, extname, normalize } from "node:path";
@@ -64,6 +65,19 @@ ok(clip.length >= clip.beam, "Clipper: length is the longest axis (26.5 × 21 ×
 const { chromium } = await import("playwright");
 execFileSync("node", [join(ROOT, "tools", "build-standalone.mjs"), "--no-images"], { stdio: "pipe" });
 ok(existsSync(join(ROOT, "dist", "flottenmanifest.html")), "standalone build");
+// Windows checkout (CRLF line endings): the build must still produce matching CSP hashes
+const crlfDir = mkdtempSync(join(tmpdir(), "fm-crlf-"));
+for (const d of ["index.html", "js", "css", "data", "fonts", "tools"]) cpSync(join(ROOT, d), join(crlfDir, d), { recursive: true });
+const toCrlf = (dir) => readdirSync(dir).forEach((f) => {
+  const p = join(dir, f);
+  if (statSync(p).isDirectory()) return toCrlf(p);
+  if (/\.(js|mjs|css|html|json)$/.test(f)) writeFileSync(p, readFileSync(p, "utf8").replace(/\r?\n/g, "\r\n"));
+});
+toCrlf(crlfDir);
+execFileSync("node", [join(crlfDir, "tools", "build-standalone.mjs"), "--no-images"], { stdio: "pipe" });
+const CRLF_PAGE = "dist/flottenmanifest-crlf-test.html";
+writeFileSync(join(ROOT, CRLF_PAGE), readFileSync(join(crlfDir, "dist", "flottenmanifest.html")));
+rmSync(crlfDir, { recursive: true, force: true });
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".woff2": "font/woff2", ".jpg": "image/jpeg", ".svg": "image/svg+xml" };
 const server = createServer((req, res) => {
   const path = normalize(join(ROOT, decodeURIComponent(new URL(req.url, "http://x").pathname)));
@@ -74,7 +88,7 @@ const server = createServer((req, res) => {
 const base = `http://localhost:${server.address().port}`;
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
-for (const page of ["index.html", "dist/flottenmanifest.html"]) {
+for (const page of ["index.html", "dist/flottenmanifest.html", CRLF_PAGE]) {
   section(`Browser: ${page}`);
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const p = await ctx.newPage();
@@ -129,5 +143,6 @@ for (const page of ["index.html", "dist/flottenmanifest.html"]) {
 
 await browser.close();
 server.close();
+rmSync(join(ROOT, CRLF_PAGE), { force: true });
 console.log(failed ? `\n${failed} test(s) failed.` : "\nAll tests passed.");
 process.exit(failed ? 1 : 0);

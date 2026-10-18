@@ -467,7 +467,7 @@
     },
     {
       "name": "Ballista",
-      "aliases": [],
+      "aliases": ["Ballista Dunestalker", "Ballista Snowblind"],
       "size": "Ground vehicle",
       "length": 17, "beam": 7, "height": 5,
       "crewMin": 1, "crewMax": 2,
@@ -610,7 +610,7 @@
     },
     {
       "name": "Caterpillar",
-      "aliases": [],
+      "aliases": ["Caterpillar Pirate", "Caterpillar Pirate Edition"],
       "size": "S5 Large",
       "length": 111.5, "beam": 39.5, "height": 13.4,
       "crewMin": 1, "crewMax": 4,
@@ -640,7 +640,7 @@
       "name": "Clipper",
       "aliases": [],
       "size": "S2 Small",
-      "length": 26.5, "beam": 50, "height": 13,
+      "length": 26.5, "beam": 21, "height": 18,
       "crewMin": 1, "crewMax": 1,
       "scu": 12,
       "status": "flight-ready",
@@ -1411,7 +1411,7 @@
     },
     {
       "name": "Golem",
-      "aliases": [],
+      "aliases": ["Golem Alliance"],
       "size": "S2 Small",
       "length": 15.5, "beam": 7, "height": 5,
       "crewMin": 1, "crewMax": 1,
@@ -1925,7 +1925,7 @@
     },
     {
       "name": "MOLE",
-      "aliases": [],
+      "aliases": ["MOLE Alliance"],
       "size": "S3 Medium",
       "length": 45, "beam": 25, "height": 15,
       "crewMin": 1, "crewMax": 4,
@@ -2206,6 +2206,20 @@
       "image": "images/ships/p-52-merlin.jpg"
     },
     {
+      "name": "Skylark",
+      "aliases": ["RSI Skylark"],
+      "size": "S1 Snub",
+      "length": 7, "beam": 6.5, "height": 3.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"snub": "primary", "fighter": "secondary"},
+      "note": { "de": "Beiboot der Constellation Mk V", "en": "Snub of the Constellation Mk V" },
+      "motherships": ["Constellation Mk V Centaurus"],
+      "upgradeable": false,
+      "fighterClass": "snub"
+    },
+    {
       "name": "P-72 Archimedes Emerald",
       "aliases": ["P-72 Archimedes","P72 Archimedes"],
       "size": "S1 Snub",
@@ -2292,7 +2306,7 @@
     },
     {
       "name": "Prospector",
-      "aliases": [],
+      "aliases": ["Prospector Alliance"],
       "size": "S2 Small",
       "length": 26, "beam": 16, "height": 7,
       "crewMin": 1, "crewMax": 1,

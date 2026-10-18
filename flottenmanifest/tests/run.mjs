@@ -54,6 +54,11 @@ ok(!snub, "included snubs alone (C8, Merlin, 85X) cause no overlap");
 const rest = remainingAfter(fleet.ships, ["Carrack Expedition w/C8X"]);
 ok(!rest.some((s) => s.name === "C8 Pisces"), "a marked Carrack takes its C8 along");
 ok(!db.byName("Merchantman").loops.touring, "Merchantman not in touring");
+fleet = buildFleet(items(["Constellation Mk V Centaurus", "Ballista Snowblind", "Caterpillar Pirate Edition"]), db);
+ok(fleet.ships.some((s) => s.name === "Skylark" && s.includedOnly), "Constellation Mk V brings its Skylark");
+ok(fleet.unknown.length === 0 && fleet.ships.some((s) => s.name === "Ballista") && fleet.ships.some((s) => s.name === "Caterpillar"), "editions (Ballista Snowblind, Caterpillar Pirate) = base ship");
+const clip = db.byName("Clipper");
+ok(clip.length >= clip.beam, "Clipper: length is the longest axis (26.5 × 21 × 18)");
 
 /* ---------- 3. Browser ---------- */
 const { chromium } = await import("playwright");

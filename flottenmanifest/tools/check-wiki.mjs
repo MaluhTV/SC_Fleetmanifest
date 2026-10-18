@@ -43,6 +43,11 @@ for (const s of ships) for (const n of [s.name, ...(s.aliases || [])]) byName.se
 
 // special paints and event editions of a ship (same values) – not reported as missing
 const SPECIAL = /wikelo|pyam exec|best in show|citizencon|\bedition\b|\bcolou?r\b|\bikti\b|orange line|\b2951 bis\b/i;
+// ships nobody can own (military / NPC / parts of other ships) – not reported as missing
+const NOT_OWNABLE = new Set(["F8A Lightning", "Mauler", "Mauler Destroyer", "Vanduul Scythe", "Scythe", "Command Module"].map(norm));
+// checked 2026-10-18: our values follow the RSI pledge store on purpose (Xi'an ships fly vertically, wide wings) –
+// the wiki API uses in-game axes, so the "other order" warning is expected for these
+const AXES_CHECKED = new Set(["Railen", "Tyilui", "Khartu-al", "Syulen", "Reliant Kore", "Reliant Mako", "Reliant Sen", "Reliant Tana", "Scorpius", "Ares Inferno", "Ares Ion", "Hawk", "Corsair", "S-65 Stingray", "ATLS", "San'tok.yāi"]);
 // "MISC Freelancer" → "Freelancer": the wiki sometimes puts the manufacturer in front
 const withoutMaker = (name) => name.split(/\s+/).slice(1).join(" ");
 const findShip = (name) => byName.get(norm(name)) || byName.get(norm(withoutMaker(name)));
@@ -68,7 +73,7 @@ for (const v of api) {
   const name = pick(v, "name");
   if (!name) continue;
   const s = findShip(name);
-  if (!s) { if (!SPECIAL.test(name)) missing.add(name); continue; }
+  if (!s) { if (!SPECIAL.test(name) && !NOT_OWNABLE.has(norm(name))) missing.add(name); continue; }
   const exact = norm(name) === norm(s.name);
   if (!entries.has(s.name) || (exact && !entries.get(s.name).exact)) entries.set(s.name, { v, exact });
 }
@@ -89,7 +94,7 @@ for (const [shipName, { v }] of entries) {
     const fmt = (a) => a.join(" × ");
     const sorted = (a) => [...a].sort((x, y) => x - y).join(",");
     const off = h.some((x, i) => Math.abs(x - w[i]) > Math.max(0.5, x * 0.1));
-    if (off && sorted(h) === sorted(w)) groups.axes.push(`${s.name}: here ${fmt(h)}, wiki ${fmt(w)} (same values, other order)`);
+    if (off && sorted(h) === sorted(w) && !AXES_CHECKED.has(s.name)) groups.axes.push(`${s.name}: here ${fmt(h)}, wiki ${fmt(w)} (same values, other order)`);
     else if (off && withDims) groups.dims.push(`${s.name}: here ${fmt(h)}, wiki ${fmt(w)}`);
   }
 }

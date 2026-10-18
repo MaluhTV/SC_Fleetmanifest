@@ -46,6 +46,10 @@
   <div class="fm-toolbar fm-toolbar--more">
     <button class="btn" type="button" id="pasteToggle" data-i18n="import_text"></button>
     <button class="btn" type="button" id="resetExample" data-i18n="reset_example"></button>
+    <button class="btn" type="button" id="tourStart" data-i18n="tour_restart"></button>
+    <button class="btn" type="button" id="backupSave" data-i18n="backup_save"></button>
+    <label class="btn" for="backupFile"><span data-i18n="backup_load"></span></label>
+    <input id="backupFile" class="visually-hidden" type="file" accept=".json,application/json">
     <button class="btn" type="button" id="imgToggle" aria-pressed="false" hidden></button>
     <span class="fm-toolbar__spacer"></span>
     <span class="fm-dbinfo" id="dbInfo"></span>
@@ -101,6 +105,21 @@
   </div>
 
   <div class="fm-banner" id="banner"></div>
+  <!-- Entries the import did not recognise: own assignment to a database ship (main.js → openMapDialog) -->
+  <div class="fm-banner fm-banner--warn" id="unknownNote" hidden>
+    <span id="unknownText"></span>
+    <button class="btn" type="button" id="unknownMap" data-i18n="map_open"></button>
+  </div>
+  <dialog class="fm-dialog fm-import" id="mapDialog" aria-labelledby="mapTitle">
+    <h3 id="mapTitle" data-i18n="map_title"></h3>
+    <p data-i18n="map_intro"></p>
+    <div class="map-rows" id="mapRows"></div>
+    <div class="map-saved" id="mapSaved"></div>
+    <div class="fm-row fm-import-foot">
+      <button class="btn" type="button" id="mapCancel" data-i18n="close"></button>
+      <button class="btn btn--primary" type="button" id="mapApply" data-i18n="map_apply"></button>
+    </div>
+  </dialog>
   <div class="fm-toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- KPIs (js/views/kpis.js) -->
@@ -216,6 +235,7 @@
     <div><span data-i18n="sources"></span> <a href="https://starcitizen.tools/Ships" target="_blank" rel="noopener">Star Citizen Wiki</a>. <span data-i18n="sources_note"></span></div>
     <div data-i18n="disclaimer"></div>
     <div data-i18n="footer_images"></div>
+    <div class="fm-version"><span id="appVersion"></span> · <a href="https://github.com/MaluhTV/SC_Fleetmanifest" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://github.com/MaluhTV/SC_Fleetmanifest/blob/main/flottenmanifest/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></div>
     <!-- Required by the RSI Fankit and Fandom FAQ for fan sites: notice in English plus a link to the official site. Keep it visible. -->
     <div class="fm-fan-notice">This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imperium group of companies. All content on this site not authored by its host or users are property of their respective owners. <a href="https://robertsspaceindustries.com" target="_blank" rel="noopener">robertsspaceindustries.com</a></div>
   </footer>

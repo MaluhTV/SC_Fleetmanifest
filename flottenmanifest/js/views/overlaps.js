@@ -179,19 +179,25 @@ export function renderOverlaps(el, ctx) {
     parts.push(`<article class="is-gap"><h3>${t("unknown_title")}</h3><p>${t("unknown_text")}</p>${list(fleet.unknown.map(esc))}</article>`);
   }
 
-  // ships grouped by size class, largest first: Map size label → tiles (or text with images off)
+  // ships grouped by size (Small, Medium, Large, Capital …), largest first – "S5 Large" and "Large" (no S class
+  // known yet, mostly concepts) land in the same group; the heading lists the S classes in it.
+  // Map size word → { classes: Set, items: tiles (or text with images off) }
+  const sizeWord = (size) => String(size).replace(/^S\d+\s+/, "");
   const sizeGroups = (ships) => {
     const groups = new Map();
     [...ships].sort((a, b) => sizeRank(b.size) - sizeRank(a.size)).forEach((s) => {
-      const key = sizeLabel(s.size);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(pics ? tile(s) : mark(s, shipWithMelt(s) + meta(s)));
+      const key = sizeWord(s.size);
+      if (!groups.has(key)) groups.set(key, { classes: new Set(), items: [] });
+      const g = groups.get(key);
+      g.classes.add((String(s.size).match(/^S\d+/) || [t("size_no_class")])[0]);
+      g.items.push(pics ? tile(s) : mark(s, shipWithMelt(s) + meta(s)));
     });
     return groups;
   };
+  const groupHead = (word, g) => `<b>${sizeLabel(word)}</b>${g.classes.size > 1 || !g.classes.has(t("size_no_class")) && word !== "Ground vehicle" ? ` <small class="muted">${[...g.classes].map(esc).join(" · ")}</small>` : ""}`;
   const groupsHtml = (groups) => pics
-    ? `<div class="size-groups">${[...groups].map(([size, tiles]) => `<div class="size-group"><b>${size}</b><div class="tiles">${tiles.join("")}</div></div>`).join("")}</div>`
-    : list([...groups].map(([size, names]) => `<b>${size}</b>: ${names.join(", ")}`));
+    ? `<div class="size-groups">${[...groups].map(([word, g]) => `<div class="size-group"><div class="size-head">${groupHead(word, g)}</div><div class="tiles">${g.items.join("")}</div></div>`).join("")}</div>`
+    : list([...groups].map(([word, g]) => `${groupHead(word, g)}: ${g.items.join(", ")}`));
 
   if (!result.overlaps.length) parts.push(`<article><p>${t("ov_no_overlap")}</p></article>`);
   // loop cards (overlaps and "planned only") are collected per loop and output in the fixed order of

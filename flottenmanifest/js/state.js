@@ -37,6 +37,7 @@ export function loadState(example) {
   const planner = storage.get("planner", []);
   const ovReadyFirst = storage.get("ovready", false);
   const rsiImages = storage.get("rsiimg", null);
+  const aliases = storage.get("aliases", {});
   return {
     lang: lang === "en" ? "en" : "de",
     username: typeof storage.get("name", null) === "string" ? storage.get("name").slice(0, 40) : example.username,
@@ -50,6 +51,7 @@ export function loadState(example) {
     ovDetails: strList(ovDetails),
     ovReadyFirst: ovReadyFirst === true, // overlaps option: ships usable today first (off by default) // extra data shown in the overlaps tab, e.g. ["scu"]
     melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: "meltable"|"upgrade"|"locked" }
+    aliases: strMap(aliases, isStr), // own name → database ship for entries the import did not recognise
     rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: false = off; true = on (notice acknowledged); null = on, notice not acknowledged yet
     planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
@@ -104,5 +106,28 @@ export const save = {
   ovReadyFirst: (state) => storage.set("ovready", state.ovReadyFirst),
   planner: (state) => storage.set("planner", state.planner),
   rsiImages: (state) => storage.set("rsiimg", state.rsiImages),
+  aliases: (state) => storage.set("aliases", state.aliases),
   resetFleet: () => storage.set("fleet", null),
 };
+
+/**
+ * Backup of everything the page stores (fleet, plan, marks, edits, settings) as one JSON file, to move it
+ * to another device. Only names, quantities and settings – no prices or pledge IDs (they are never stored).
+ * Restoring writes the values back and loadState() validates them like any stored value.
+ */
+export const BACKUP_FORMAT = "flottenmanifest-backup";
+const BACKUP_KEYS = ["fleet", "name", "lang", "cmp", "marked", "chosen", "overrides", "melt", "ovdetails", "planner", "ovready", "rsiimg", "aliases"];
+export function makeBackup(version) {
+  const data = {};
+  for (const k of BACKUP_KEYS) {
+    const v = storage.get(k, null);
+    if (v !== null) data[k] = v;
+  }
+  return { format: BACKUP_FORMAT, version, exported: new Date().toISOString().slice(0, 10), data };
+}
+/** true if the object is a backup and was written to storage; call loadState() afterwards. */
+export function restoreBackup(obj) {
+  if (!isObj(obj) || obj.format !== BACKUP_FORMAT || !isObj(obj.data)) return false;
+  for (const k of BACKUP_KEYS) if (k in obj.data) storage.set(k, obj.data[k]);
+  return true;
+}

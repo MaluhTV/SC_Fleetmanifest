@@ -67,7 +67,7 @@ function bestName(ctx, ...candidates) {
  */
 const hangarLinkCsv = {
   id: "hangarlink-csv",
-  label: "HangarLink CSV",
+  label: "Hangar.link CSV",
   detect(text) {
     if (looksLikeJson(text)) return false;
     const { header } = csvTable(text.split(/\r?\n/, 1)[0]);
@@ -112,7 +112,7 @@ const hangarLinkCsv = {
  */
 const shipListCsv = {
   id: "ship-list-csv",
-  label: "Ship list CSV (\"name\" column)",
+  label: "Hangar XPLORer CSV",
   detect(text) {
     if (looksLikeJson(text)) return false;
     return csvTable(text.split(/\r?\n/, 1)[0]).header.includes("name");
@@ -138,7 +138,7 @@ const shipListCsv = {
  */
 const fleetViewerJson = {
   id: "fleetviewer-json",
-  label: "FleetViewer JSON",
+  label: "STARJUMP Fleetviewer JSON",
   detect(text) {
     return looksLikeJson(text) && /"canvasItems"\s*:/.test(text);
   },
@@ -161,7 +161,7 @@ const fleetViewerJson = {
  */
 const genericJson = {
   id: "generic-json",
-  label: "JSON list",
+  label: "JSON",
   detect(text) {
     if (!looksLikeJson(text)) return false;
     try {

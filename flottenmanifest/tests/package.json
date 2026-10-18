@@ -1,0 +1,9 @@
+{
+  "name": "flottenmanifest-tests",
+  "private": true,
+  "description": "Browser and logic tests for the Fleet Manifest (run: node run.mjs)",
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

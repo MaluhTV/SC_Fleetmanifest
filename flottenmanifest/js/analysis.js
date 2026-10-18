@@ -13,11 +13,12 @@ import { sum, normalizeName } from "./util.js";
  *               melt = "meltable" | "upgrade" | "locked" | null (null = unknown), meltManual = set by the user
  * meltOverrides = { shipName: status } chosen by clicking the melt icon (state.melt)
  */
-export function buildFleet(items, db, meltOverrides = {}) {
+export function buildFleet(items, db, meltOverrides = {}, aliases = {}) {
   const byShip = new Map();
   const unknown = [];
   for (const item of items) {
-    const ship = db.match(item.name);
+    // own assignment (state.aliases) for names the database does not know
+    const ship = db.match(item.name) || (aliases[item.name] ? db.match(aliases[item.name]) : null);
     if (!ship) { unknown.push(item.name); continue; }
     if (!byShip.has(ship.name)) byShip.set(ship.name, { ...ship, qty: 0, insurance: [], notMeltable: 0, meltKnown: 0 });
     const entry = byShip.get(ship.name);
@@ -27,7 +28,7 @@ export function buildFleet(items, db, meltOverrides = {}) {
     if (item.meltable === false) entry.notMeltable += qty;
     if (item.meltable === true || item.meltable === false) entry.meltKnown += qty;
   }
-  addIncluded(items, db, byShip);
+  addIncluded(items, db, byShip, aliases);
   const ships = [...byShip.values()].sort((a, b) => a.name.localeCompare(b.name));
   for (const s of ships) {
     s.meltManual = MELT_STATES.includes(meltOverrides[s.name]);
@@ -43,10 +44,10 @@ export function buildFleet(items, db, meltOverrides = {}) {
  *   - also owned on its own → the owned entry gets includedBy, so the overlaps can say "your own copy is extra"
  * includedBy = database names of the parent ships.
  */
-function addIncluded(items, db, byShip) {
+function addIncluded(items, db, byShip, aliases) {
   if (!db.included || !db.included.size) return;
   for (const item of items) {
-    const parent = db.match(item.name);
+    const parent = db.match(item.name) || (aliases[item.name] ? db.match(aliases[item.name]) : null);
     if (!parent) continue;
     const list = db.included.get(normalizeName(item.name)) || db.included.get(normalizeName(parent.name)) || [];
     for (const vesselName of list) {
@@ -216,7 +217,8 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { r
   const overlaps = loops
     .map(({ id }) => {
       const primary = fleetShips.filter((s) => coreRole(s, id));
-      if (primary.length < OVERLAP_MIN_SHIPS) return null;
+      // an overlap needs three ships – and at least one the user owns (included snubs alone cannot be given away)
+      if (primary.length < OVERLAP_MIN_SHIPS || primary.every((s) => s.includedOnly)) return null;
       const candidates = primary
         .map((ship) => {
           const isMarked = markedSet.has(ship.name);

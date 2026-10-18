@@ -42,6 +42,19 @@ node tools/build-standalone.mjs   # → dist/flottenmanifest.html
 
 Only ship names and quantities are used; prices and pledge IDs in these files are ignored.
 
+## Tests
+
+```
+cd flottenmanifest/tests
+npm install
+npx playwright install chromium
+node run.mjs
+```
+
+The same tests run on GitHub for every push (`.github/workflows/test.yml`). Merge to `main` only when they pass.
+
+`node tools/check-wiki.mjs` compares `data/ships.json` with the Star Citizen Wiki API and lists differences (it changes nothing; `--sample` shows the raw API format).
+
 ## Folder structure
 
 ```
@@ -56,7 +69,7 @@ js/
   main.js                  entry point: load data, wire events, render everything
   i18n.js                  all UI texts in German/English + t() function
   shipdb.js                loads ships.json/loops.json, name matching incl. aliases
-  importers.js             file formats (HangarLink, ship list CSV, FleetViewer, JSON list)
+  importers.js             file formats (Hangar.link CSV, Hangar XPLORer CSV, STARJUMP Fleetviewer JSON, generic JSON)
   analysis.js              analysis: build fleet, loop stats, overlaps, swap balance
   state.js                 page state and persistence in localStorage
   util.js                  small helpers ($, esc, normalizeName, storage)

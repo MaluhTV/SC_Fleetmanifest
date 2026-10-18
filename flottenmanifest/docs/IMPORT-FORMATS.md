@@ -6,10 +6,10 @@ The page detects the format from the file content, not the file extension. Only 
 
 | Format | Detected by | What is read |
 |---|---|---|
-| **HangarLink CSV** | header contains `Hangar`, `Source`, `Items` | Only rows with `Source = Active` count. Ships come from `Items` (`[\|TITLE\| … \|KIND\| Ship …]`), falling back to the ship slug or `Contains`. Each pledge gets its best insurance (LTI first, then the longest term). The account name comes from `Hangar`. |
-| **Ship list CSV ("name" column)** | header contains `name` | One row per ship, optionally with `insurance`, `isMeltable` and `account`. |
+| **Hangar.link CSV** | header contains `Hangar`, `Source`, `Items` | Only rows with `Source = Active` count. Ships come from `Items` (`[\|TITLE\| … \|KIND\| Ship …]`), falling back to the ship slug or `Contains`. Each pledge gets its best insurance (LTI first, then the longest term). The account name comes from `Hangar`. |
+| **Hangar XPLORer CSV** (any CSV with a `name` column) | header contains `name` | One row per ship, optionally with `insurance`, `isMeltable` and `account`. |
 | **FleetViewer JSON** (STARJUMP) | JSON with `canvasItems` | Entries with `itemType: "SHIP"`. The name is the last line of `defaultText`, falling back to `variantSlug`/`shipSlug`. |
-| **JSON list** | JSON array, or object with `ships`/`vehicles`/`fleet`/`hangar`/`items`/`data` | Strings, or objects with `name`/`shipName`/`model.name`/`slug` and optionally `quantity`/`qty`/`count`. |
+| **JSON** (generic list) | JSON array, or object with `ships`/`vehicles`/`fleet`/`hangar`/`items`/`data` | Strings, or objects with `name`/`shipName`/`model.name`/`slug` and optionally `quantity`/`qty`/`count`. |
 | **Paste list** (text box) | – | One ship per line, optionally `2x Name` or `2 × Name`. |
 
 Example of a simple JSON list:

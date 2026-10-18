@@ -7,13 +7,14 @@
  *   3. renderAll()   – builds the fleet (analysis.js) and renders every view (views/*.js)
  * Every user action changes state, saves it (save.*) and re-renders.
  */
-import { $, $$, storage } from "./util.js";
+import { $, esc, $$, storage, normalizeName } from "./util.js";
 import { setLang, t, applyStaticTexts } from "./i18n.js";
+import { VERSION } from "./version.js";
 import { loadShipDb, createShipDb, applyOverrides , includedIndex } from "./shipdb.js";
 import { renderEditor, readEditor, diffFromOriginal, downloadShipsJson } from "./views/editor.js";
 import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet, plannerSuggestions } from "./analysis.js";
-import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot } from "./state.js";
+import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot, makeBackup, restoreBackup, BACKUP_FORMAT } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
 import { renderKpis, KPI_FILTERS } from "./views/kpis.js";
 import { renderLoops, renderLoopBar } from "./views/loops.js";
@@ -116,6 +117,8 @@ function renderHeader() {
   document.body.classList.toggle("has-own-fleet", state.ownFleet);
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
   renderImageConsent();
+  renderUnknownNote();
+  $("#appVersion").textContent = `Flottenmanifest ${VERSION}`;
   el.plannerAll.title = t("planner_all_title");
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
 }
@@ -162,6 +165,118 @@ function renderImageConsent() {
   el.imgToggle.title = t("img_toggle_title");
 }
 
+/* ---------- Unknown entries: own assignment to a database ship (state.aliases) ---------- */
+const unknownNames = () => [...new Set(fleet.unknown)];
+function renderUnknownNote() {
+  const names = unknownNames();
+  $("#unknownNote").hidden = !names.length;
+  if (!names.length) return;
+  $("#unknownText").textContent = t("map_note", { n: names.length, list: names.slice(0, 5).join(", ") + (names.length > 5 ? " …" : "") });
+}
+/** Best guess for an unknown name: the database ship sharing the most words (name or alias), or "". */
+function guessShip(name) {
+  const words = new Set(normalizeName(name).split(" ").filter((w) => w.length > 1));
+  let best = "", score = 0;
+  for (const s of db.ships) {
+    for (const label of [s.name, ...s.aliases]) {
+      const w = normalizeName(label).split(" ").filter((x) => x.length > 1);
+      const hits = w.filter((x) => words.has(x)).length;
+      const sc = hits / Math.max(w.length, words.size);
+      if (sc > score) { score = sc; best = s.name; }
+    }
+  }
+  return score >= 0.3 ? best : "";
+}
+function openMapDialog() {
+  const options = [...db.ships].sort((a, b) => a.name.localeCompare(b.name));
+  const select = (name, value) => `<select data-map-name="${esc(name)}"><option value="">${esc(t("map_none"))}</option>${options.map((s) => `<option value="${esc(s.name)}"${s.name === value ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>`;
+  const names = unknownNames();
+  $("#mapRows").innerHTML = names.length
+    ? names.map((n) => `<label class="map-row"><span>${esc(n)}</span>${select(n, guessShip(n))}</label>`).join("")
+    : `<p class="muted">${esc(t("map_all_known"))}</p>`;
+  const saved = Object.entries(state.aliases);
+  $("#mapSaved").innerHTML = saved.length
+    ? `<p><b>${esc(t("map_saved"))}</b></p>` + saved.map(([from, to]) => `<div class="map-row"><span>${esc(from)} → ${esc(to)}</span><button type="button" class="btn btn--icon" data-map-remove="${esc(from)}" title="${esc(t("map_remove"))}" aria-label="${esc(t("map_remove"))}">×</button></div>`).join("")
+    : "";
+  $("#mapDialog").showModal();
+}
+function applyMapDialog() {
+  $$("#mapRows [data-map-name]").forEach((sel) => {
+    if (sel.value && db.byName(sel.value)) state.aliases[sel.dataset.mapName] = sel.value;
+  });
+  save.aliases(state);
+  $("#mapDialog").close();
+  renderAll();
+}
+
+/* ---------- First visit: three short hints one after another (fm_tour = done) ---------- */
+const TOUR = [
+  { target: () => $("#importOpen"), text: "tour_import" },
+  { target: () => el.bars.find((b) => !b.hidden) || $("#tabs"), text: "tour_bar" },
+  { target: () => $('[data-view="overlaps"]'), text: "tour_overlaps" },
+];
+let tourStep = -1, tourBox = null;
+function showTour(step) {
+  tourStep = step;
+  if (!tourBox) {
+    tourBox = document.createElement("div");
+    tourBox.className = "fm-tour";
+    tourBox.setAttribute("role", "dialog");
+    tourBox.setAttribute("aria-live", "polite");
+    tourBox.addEventListener("click", (e) => {
+      if (e.target.closest("[data-tour-next]")) return tourStep + 1 < TOUR.length ? showTour(tourStep + 1) : endTour();
+      if (e.target.closest("[data-tour-skip]")) endTour();
+    });
+    document.body.append(tourBox);
+  }
+  const s = TOUR[step];
+  const last = step === TOUR.length - 1;
+  tourBox.innerHTML = `<p><small class="muted">${step + 1} / ${TOUR.length}</small><br>${esc(t(s.text))}</p>
+    <div class="fm-row"><button type="button" class="btn btn--primary" data-tour-next>${esc(t(last ? "tour_done" : "tour_next"))}</button>${last ? "" : `<button type="button" class="btn" data-tour-skip>${esc(t("tour_skip"))}</button>`}</div>`;
+  const target = s.target();
+  $$(".is-tour-target").forEach((x) => x.classList.remove("is-tour-target"));
+  target.classList.add("is-tour-target");
+  target.scrollIntoView({ block: "center" });
+  placeTour();
+  tourBox.querySelector("[data-tour-next]").focus({ preventScroll: true });
+}
+function placeTour() {
+  if (!tourBox || tourStep < 0) return;
+  const r = TOUR[tourStep].target().getBoundingClientRect();
+  const w = tourBox.offsetWidth;
+  tourBox.style.left = Math.min(Math.max(8, r.left), innerWidth - w - 8) + "px";
+  tourBox.style.top = r.bottom + 10 + tourBox.offsetHeight < innerHeight ? r.bottom + 10 + "px" : Math.max(8, r.top - tourBox.offsetHeight - 10) + "px";
+}
+function endTour() {
+  tourStep = -1;
+  if (tourBox) { tourBox.remove(); tourBox = null; }
+  $$(".is-tour-target").forEach((x) => x.classList.remove("is-tour-target"));
+  storage.set("tour", true);
+}
+
+/* ---------- Backup: everything stored, as one JSON file (move to another device) ---------- */
+function saveBackup() {
+  const blob = new Blob([JSON.stringify(makeBackup(VERSION), null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `flottenmanifest-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+/** Restores a backup object; returns false if it is none. */
+function loadBackup(obj) {
+  if (!restoreBackup(obj)) return false;
+  state = loadState(db.example);
+  rebuildDb();
+  renderAll();
+  if (el.importDialog.open) el.importDialog.close();
+  toast(t("backup_loaded"));
+  return true;
+}
+const readJson = (text) => { try { return JSON.parse(text); } catch { return null; } };
+
 /** Import problem: shown in the open import dialog and as a toast. */
 function importError(message) {
   el.importMsg.textContent = message;
@@ -177,7 +292,7 @@ function setRsiImages(on) {
 }
 
 function renderAll() {
-  fleet = buildFleet(state.items, db, state.melt);
+  fleet = buildFleet(state.items, db, state.melt, state.aliases);
   renderHeader();
   const edits = Object.keys(state.overrides).length;
   el.editCount.textContent = edits ? t("edit_count", { n: edits }) : t("edit_count_none");
@@ -612,8 +727,11 @@ function wireEvents() {
     if (file.size > MAX_IMPORT_BYTES) { e.target.value = ""; return importError(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 })); }
     const reader = new FileReader();
     reader.onload = () => {
+      // a backup file (fleet + plan + settings) chosen here is restored as such
+      const text = String(reader.result);
+      if (text.includes(BACKUP_FORMAT) && loadBackup(readJson(text))) return;
       let result;
-      try { result = importFile(String(reader.result), db); } catch { result = null; }
+      try { result = importFile(text, db); } catch { result = null; }
       if (!result) return importError(t("import_error", { formats: IMPORTERS.map((i) => i.label).join(", ") }));
       if (!result.items.length) return importError(t("import_empty"));
       if (result.account) { state.username = result.account; save.username(state); }
@@ -650,6 +768,28 @@ function wireEvents() {
   });
 
   el.resetExample.addEventListener("click", resetToExample);
+  $("#unknownMap").addEventListener("click", openMapDialog);
+  $("#mapCancel").addEventListener("click", () => $("#mapDialog").close());
+  $("#mapApply").addEventListener("click", applyMapDialog);
+  $("#mapDialog").addEventListener("click", (e) => {
+    if (e.target === $("#mapDialog")) return $("#mapDialog").close();
+    const r = e.target.closest("[data-map-remove]");
+    if (r) { delete state.aliases[r.dataset.mapRemove]; save.aliases(state); renderAll(); openMapDialog(); }
+  });
+  $("#backupSave").addEventListener("click", saveBackup);
+  $("#tourStart").addEventListener("click", () => { el.tools.open = false; showTour(0); });
+  addEventListener("resize", placeTour);
+  addEventListener("scroll", placeTour, { passive: true });
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && tourStep >= 0) endTour(); });
+  $("#backupFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > MAX_IMPORT_BYTES) return toast(t("import_too_big", { mb: MAX_IMPORT_BYTES / 1024 / 1024 }), true);
+    const reader = new FileReader();
+    reader.onload = () => { if (!loadBackup(readJson(String(reader.result)))) toast(t("backup_bad"), true); };
+    reader.readAsText(file);
+  });
   // KPI tiles filter the loop cards, matrix and ship list (second click or a "… ×" chip clears it);
   // from the overlaps, planner or compare tab a click opens the ship list
   el.kpis.addEventListener("click", (e) => {
@@ -829,6 +969,7 @@ async function start() {
 
   wireEvents();
   renderAll();
+  if (!storage.get("tour", false)) setTimeout(() => showTour(0), 400); // first visit
   showView(state.view);
 }
 

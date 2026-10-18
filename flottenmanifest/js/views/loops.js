@@ -2,7 +2,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
-import { loopStats } from "../analysis.js";
+import { loopStats, isPending } from "../analysis.js";
 import { ROLE } from "../shipdb.js";
 import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
 
@@ -39,7 +39,7 @@ function loopCard(loopId, db, ships, state, thumbs) {
     <span>${t("stat_primary")} <b>${st.primary.length}</b></span>
     <span>${t("stat_secondary")} <b>${st.secondaryCount}</b></span>
     <span>${t("stat_planned")} <b>${st.planned.length}</b></span>
-    <span>${t("stat_crew")} <b>${st.crewMinPrimary}–${st.crewMaxPrimary}</b></span>
+    <span>${t("stat_crew")} <b>${st.primary.length ? `${st.crewMinPrimary}–${st.crewMaxPrimary}` : "–"}</b></span>
     ${loopId === "cargo" ? `<span>${t("stat_scu")} <b>${fmt(st.scuPrimary)}</b></span>` : ""}
   </div>`;
 
@@ -52,7 +52,8 @@ function loopCard(loopId, db, ships, state, thumbs) {
 
 /**
  * Fleet coverage per loop for the loop bar (loopBar() in common.js), shared by the loop tab, matrix and ship list.
- * Filled = ships in a primary role (number = how many), dashed = only secondary or planned roles, empty = none.
+ * Same meaning as in the overlaps tab: filled = ships in a primary or announced role (number = how many),
+ * violet dashed = only announced / not yet playable ships (isPending), dashed = secondary roles only, empty = none.
  */
 export function fleetLoopCells(db, fleet) {
   const cells = {};
@@ -64,9 +65,10 @@ export function fleetLoopCells(db, fleet) {
       secondary && t("loopbar_secondary", { n: secondary }),
       st.planned.length && t("loopbar_planned", { n: st.planned.length }),
     ].filter(Boolean);
+    const core = st.all.filter((s) => s.loops[id] === ROLE.PRIMARY || s.loops[id] === ROLE.PLANNED);
     cells[id] = {
-      n: st.primary.length || st.all.length,
-      level: st.primary.length ? "full" : st.all.length ? "partial" : "",
+      n: core.length || st.all.length,
+      level: !core.length ? (st.all.length ? "partial" : "") : core.every((s) => isPending(s, id)) ? "planned" : "full",
       text: `${loopText(db, id)}: ${parts.length ? parts.join(", ") : t("loop_empty")}`,
     };
   }
@@ -80,5 +82,7 @@ export function fleetLoopCells(db, fleet) {
 export function renderLoopBar(el, { db, fleet }, { attr = "loop-jump", active = null, hint = "" } = {}) {
   const cells = fleetLoopCells(db, fleet);
   const full = Object.values(cells).filter((c) => c.level === "full").length;
-  el.innerHTML = loopBar(db, cells, { attr, active, label: t("loopbar_title"), summary: t("loopbar_sum", { n: full, total: db.loops.length }) + hint });
+  const planned = Object.values(cells).filter((c) => c.level === "planned").length;
+  const summary = t("loopbar_sum", { n: full, total: db.loops.length }) + (planned ? " · " + t("loopbar_sum_planned", { n: planned }) : "");
+  el.innerHTML = loopBar(db, cells, { attr, active, label: t("loopbar_title"), summary: summary + hint });
 }

@@ -62,16 +62,23 @@ The list lives in `data/loops.json`. Its order is also the order of the cards on
 | ID | German | English |
 |---|---|---|
 | `cargo` | Fracht / Handel | Cargo / Trading |
+| `passenger` | Passagiere | Passenger transport |
 | `vehicle-transport` | Fahrzeug- & Schiffstransport | Vehicle & ship transport |
 | `mining` | Bergbau (Mining) | Mining |
 | `refining` | Raffinerie (Refining) | Refining |
 | `salvage` | Bergung (Salvage) | Salvage |
+| `refuel` | Tanken (Refuel) | Refuelling |
+| `support` | Reparatur / Munition | Repair / Rearm |
+| `construction` | Bau (Construction) | Construction |
 | `medical` | Medizin / Rettung | Medical / Rescue |
 | `fighter` | Jäger (Dogfight) | Fighters (dogfight) |
-| `gunship` | Gunship / Großkampf | Gunship / Heavy combat |
+| `interdiction` | Abfangen / EW | Interdiction / EW |
+| `bomber` | Bomber | Bomber |
+| `gunship` | Gunship | Gunship |
+| `capital` | Großkampfschiff (Capital) | Capital ship |
 | `dropship` | Dropship / Boarding / FPS | Dropship / Boarding / FPS |
 | `exploration` | Exploration | Exploration |
-| `support` | Reparatur / Tanken / Support | Repair / Refuel / Support |
+| `recon` | Aufklärung / Datenkurier | Recon / Data running |
 | `touring` | Touring / Wohnen | Touring / Living |
 | `snub` | Snub / Beiboot | Snub / Parasite craft |
 | `ground` | Bodenfahrzeug | Ground vehicle |

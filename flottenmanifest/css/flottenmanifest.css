@@ -564,7 +564,7 @@ tr.row--planned td { color: var(--fut); }
   .fm-bar { position: sticky; top: calc(var(--fm-sticky-top, 0px) + var(--fm-tabs-h, 44px)); z-index: 20; background: var(--bg); padding: 6px 0 8px; box-shadow: 0 1px 0 var(--line); }
   .fm-bar[hidden] { display: none; }
   .fm-bar .cover-bar { gap: 4px; }
-  /* 15 loops = two rows of 8, every square a full-width tap target */
+  /* 22 loops = three rows of 8, every square a full-width tap target */
   .fm-bar .cover-cells { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; width: 100%; }
   .fm-bar .cover-item { padding: 2px 0; }
   .fm-bar .cover-cell { width: 100%; height: 28px; box-sizing: border-box; }

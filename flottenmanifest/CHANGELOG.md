@@ -1,6 +1,14 @@
 # Changelog
 
 ## 2.21.0 – 2026-10-19
+- Seven more gameplay loops (22 in total), so ships that do different jobs no longer count as overlaps of each other:
+  - **Bomber** (from Gunship / Fighter): A1 Spirit, A2 Hercules, Eclipse, Retaliator, Vanguard Harbinger; Gladiator as secondary role.
+  - **Capital ship** (from Gunship): Idris, Polaris, Javelin, Kraken, Kraken Privateer, Odin, Nautilus. "Gunship / Heavy combat" is now just **Gunship**.
+  - **Interdiction / EW** (from Fighter): Mantis, Cutlass Blue, Vanguard Sentinel, Sabre Raven (fighter as secondary role).
+  - **Recon / Data running** (from Exploration): Herald, Mercury Star Runner, Hornet Tracker Mk I/II, Cutter Scout.
+  - **Passenger transport** (from Touring): Genesis Starliner, MPUV Personnel, E1 Spirit.
+  - "Repair / Refuel / Support" split into **Refuelling** (Starfarer, Starfarer Gemini, Starlite, Vulcan, Kraken, Tyilui), **Repair / Rearm** (id `support`: Crucible, Vulcan, Carrack, Kraken, Tyilui, Ironclad Assault) and **Construction** (Pioneer, Starlancer BLD); the SRV (towing) moves to Salvage, the MPUV Tractor keeps only Cargo.
+  - New icons for every new loop; the phone loop bar shows three rows of 8.
 - Gameplay loops: "Mining / Refining" split into **Mining** and **Refining** (new loop `refining`, flask icon) – both have dedicated ships. Refining: Expanse (refining only), Galaxy (refinery module), Orion and Arrastra (mining with onboard refinery) – all announced. The phone loop bar shows two rows of 8.
 
 ## 2.20.0 – 2026-10-17

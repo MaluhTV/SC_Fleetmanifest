@@ -1338,7 +1338,7 @@
       "scu": 2,
       "status": "concept",
       "loops": {"ground": "planned"},
-      "note": { "de": "", "en": "" },
+      "note": { "de": "Konzept – bei der 600i enthalten; bis zur Veröffentlichung stellt RSI einen Cyclone als Leihfahrzeug", "en": "Concept – included with the 600i; until release RSI provides a Cyclone as a loaner" },
       "motherships": [],
       "archetype": "explore",
       "upgradeable": true,

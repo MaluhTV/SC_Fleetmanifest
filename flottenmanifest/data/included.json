@@ -1,13 +1,13 @@
 {
   "source": "https://support.robertsspaceindustries.com/hc/en-us/articles/4408770370455-Included-Vessels-Snub-Fighters-and-Rovers",
   "checked": "2026-10-18",
-  "note": "Vessels RSI includes with a parent ship (as loaners, only while the parent is in the hangar; they do not stack). Keys are the names RSI uses for the parent; values are names or aliases from ships.json. 600i: RSI lists the G12, currently the Cyclone is handed out. Javelin: in production, the included MPUV comes with the loaner matrix until then. Constellation Mk V Centaurus: the Skylark is its docked snub (starcitizen.tools; not yet on RSI's list).",
+  "note": "Vessels RSI includes with a parent ship (as loaners, only while the parent is in the hangar; they do not stack). Keys are the names RSI uses for the parent; values are names or aliases from ships.json. 600i: RSI lists the G12 (concept) – it is counted as the G12; the Cyclone RSI hands out until then is the loaner and not counted (like the loaner matrix). Javelin: in production, the included MPUV comes with the loaner matrix until then. Constellation Mk V Centaurus: the Skylark is its docked snub (starcitizen.tools; not yet on RSI's list).",
   "parents": {
     "600i Explorer": [
-      "Cyclone"
+      "G12"
     ],
     "600i Executive Edition": [
-      "Cyclone"
+      "G12"
     ],
     "890 Jump": [
       "85X"

@@ -14,6 +14,7 @@
 - Melt / upgrade icons only where they matter: Optimise, Compare and the ship list (hidden in Coverage, Plan and the matrix).
 - **Phone:** the sticky loop bar shows one compact row "Combat 4/6 · Supply 8/9 · Exploration 3/5"; a tap opens the full bar.
 - Legend in sections: roles, melt / upgrade, loop bar, archetypes, markers.
+- Skylark: ship image (RSI store link in ships.json, the ship matrix has none).
 - **Outdated local edits:** an edit from the ship editor replaces the whole role list of a ship, so edits made on an older database hid newer data (e.g. a Constellation Phoenix without the new passenger loop, a Carrack still in the snub category). Edits now remember the database date (`base`); edits from an older date – and all edits made before 2.22 – show a notice at the top with "Show edits" and "Discard outdated".
 
 ## 2.21.0 – 2026-10-19

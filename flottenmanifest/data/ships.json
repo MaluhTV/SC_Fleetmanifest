@@ -2229,7 +2229,8 @@
       "note": { "de": "Snub-Fighter der Constellation Mk V", "en": "Snub fighter of the Constellation Mk V" },
       "motherships": ["Constellation Mk V Centaurus"],
       "upgradeable": false,
-      "fighterClass": "snub"
+      "fighterClass": "snub",
+      "image": "https://media.robertsspaceindustries.com/nxwjwdxucmknm/store_small.jpg"
     },
     {
       "name": "P-72 Archimedes Emerald",

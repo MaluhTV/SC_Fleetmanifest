@@ -497,7 +497,7 @@
     },
     {
       "name": "Blade",
-      "aliases": [],
+      "aliases": ["Blade (replica)"],
       "size": "S2 Small",
       "length": 20.5, "beam": 16.5, "height": 5.5,
       "crewMin": 1, "crewMax": 1,
@@ -1419,7 +1419,7 @@
     },
     {
       "name": "Gladius",
-      "aliases": ["Gladius Valiant","Pirate Gladius","Gladius Pirate"],
+      "aliases": ["Gladius Valiant","Pirate Gladius","Gladius Pirate","Gladius Dunlevy"],
       "size": "S2 Small",
       "length": 20, "beam": 17, "height": 5.5,
       "crewMin": 1, "crewMax": 1,
@@ -1434,7 +1434,7 @@
     },
     {
       "name": "Glaive",
-      "aliases": [],
+      "aliases": ["Glaive (replica)"],
       "size": "S3 Medium",
       "length": 33, "beam": 24, "height": 9,
       "crewMin": 1, "crewMax": 1,
@@ -1507,7 +1507,7 @@
     },
     {
       "name": "Hammerhead",
-      "aliases": [],
+      "aliases": ["Hammerhead Best In Show Edition"],
       "size": "S5 Large",
       "length": 120, "beam": 72, "height": 16,
       "crewMin": 1, "crewMax": 9,
@@ -2535,7 +2535,7 @@
     },
     {
       "name": "Reclaimer",
-      "aliases": [],
+      "aliases": ["Reclaimer Best In Show Edition"],
       "size": "S6 Capital",
       "length": 155, "beam": 118, "height": 50,
       "crewMin": 4, "crewMax": 5,
@@ -2953,7 +2953,7 @@
     },
     {
       "name": "Stinger",
-      "aliases": [],
+      "aliases": ["Stinger (replica)"],
       "size": "S3 Medium",
       "length": 35, "beam": 35, "height": 10,
       "crewMin": 1, "crewMax": 1,
@@ -3141,7 +3141,7 @@
     },
     {
       "name": "Valkyrie",
-      "aliases": [],
+      "aliases": ["Valkyrie Liberator"],
       "size": "S4 Large",
       "length": 48, "beam": 38, "height": 12,
       "crewMin": 1, "crewMax": 5,

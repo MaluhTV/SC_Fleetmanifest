@@ -16,6 +16,10 @@
 - Legend in sections: roles, melt / upgrade, loop bar, archetypes, markers.
 - 600i Explorer / Executive Edition: the included vehicle is the **G12** (concept, as RSI lists it), no longer the Cyclone RSI hands out as a loaner until then – loaners are not counted. The G12 note says so.
 - Loop `capital` renamed to **Fleet combat / Anti-capital** (DE "Flottenkampf / Anti-Capital"): it is a combat role (fighting capital ships and fleets – torpedoes, capital weapons, carriers), not the size class. A capital-sized ship such as the Reclaimer stays in its own role (salvage); the minelayer Nautilus (Large) belongs here. The id stays `capital`, so saved plans keep working.
+- Interdiction / EW: Guardian QI and Avenger Warlock now primary (fighter secondary), Hawk secondary, Zeus Mk II MR announced. New: **Scorpius Antares** (EMP, quantum dampener, distortion) – before only an alias of the Scorpius.
+- Ironclad (not the Assault): cargo with vehicle transport, no longer dropship.
+- Ground vehicles as their own entries instead of aliases: **G12a** (combat), **G12r** (racing), **Ranger CV** (exploration, also matches "Ranger"), **Ranger RC** (racing), **Ranger TR** (combat) – all concepts, with RSI image links. The 600i still includes the plain G12.
+- Notes: Perseus "anti-capital gunship", Hammerhead "anti-fighter gunship".
 - Skylark: ship image (RSI store link in ships.json, the ship matrix has none).
 - **Outdated local edits:** an edit from the ship editor replaces the whole role list of a ship, so edits made on an older database hid newer data (e.g. a Constellation Phoenix without the new passenger loop, a Carrack still in the snub category). Edits now remember the database date (`base`); edits from an older date – and all edits made before 2.22 – show a notice at the top with "Show edits" and "Discard outdated".
 

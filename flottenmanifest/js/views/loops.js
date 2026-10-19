@@ -4,22 +4,35 @@ import { esc } from "../util.js";
 import { ROLE_ORDER, ARCHETYPES } from "../shipdb.js";
 import { loopStats, isPending } from "../analysis.js";
 import { ROLE } from "../shipdb.js";
-import { slotName, slotText, loopBar, loopIconTitle, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
+import { slotName, slotText, loopText, loopBar, loopIconTitle, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
 
 export function renderLoops(el, { db, fleet, state }) {
   // thumbnail column only if at least one fleet ship has an image (data/ships.json → image)
   const thumbs = fleet.ships.some((s) => s.image);
   // one section per archetype; snub and ground vehicle appear in every archetype with that archetype's ships
-  el.innerHTML = ARCHETYPES.map((g) => `<h2 class="loop-group-head g-${g}">${t("group_" + g)}</h2>` +
-    db.slots.filter((s) => s.group === g).map((slot) => loopCard(slot, db, fleet.ships.filter(slot.has), state, thumbs)).join("")).join("");
+  // empty slots are not drawn as empty cards but named in one "Not covered: …" line per archetype
+  el.innerHTML = ARCHETYPES.map((g) => {
+    const slots = db.slots.filter((s) => s.group === g);
+    const empty = slots.filter((slot) => !fleet.ships.some((s) => slot.has(s) && s.loops[slot.id]));
+    const cards = slots.filter((slot) => !empty.includes(slot)).map((slot) => loopCard(slot, db, fleet.ships.filter(slot.has), state, thumbs)).join("");
+    const none = empty.length
+      ? `<p class="loop-uncovered g-${g}" data-group="${g}"><b>${t("loop_uncovered")}</b> ${empty.map((slot) => `<span class="loop-uncovered__item" id="loop-${slot.key}">${loopIconTitle(slot.id)}${esc(loopText(db, slot.id))}</span>`).join("")}</p>`
+      : "";
+    return `<h2 class="loop-group-head g-${g}" id="loopgroup-${g}" data-group="${g}"><button type="button" class="group-pick" data-group-pick="${g}" aria-pressed="${state.groupFilter === g}" title="${esc(t(state.groupFilter === g ? "group_filter_off" : "group_filter_on"))}">${t("group_" + g)}</button></h2>` + none + cards;
+  }).join("");
 }
+
+/** Secondary roles are folded behind "+ n more" as long as the card also has primary or announced ships. */
+const FOLD_MIN_ROWS = 4;
 
 function loopCard(slot, db, ships, state, thumbs) {
   const { compare } = state;
   const loopId = slot.id;
   const st = loopStats(ships, loopId);
   const head = `<div class="loop-card__head"><h3>${loopIconTitle(loopId)}${slotName(db, slot.key)}</h3><span class="muted loop-card__count">${st.all.length} ${t("ships")}</span></div>`;
-  if (!st.all.length) return `<div class="loop-card is-empty${slot.multi ? " is-multi" : ""}" id="loop-${slot.key}">${head}<p class="muted">${t("loop_empty")}</p></div>`;
+  const secondary = st.all.filter((s) => s.loops[loopId] === ROLE.SECONDARY).length;
+  const fold = secondary && secondary < st.all.length && st.all.length >= FOLD_MIN_ROWS;
+  const expanded = state.loopExpanded && state.loopExpanded.has(slot.key);
 
   // Sort: primary, planned, secondary; within each by SCU and crew, descending
   const rows = [...st.all]
@@ -46,11 +59,14 @@ function loopCard(slot, db, ships, state, thumbs) {
     ${loopId === "cargo" ? `<span>${t("stat_scu")} <b>${fmt(st.scuPrimary)}</b></span>` : ""}
   </div>`;
 
-  return `<div class="loop-card" id="loop-${slot.key}">${head}${stats}
+  const more = fold
+    ? `<button type="button" class="loop-more" data-loop-expand="${esc(slot.key)}" aria-expanded="${!!expanded}">${expanded ? t("loop_less") : t("loop_more", { n: secondary })}</button>`
+    : "";
+  return `<div class="loop-card g-${slot.group}${fold ? " is-foldable" : ""}${expanded ? " is-expanded" : ""}" id="loop-${slot.key}" data-group="${slot.group}">${head}${stats}
     <div class="table-wrap"><table>
       <thead><tr><th></th>${thumbs ? "<th></th>" : ""}<th>${t("col_ship")}</th><th>${t("col_size")}</th><th class="num">SCU</th><th class="num">${t("col_crew")}</th><th><span class="visually-hidden">${t("legend_compare")}</span></th></tr></thead>
       <tbody>${rows}</tbody>
-    </table></div></div>`;
+    </table></div>${more}</div>`;
 }
 
 /**

@@ -46,13 +46,20 @@ export function renderListFilters({ loopSelect, sizeSelect }, { db, fleet }) {
   sizeSelect.value = sizes.includes(keep[1]) ? keep[1] : "";
 }
 
-export function renderList(table, { db, fleet, state }, filter) {
-  const { sortKey, sortDir } = state.list;
+/** Fleet ships that pass the list filters (KPI tile, archetype, loop / bar square, size, text) – also used by the matrix. */
+export function filterRows({ db, fleet, state }, filter) {
   const q = filter.text.toLowerCase();
   const kpi = KPI_FILTERS[state.kpiFilter]; // tile filter from the KPI row (owned / flight-ready / included)
-  const rows = fleet.ships.filter(
-    (s) => (!kpi || kpi(s)) && (!filter.loop || s.loops[filter.loop]) && (!filter.has || filter.has(s)) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
+  const group = state.groupFilter; // archetype filter (fleet profile / bar group heading)
+  return fleet.ships.filter(
+    (s) => (!kpi || kpi(s)) && (!group || db.archetypesOf(s).includes(group)) && (!filter.loop || s.loops[filter.loop]) && (!filter.has || filter.has(s)) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
   );
+}
+
+export function renderList(table, ctx, filter) {
+  const { db, fleet, state } = ctx;
+  const { sortKey, sortDir } = state.list;
+  const rows = filterRows(ctx, filter);
   // the image column is left out if no fleet ship has an image
   // optional columns only appear when at least one fleet ship has a value
   const has = (k) => fleet.ships.some((s) => s[k]);

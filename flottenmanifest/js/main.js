@@ -16,10 +16,10 @@ import { importFile, importTextList, IMPORTERS } from "./importers.js";
 import { buildFleet, plannerSuggestions } from "./analysis.js";
 import { loadState, save, exampleItems, MAX_COMPARE, VIEWS, PLANNER_MAX_SLOTS, PLANNER_MAX_PICKS, sanitizeSlot, makeBackup, restoreBackup, BACKUP_FORMAT } from "./state.js";
 import { ICONS, meltPair } from "./views/common.js";
-import { renderKpis, KPI_FILTERS } from "./views/kpis.js";
+import { renderKpis, renderSummary, KPI_FILTERS } from "./views/kpis.js";
 import { renderLoops, renderLoopBar } from "./views/loops.js";
 import { renderMatrix } from "./views/matrix.js";
-import { renderList, renderListFilters } from "./views/list.js";
+import { renderList, renderListFilters, filterRows } from "./views/list.js";
 import { renderOverlaps, renderOvDetails, renderOverlapBar } from "./views/overlaps.js";
 import { renderCompare, renderCompareSelect } from "./views/compare.js";
 import { renderPlanner, renderPlannerForm, planText } from "./views/planner.js";
@@ -57,7 +57,6 @@ const el = {
   compareBadge: $("#compareBadge"),
   loopCards: $("#loopCards"),
   loopBar: $("#loopBar"),
-  matrixBar: $("#matrixBar"),
   listBar: $("#listBar"),
   overlapBar: $("#overlapBar"),
   plannerBar: $("#plannerBar"),
@@ -72,6 +71,11 @@ const el = {
   plannerAll: $("#plannerAll"),
   plannerSlots: $("#plannerSlots"),
   matrixTable: $("#matrixTable"),
+  matrixBox: $("#matrixBox"),
+  shipBox: $("#shipBox"),
+  editBar: $("#editBar"),
+  listMode: $("#listMode"),
+  fleetSummary: $("#fleetSummary"),
   filterLoop: $("#filterLoop"),
   filterSize: $("#filterSize"),
   filterText: $("#filterText"),
@@ -96,7 +100,7 @@ const viewCtx = () => {
   return keep ? { db, fleet: { ...fleet, ships: fleet.ships.filter(keep) }, state } : ctx();
 };
 /** Views that follow the KPI filter; from any other tab a tile click opens the ship list. */
-const KPI_VIEWS = ["loops", "matrix", "list"];
+const KPI_VIEWS = ["loops", "list"];
 // listSlot: bar square picked in the ship list (a multi slot like "snub--combat" also filters by archetype)
 let listSlot = null;
 const listFilter = () => {
@@ -218,7 +222,7 @@ function applyMapDialog() {
 const TOUR = [
   { target: () => $("#importOpen"), text: "tour_import" },
   { target: () => el.bars.find((b) => !b.hidden) || $("#tabs"), text: "tour_bar" },
-  { target: () => $('[data-view="overlaps"]'), text: "tour_overlaps" },
+  { target: () => $("#tabs"), text: "tour_overlaps" },
 ];
 let tourStep = -1, tourBox = null;
 function showTour(step) {
@@ -306,7 +310,7 @@ function renderAll() {
   renderKpiChips();
   renderLoops(el.loopCards, viewCtx());
   renderLoopBar(el.loopBar, viewCtx());
-  renderMatrixArea();
+  renderSummary(el.fleetSummary, ctx());
   renderListFilters({ loopSelect: el.filterLoop, sizeSelect: el.filterSize }, ctx());
   renderListArea();
   renderOverlaps(el.overlapCards, ctx());
@@ -316,36 +320,55 @@ function renderAll() {
   renderPlannerArea();
 }
 
-/* Loop bars above the matrix (highlight a column) and the ship list (filter by loop) */
-let matrixHl = null;
-function renderMatrixArea() {
-  renderLoopBar(el.matrixBar, viewCtx(), { attr: "matrix-hl", active: matrixHl });
-  renderMatrix(el.matrixTable, viewCtx(), matrixHl ? (db.slot(matrixHl) || { id: matrixHl }).id : null); // column = loop of the picked square
-}
 function setKpiFilter(filter) {
   state.kpiFilter = filter;
   renderKpis(el.kpis, ctx());
   renderLoops(el.loopCards, viewCtx());
   renderLoopBar(el.loopBar, viewCtx());
-  renderMatrixArea();
+  renderListArea();
+  renderKpiChips();
+  queueSpy();
+}
+/** Archetype filter (fleet profile, bar group heading, loop tab heading; "Nur Kampf ×" chip clears it). */
+function setGroupFilter(group) {
+  state.groupFilter = group;
+  renderKpis(el.kpis, ctx());
+  renderLoops(el.loopCards, viewCtx());
   renderListArea();
   renderKpiChips();
   queueSpy();
 }
 /** "Own ships only ×" chips above the filtered views. */
 function renderKpiChips() {
-  document.body.classList.toggle("kpi-filtered", !!state.kpiFilter); // hides empty loop cards while filtering
+  document.body.classList.toggle("kpi-filtered", !!state.kpiFilter);
   $$("[data-kpi-clear]").forEach((chip) => {
     chip.hidden = !state.kpiFilter;
     chip.textContent = state.kpiFilter ? t("kpi_filter_chip_" + state.kpiFilter) + " ×" : "";
     chip.title = t("kpi_filter_off");
   });
+  // archetype filter: CSS hides the cards of the other archetypes ([data-group]) and dims their bar groups
+  if (state.groupFilter) document.body.dataset.groupFilter = state.groupFilter;
+  else delete document.body.dataset.groupFilter;
+  $$("[data-group-clear]").forEach((chip) => {
+    chip.hidden = !state.groupFilter;
+    chip.textContent = state.groupFilter ? t("group_chip", { g: t("group_" + state.groupFilter) }) : "";
+    chip.title = t("group_filter_off");
+  });
+  $$("[data-group-pick]").forEach((b) => b.setAttribute("aria-pressed", state.groupFilter === b.dataset.groupPick));
 }
 
+/** Ship list tab: table or loop matrix ("Liste | Matrix"); filters, bar and KPI / archetype filters apply to both. */
 function renderListArea() {
   const slot = listSlot && db.slot(listSlot);
-  renderLoopBar(el.listBar, viewCtx(), { attr: "list-filter", active: slot && slot.id === el.filterLoop.value ? listSlot : el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
-  renderList(el.shipTable, ctx(), listFilter());
+  const active = slot && slot.id === el.filterLoop.value ? listSlot : el.filterLoop.value || null;
+  renderLoopBar(el.listBar, viewCtx(), { attr: "list-filter", active, hint: " · " + t("listbar_hint") });
+  const matrix = state.listMode === "matrix";
+  el.shipBox.hidden = el.editBar.hidden = matrix;
+  el.matrixBox.hidden = !matrix;
+  el.listMode.setAttribute("aria-label", t("list_mode"));
+  el.listMode.querySelectorAll("[data-list-mode]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.listMode === state.listMode));
+  if (matrix) renderMatrix(el.matrixTable, ctx(), filterRows(ctx(), listFilter()), active); // column of the picked square is highlighted
+  else renderList(el.shipTable, ctx(), listFilter());
 }
 
 function renderPlannerArea() {
@@ -367,6 +390,24 @@ function showView(view) {
   if (nav && active && nav.scrollWidth > nav.clientWidth) {
     nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
   }
+}
+
+/** Opens a folded overlap card (accordion) and scrolls to it. */
+function openOverlapCard(card) {
+  if (!card) return;
+  const d = card.querySelector("details[data-ov-acc]");
+  if (d && !d.open) { d.open = true; state.ovOpen.set(d.dataset.ovAcc, true); }
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+/** Phones: which loop bars the user opened (compact row → full bar); re-applied after every render. */
+const barExpanded = {};
+function restoreBarExpanded() {
+  el.bars.forEach((b) => {
+    const bar = b.querySelector(".cover-bar");
+    if (!bar || !barExpanded[b.id]) return;
+    bar.classList.add("is-expanded");
+    bar.querySelectorAll("[data-bar-expand]").forEach((x) => x.setAttribute("aria-expanded", "true"));
+  });
 }
 
 let toastTimer;
@@ -605,7 +646,7 @@ function spyCurrent() {
 }
 let spyPicked = null; // loop last clicked in a bar
 let spyQueued = false;
-const queueSpy = () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spyCurrent(); }); } };
+const queueSpy = () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(() => { spyQueued = false; spyCurrent(); restoreBarExpanded(); }); } };
 
 function wireEvents() {
   addEventListener("scroll", queueSpy, { passive: true });
@@ -804,7 +845,44 @@ function wireEvents() {
     setKpiFilter(state.kpiFilter === tile.dataset.kpiFilter ? null : tile.dataset.kpiFilter);
     if (state.kpiFilter && !KPI_VIEWS.includes(state.view)) showView("list");
   });
-  document.addEventListener("click", (e) => { if (e.target.closest("[data-kpi-clear]")) setKpiFilter(null); });
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-kpi-clear]")) setKpiFilter(null);
+    if (e.target.closest("[data-group-clear]")) setGroupFilter(null);
+    const g = e.target.closest("[data-group-pick]");
+    if (g) setGroupFilter(state.groupFilter === g.dataset.groupPick ? null : g.dataset.groupPick);
+    // phones: the compact bar row ("Kampf 5/6") opens the full bar
+    const x = e.target.closest("[data-bar-expand]");
+    if (x) {
+      const bar = x.closest(".cover-bar");
+      const on = !bar.classList.contains("is-expanded");
+      bar.classList.toggle("is-expanded", on);
+      bar.querySelectorAll("[data-bar-expand]").forEach((b) => b.setAttribute("aria-expanded", on));
+      barExpanded[bar.closest(".fm-bar")?.id] = on;
+    }
+    // loop cards: "+ n more in a secondary role"
+    const m = e.target.closest("[data-loop-expand]");
+    if (m) {
+      const key = m.dataset.loopExpand, card = m.closest(".loop-card");
+      const on = !state.loopExpanded.has(key);
+      on ? state.loopExpanded.add(key) : state.loopExpanded.delete(key);
+      card.classList.toggle("is-expanded", on);
+      m.setAttribute("aria-expanded", on);
+      m.textContent = on ? t("loop_less") : t("loop_more", { n: card.querySelectorAll("tr.row--secondary").length });
+    }
+    // short summary: "9 overlaps …" opens the tab (and the gaps card)
+    const go = e.target.closest("[data-goto]");
+    if (go) {
+      showView(go.dataset.goto);
+      const target = go.dataset.gotoTarget && document.getElementById(go.dataset.gotoTarget);
+      if (target) openOverlapCard(target);
+      else el.tabs.find((b) => b.dataset.view === go.dataset.goto).scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+  // overlap accordions: remember open / closed across re-renders ("toggle" does not bubble – capture)
+  el.overlapCards.addEventListener("toggle", (e) => {
+    const d = e.target;
+    if (d.dataset && d.dataset.ovAcc) state.ovOpen.set(d.dataset.ovAcc, d.open);
+  }, true);
   $("#imgConsentYes").addEventListener("click", () => setRsiImages(true));
   $("#imgConsentNo").addEventListener("click", () => setRsiImages(false));
   el.imgToggle.addEventListener("click", () => setRsiImages(state.rsiImages === false));
@@ -846,8 +924,7 @@ function wireEvents() {
     // loop bar inside the "result after the changes" card: jump like the bar above the tab
     const j = e.target.closest("[data-ov-jump]");
     if (j) {
-      const card = document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps"));
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      openOverlapCard(document.getElementById("ov-" + j.dataset.ovJump) || (j.classList.contains("is-gap") && document.getElementById("ov-gaps")));
       return;
     }
     const m = e.target.closest("[data-mark]");
@@ -855,6 +932,11 @@ function wireEvents() {
     const c = e.target.closest("[data-choose]");
     if (c) chooseSubstitute(c.dataset.for, c.dataset.choose);
     if (e.target.closest("[data-clear-marks]")) setMarks([], {});
+    const all = e.target.closest("[data-ov-all]");
+    if (all) {
+      const on = all.dataset.ovAll === "open";
+      el.overlapCards.querySelectorAll("details[data-ov-acc]").forEach((d) => { d.open = on; state.ovOpen.set(d.dataset.ovAcc, on); });
+    }
 
   });
   // Fleet planner: add a wish, crew presets, remove, compare toggles on the tiles
@@ -922,15 +1004,15 @@ function wireEvents() {
 
   // Ship list: filters and sorting via click/Enter on the column header
   [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", () => { if (f === el.filterLoop) listSlot = null; renderListArea(); }));
-  // loop bars: matrix = highlight the column, ship list = filter (second click clears), overlaps = jump to the card
-  el.matrixBar.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-matrix-hl]");
-    if (!b) return;
-    matrixHl = matrixHl === b.dataset.matrixHl ? null : b.dataset.matrixHl;
-    renderMatrixArea();
-    const th = el.matrixTable.querySelector("th.col-hl");
-    if (th) th.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  // "Liste | Matrix" toggle of the ship list tab
+  el.listMode.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-list-mode]");
+    if (!b || b.dataset.listMode === state.listMode) return;
+    state.listMode = b.dataset.listMode;
+    save.listMode(state);
+    renderListArea();
   });
+  // loop bars: ship list = filter (second click clears; the matrix also highlights the column), overlaps = jump to the card
   el.listBar.addEventListener("click", (e) => {
     const b = e.target.closest("[data-list-filter]");
     if (!b) return;
@@ -938,12 +1020,13 @@ function wireEvents() {
     listSlot = listSlot === key ? null : key;
     el.filterLoop.value = listSlot ? slot.id : "";
     renderListArea();
+    const th = state.listMode === "matrix" && el.matrixTable.querySelector("th.col-hl");
+    if (th) th.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   });
   el.overlapBar.addEventListener("click", (e) => {
     const b = e.target.closest("[data-ov-jump]");
     if (!b) return;
-    const card = document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps"));
-    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+    openOverlapCard(document.getElementById("ov-" + b.dataset.ovJump) || (b.classList.contains("is-gap") && document.getElementById("ov-gaps")));
   });
   const sortBy = (key) => {
     state.list.sortDir = state.list.sortKey === key ? -state.list.sortDir : 1;
@@ -975,6 +1058,9 @@ async function start() {
   const hash = location.hash.slice(1);
   if (hash === "de" || hash === "en") state.lang = hash;
   if (VIEWS.includes(hash)) state.view = hash;
+  if (hash === "matrix") { state.view = "list"; state.listMode = "matrix"; } // old link to the matrix tab
+  state.loopExpanded = new Set(); // loop cards showing their secondary roles (not stored)
+  state.ovOpen = new Map(); // overlap cards opened / closed by the user (not stored)
 
   wireEvents();
   renderAll();

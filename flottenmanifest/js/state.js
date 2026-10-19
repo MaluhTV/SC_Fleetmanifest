@@ -7,7 +7,7 @@ import { sanitizeOverride } from "./shipdb.js";
 import { MELT_STATES } from "./analysis.js";
 
 export const MAX_COMPARE = 4;
-export const VIEWS = ["loops", "matrix", "list", "overlaps", "compare", "planner"];
+export const VIEWS = ["loops", "overlaps", "planner", "compare", "list"];
 /** Fleet planner: at most this many wishes, crew numbers between 1 and PLANNER_CREW_LIMIT. */
 export const PLANNER_MAX_SLOTS = 20;
 export const PLANNER_CREW_LIMIT = 99;
@@ -28,7 +28,9 @@ export function loadState(example) {
   const items = saved && Array.isArray(saved.items) ? saved.items.map(sanitizeItem).filter((i) => i.name) : null;
   const lang = storage.get("lang", "de");
   const compare = storage.get("cmp", null);
-  const view = storage.get("tab", "loops");
+  const savedView = storage.get("tab", "loops");
+  const view = savedView === "matrix" ? "list" : savedView; // up to 2.21 the matrix was a tab of its own
+  const listMode = savedView === "matrix" ? "matrix" : storage.get("listmode", "list");
   const marked = storage.get("marked", []);
   const chosen = storage.get("chosen", {});
   const overrides = storage.get("overrides", {});
@@ -45,6 +47,7 @@ export function loadState(example) {
     items: items || exampleItems(example),
     compare: Array.isArray(compare) ? strList(compare).slice(0, MAX_COMPARE) : [...example.compare],
     view: VIEWS.includes(view) ? view : "loops",
+    listMode: listMode === "matrix" ? "matrix" : "list", // ship list tab: table or loop matrix
     marked: strList(marked), // ships marked "to replace" in the overlaps tab (red)
     chosen: strMap(chosen, isStr), // { shipToReplace: substitute } (green)
     overrides: Object.fromEntries(Object.entries(strMap(overrides, isObj)).map(([k, o]) => [k, sanitizeOverride(o)]).filter(([, o]) => o)), // edits from the in-page editor
@@ -55,6 +58,7 @@ export function loadState(example) {
     rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: false = off; true = on (notice acknowledged); null = on, notice not acknowledged yet
     planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
     list: { sortKey: "name", sortDir: 1 },
+    groupFilter: null, // archetype filter ("combat" | "supply" | "explore", not stored)
     kpiFilter: null, // KPI tile filter for the ship list: "owned" | "ready" | "included" (not stored)
   };
 }
@@ -99,6 +103,7 @@ export const save = {
   lang: (state) => storage.set("lang", state.lang),
   compare: (state) => storage.set("cmp", state.compare),
   view: (state) => storage.set("tab", state.view),
+  listMode: (state) => storage.set("listmode", state.listMode),
   marked: (state) => { storage.set("marked", state.marked); storage.set("chosen", state.chosen); },
   overrides: (state) => storage.set("overrides", state.overrides),
   melt: (state) => storage.set("melt", state.melt),

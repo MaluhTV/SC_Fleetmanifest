@@ -116,14 +116,29 @@ for (const page of ["index.html", "dist/flottenmanifest.html", CRLF_PAGE]) {
   const kpi = await p.evaluate(() => [...document.querySelectorAll(".fm-kpi b")].map((b) => b.textContent));
   ok(kpi[0] === "14", `KPI ships = 14 (got ${kpi[0]})`);
   ok(!(await p.evaluate(() => document.getElementById("unknownNote").hidden)), "unknown entry is reported with 'Assign'");
-  for (const v of ["loops", "matrix", "list", "overlaps", "planner", "compare"]) { await p.click(`[data-view=${v}]`); await p.waitForTimeout(150); }
+  for (const v of ["loops", "overlaps", "planner", "compare", "list"]) { await p.click(`[data-view=${v}]`); await p.waitForTimeout(150); }
   ok(await p.evaluate(() => !!document.querySelector('meta[http-equiv="Content-Security-Policy"]')), "Content Security Policy present");
+  ok((await p.evaluate(() => document.getElementById("fleetSummary").textContent)).length > 10, "short summary under the KPIs");
+  // ship list: "Liste | Matrix" toggle, the bar filters both
+  await p.click('[data-list-mode="matrix"]'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => document.getElementById("shipBox").hidden && !document.getElementById("matrixBox").hidden && document.querySelectorAll("#matrixTable .matrix-groups th").length === 4), "matrix mode in the ship list, columns grouped by archetype");
+  await p.click('[data-list-mode="list"]'); await p.waitForTimeout(150);
+  // archetype filter from the fleet profile; chip clears it
+  await p.click("[data-view=loops]"); await p.waitForTimeout(150);
+  await p.click('.profile-legend [data-group-pick="combat"]'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => [...document.querySelectorAll("#loopCards .loop-card")].filter((c) => c.offsetParent).every((c) => c.dataset.group === "combat")), "archetype filter shows only that archetype");
+  await p.click("#view-loops [data-group-clear]"); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => !document.body.dataset.groupFilter), "archetype chip clears the filter");
+  // overlaps: folded cards, the bar opens one
+  await p.click("[data-view=overlaps]"); await p.waitForTimeout(150);
+  const acc = await p.evaluate(() => { const b = document.querySelector("#overlapBar .is-filled"); if (!b) return null; b.click(); return document.querySelector(`#ov-${b.dataset.ovJump} details`)?.open; });
+  ok(acc !== false, "overlap card opens from the bar");
 
   // code injection: names, insurance and backup values must never run
   const evil = '"<img src=x onerror=window.__pwn=1>","<svg onload=window.__pwn=1>",true\n"Gladius","\\"><script>window.__pwn=1</script>",true\n';
   await p.setInputFiles("#importFile", { name: "x.csv", mimeType: "text/csv", buffer: Buffer.from('"name","insurance","isMeltable"\n' + evil) });
   await p.waitForTimeout(400);
-  for (const v of ["loops", "matrix", "list", "overlaps"]) { await p.click(`[data-view=${v}]`); await p.waitForTimeout(150); }
+  for (const v of ["loops", "list", "overlaps"]) { await p.click(`[data-view=${v}]`); await p.waitForTimeout(150); }
   const backup = { format: "flottenmanifest-backup", data: { name: "<img src=x onerror=window.__pwn=1>", aliases: { "<b>x</b>": "<script>window.__pwn=1</script>" }, fleet: { own: true, items: [{ name: "<svg onload=window.__pwn=1>", qty: 1 }] } } };
   await p.setInputFiles("#backupFile", { name: "b.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
   await p.waitForTimeout(400);
@@ -143,7 +158,7 @@ for (const page of ["index.html", "dist/flottenmanifest.html", CRLF_PAGE]) {
   await m.evaluate(() => { localStorage.clear(); localStorage.setItem("fm_tour", "true"); }); await m.reload(); await m.waitForTimeout(600);
   await m.setInputFiles("#importFile", FIXTURE); await m.waitForTimeout(600);
   const wide = [];
-  for (const v of ["loops", "matrix", "list", "overlaps", "planner", "compare"]) {
+  for (const v of ["loops", "overlaps", "planner", "compare", "list"]) {
     await m.evaluate((x) => document.querySelector(`[data-view=${x}]`).click(), v); await m.waitForTimeout(200);
     const [w, vw] = await m.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
     if (w > vw) wide.push(`${v} ${w}px`);

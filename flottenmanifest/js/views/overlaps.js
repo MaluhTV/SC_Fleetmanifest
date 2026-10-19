@@ -203,7 +203,14 @@ export function renderOverlaps(el, ctx) {
     ? `<div class="size-groups">${[...groups].map(([word, g]) => `<div class="size-group"><div class="size-head">${groupHead(word, g)}</div><div class="tiles">${g.items.join("")}</div></div>`).join("")}</div>`
     : list([...groups].map(([word, g]) => `${groupHead(word, g)}: ${g.items.join(", ")}`));
 
+  // overlap cards are folded: the heading says loop, ship and candidate count; a click (or a bar square) opens it.
+  // state.ovOpen (not stored) remembers which cards are open across re-renders (main.js keeps it up to date).
+  const open = state.ovOpen || new Map();
+  const isOpen = (key, byDefault) => (open.has(key) ? open.get(key) : byDefault);
+  const accordion = (key, cls, head, body, on) => `<article class="ov-acc ${cls}" id="ov-${esc(key)}" data-group="${(db.slot(key) || {}).group || ""}">
+      <details data-ov-acc="${esc(key)}"${on ? " open" : ""}><summary><h3>${head}</h3></summary>${body}</details></article>`;
   if (!result.overlaps.length) parts.push(`<article><p>${t("ov_no_overlap")}</p></article>`);
+  else parts.push(`<div class="ov-acc-tools"><button type="button" class="btn btn--small" data-ov-all="open">${t("ov_open_all")}</button><button type="button" class="btn btn--small" data-ov-all="close">${t("ov_close_all")}</button></div>`);
   // loop cards (overlaps and "planned only") are collected per loop and output in the fixed order of
   // data/loops.json – the same order as the loop bar and the other tabs
   const loopCards = new Map();
@@ -242,24 +249,23 @@ export function renderOverlaps(el, ctx) {
         (c.alternatives.length ? ` <span class="muted">(${t("ov_also", { x: alsoList(c.alternatives, (a) => choose(a, c.ship)) })})</span>` : "");
     });
     const title = t("ov_overlap_title", { loop: slotName(db, o.key), n: o.primary.length }) +
+      ` <span class="muted ov-acc-count">· ${t("ov_cand_count", { n: o.candidates.length })}</span>` +
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
-    addCard(o.key, `<article id="ov-${esc(o.key)}">
-      <h3>${loopIconTitle(o.loopId)}${title}</h3>
+    addCard(o.key, accordion(o.key, "", `${loopIconTitle(o.loopId)}${title}`, `
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(groups)}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
-      <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}
-    </article>`);
+      <p class="muted">${candidates.length ? t("ov_candidates") : t("ov_no_candidates")}</p>${!candidates.length ? "" : pics ? `<div class="cand-rows">${candidates.join("")}</div>` : list(candidates)}`,
+      isOpen(o.key, o.markedCount > 0)));
   }
 
   // Loops covered only by ships that are not usable today (planned role or not flight-ready):
   // same card layout as an overlap (tiles by size, violet notes), without candidates
   for (const x of result.plannedOnly) {
     loopId = x.loopId;
-    addCard(x.key, `<article class="is-planned-only" id="ov-${esc(x.key)}">
-      <h3>${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: slotName(db, x.key), n: x.ships.length })}</h3>
+    addCard(x.key, accordion(x.key, "is-planned-only", `${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: slotName(db, x.key), n: x.ships.length })}`, `
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(sizeGroups(x.ships))}
-      <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>
-    </article>`);
+      <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>`,
+      isOpen(x.key, false)));
   }
 
   for (const { key } of db.slots) parts.push(...(loopCards.get(key) || []));

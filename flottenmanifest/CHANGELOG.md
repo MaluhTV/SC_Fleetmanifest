@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.22.0 – 2026-10-19
+- **Tabs in workflow order with clearer names:** Coverage (was "By gameplay loop") → Optimise (was "Overlaps") → Plan (was "Fleet planner") → Compare → Ship list. The loop matrix is no longer a tab of its own: the ship list has a **List | Matrix** toggle (`fm_listmode`); filters, loop bar, KPI and archetype filters apply to both, the bar square highlights its matrix column. Matrix columns are grouped by archetype (heading row, coloured lines), without the image column. Saved tab / `#matrix` links open the ship list in matrix mode.
+- **Short summary** under the KPI tiles: focus archetype, gaps, number of overlaps and how many of them have a substitute; the gaps and overlaps parts open the Optimise tab.
+- **Archetype filter:** a click on an archetype in the fleet profile, on a loop-bar group heading or on a heading in Coverage shows only that archetype (cards hidden, other bar groups faded, ship list / matrix filtered); a chip "Only Combat ×" clears it.
+- **Coverage:** empty categories are no longer empty cards but one line "Not covered: …" per archetype (the bar still jumps there). Secondary roles are folded behind "+ n more in a secondary role" when a card also has primary ships.
+- **Optimise:** overlap cards are folded (heading "Cargo: 9 ships · 7 candidates"), one per row; a bar square opens and scrolls to its card, "Open all / Close all"; cards with marked ships start open.
+- Melt / upgrade icons only where they matter: Optimise, Compare and the ship list (hidden in Coverage, Plan and the matrix).
+- **Phone:** the sticky loop bar shows one compact row "Combat 4/6 · Supply 8/9 · Exploration 3/5"; a tap opens the full bar.
+- Legend in sections: roles, melt / upgrade, loop bar, archetypes, markers.
+
 ## 2.21.0 – 2026-10-19
 - **Archetypes:** every gameplay loop belongs to one of three archetypes – **Combat** (fighter, interdiction/EW, bomber, gunship, capital, dropship), **Industry & supply** (cargo, vehicle & ship transport, mining, refining, salvage, construction, refuelling, repair/rearm, medical) and **Travel & exploration** (exploration, recon, passengers, touring, racing); `loops.json → group`. Snub and ground vehicle stay categories but appear in every archetype with the vehicles of that purpose: a ship counts in the archetype of its other roles, or the one set with `archetype` in ships.json (e.g. C8 Pisces / Ursa → exploration, C8R Pisces Rescue / Ursa Medivac → supply, Ballista / Nova / Storm → combat). Display slots (`db.slots`, key "snub--combat") drive the loop bars, loop cards (with archetype headings), overlaps (a Ballista no longer overlaps with a Ursa), planner coverage and the result card; an empty snub/ground slot is never a gap. Loop bar grouped with coloured headings (phone: coloured line above each square, three rows of 9). New KPI tile "Fleet profile" with the share of the own ships per archetype. The validator checks groups and that every snub/ground vehicle has an archetype; tests cover it.
 - Seven more gameplay loops (22 in total), so ships that do different jobs no longer count as overlaps of each other:

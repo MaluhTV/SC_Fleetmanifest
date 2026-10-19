@@ -57,8 +57,16 @@ export function loopBar(db, cells, { attr, label, summary, active = null }) {
     return `<button type="button" class="cover-item g-${slot.group}${slot.multi ? " is-multi" : ""}${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === key ? " is-active" : ""}" data-${attr}="${esc(key)}" aria-pressed="${active === key}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
       <span class="cover-icon">${loopIcon(slot.id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
   };
-  const groups = ARCHETYPES.map((g) => `<div class="cover-group g-${g}" role="group" aria-label="${esc(t("group_" + g))}"><span class="cover-group-label">${esc(t("group_" + g))}</span><div class="cover-group-cells">${db.slots.filter((s) => s.group === g).map(item).join("")}</div></div>`).join("");
-  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${groups}</div><span class="muted cover-sum">${summary}</span></div>`;
+  // group heading = archetype filter (main.js → data-group-pick)
+  const groups = ARCHETYPES.map((g) => `<div class="cover-group g-${g}" role="group" aria-label="${esc(t("group_" + g))}"><button type="button" class="cover-group-label" data-group-pick="${g}" title="${esc(t("group_filter_on"))}">${esc(t("group_" + g))}</button><div class="cover-group-cells">${db.slots.filter((s) => s.group === g).map(item).join("")}</div></div>`).join("");
+  // phones: one compact row "Kampf 5/6" per archetype; a tap opens the full bar (main.js → data-bar-expand)
+  const covered = (c) => c && ["full", "planned", "plain"].includes(c.level);
+  const sums = ARCHETYPES.map((g) => {
+    const loops = db.slots.filter((s) => s.group === g && !s.multi);
+    const n = loops.filter((s) => covered(cells[s.key])).length;
+    return `<button type="button" class="cover-summary g-${g}" data-bar-expand aria-expanded="false" title="${esc(t("bar_expand"))}"><span>${esc(t("group_short_" + g))}</span> <b>${n}/${loops.length}</b></button>`;
+  }).join("");
+  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-summaries">${sums}</div><div class="cover-cells">${groups}</div><span class="muted cover-sum">${summary}</span></div>`;
 }
 
 /** Name of a display slot as plain text: the loop, for a multi loop with its archetype ("Snub / Beiboot · Kampf"). */

@@ -124,6 +124,8 @@
 
   <!-- KPIs (js/views/kpis.js) -->
   <div class="fm-kpis" id="kpis"></div>
+  <!-- Short summary: focus, gaps, overlaps (js/views/kpis.js → renderSummary) -->
+  <p class="fm-summary" id="fleetSummary"></p>
 
   <!-- Sticky bar: tabs, legend and (overlaps tab only) the extra-data chips stay visible while scrolling.
        Offset for a fixed site header: set --fm-sticky-top on .fm (css/flottenmanifest.css). -->
@@ -131,38 +133,45 @@
   <!-- Tabs; data-view must match the <section id="view-…"> elements below -->
   <nav class="fm-tabs" role="tablist" id="tabs">
     <button role="tab" data-view="loops" aria-selected="true"><span data-i18n="tab_loops"></span></button>
-    <button role="tab" data-view="matrix" aria-selected="false"><span data-i18n="tab_matrix"></span></button>
-    <button role="tab" data-view="list" aria-selected="false"><span data-i18n="tab_list"></span></button>
     <button role="tab" data-view="overlaps" aria-selected="false"><span data-i18n="tab_overlaps"></span></button>
     <button role="tab" data-view="planner" aria-selected="false"><span data-i18n="tab_planner"></span></button>
     <button role="tab" data-view="compare" aria-selected="false"><span data-i18n="tab_compare"></span><span class="fm-badge" id="compareBadge" hidden></span></button>
+    <button role="tab" data-view="list" aria-selected="false"><span data-i18n="tab_list"></span></button>
   </nav>
 
   <!-- Legend: folded away by default – every symbol on the page also explains itself on hover (title) -->
   <details class="fm-legend-box">
     <summary data-i18n="legend_title"></summary>
+  <!-- in sections; every symbol also explains itself on hover (title) -->
   <div class="fm-legend">
-    <span><span class="mk mk--primary" aria-hidden="true"></span> <span data-i18n="legend_primary"></span></span>
-    <span><span class="mk mk--secondary" aria-hidden="true"></span> <span data-i18n="legend_secondary"></span></span>
-    <span><span class="mk mk--planned" aria-hidden="true"></span> <span data-i18n="legend_planned"></span></span>
-    <span><span class="cmp-toggle" aria-hidden="true">⇄</span> <span data-i18n="legend_compare"></span></span>
-    <span><span class="melt-pair melt-pair--legend"><span class="mp mp--x" data-icon="exchange"></span></span> <span data-i18n="legend_exchange"></span></span>
-    <span><span class="melt-pair melt-pair--legend"><span class="mp mp--u" data-icon="upgrade"></span></span> <span data-i18n="legend_ccu"></span></span>
-    <span><span class="melt-pair melt-pair--legend"><span class="mp mp--x mp--off" data-icon="exchange"></span></span> <span data-i18n="legend_struck"></span></span>
-    <span><span class="icon--warn" data-icon="warn"></span> <span data-i18n="legend_warn"></span></span>
-    <span><span class="ship-mark is-marked legend-mark">Name</span> <span data-i18n="legend_marked"></span></span>
-    <span><span class="ship-mark is-chosen legend-mark">Name</span> <span data-i18n="legend_chosen"></span></span>
-    <span><span class="icon--hangar" data-icon="hangar"></span> <span data-i18n="legend_hangar"></span></span>
-    <span><span class="pill pill--incl" data-i18n="incl_tag"></span> <span data-i18n="legend_included"></span></span>
-    <span class="legend-groups"><span data-i18n="legend_groups"></span>
+    <div class="legend-sec"><h4 data-i18n="legend_sec_roles"></h4>
+      <span><span class="mk mk--primary" aria-hidden="true"></span> <span data-i18n="legend_primary"></span></span>
+      <span><span class="mk mk--secondary" aria-hidden="true"></span> <span data-i18n="legend_secondary"></span></span>
+      <span><span class="mk mk--planned" aria-hidden="true"></span> <span data-i18n="legend_planned"></span></span>
+      <span><span class="pill pill--incl" data-i18n="incl_tag"></span> <span data-i18n="legend_included"></span></span>
+    </div>
+    <div class="legend-sec"><h4 data-i18n="legend_sec_melt"></h4>
+      <span><span class="melt-pair melt-pair--legend"><span class="mp mp--x" data-icon="exchange"></span></span> <span data-i18n="legend_exchange"></span></span>
+      <span><span class="melt-pair melt-pair--legend"><span class="mp mp--u" data-icon="upgrade"></span></span> <span data-i18n="legend_ccu"></span></span>
+      <span><span class="melt-pair melt-pair--legend"><span class="mp mp--x mp--off" data-icon="exchange"></span></span> <span data-i18n="legend_struck"></span></span>
+    </div>
+    <div class="legend-sec legend-bar"><h4 data-i18n="legend_sec_bar"></h4>
+      <span><span class="cover-item is-filled"><span class="cover-cell">2</span></span> <span data-i18n="legend_bar_full"></span></span>
+      <span><span class="cover-item is-partial"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_partial"></span></span>
+      <span><span class="cover-item is-gap"><span class="cover-cell"></span></span> <span data-i18n="legend_bar_gap"></span></span>
+      <span><span class="cover-item is-planned-only"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_planned"></span></span>
+    </div>
+    <div class="legend-sec legend-groups"><h4 data-i18n="legend_sec_groups"></h4>
       <span class="g-dot g-combat" data-i18n="group_combat"></span> <span class="g-dot g-supply" data-i18n="group_supply"></span> <span class="g-dot g-explore" data-i18n="group_explore"></span>
-    </span>
-    <span class="legend-bar"><span data-i18n="legend_bar"></span>
-      <span class="cover-item is-filled"><span class="cover-cell">2</span></span> <span data-i18n="legend_bar_full"></span>
-      <span class="cover-item is-partial"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_partial"></span>
-      <span class="cover-item is-gap"><span class="cover-cell"></span></span> <span data-i18n="legend_bar_gap"></span>
-      <span class="cover-item is-planned-only"><span class="cover-cell">1</span></span> <span data-i18n="legend_bar_planned"></span>
-    </span>
+      <span class="muted" data-i18n="legend_groups_hint"></span>
+    </div>
+    <div class="legend-sec"><h4 data-i18n="legend_sec_marks"></h4>
+      <span><span class="cmp-toggle" aria-hidden="true">⇄</span> <span data-i18n="legend_compare"></span></span>
+      <span><span class="ship-mark is-marked legend-mark">Name</span> <span data-i18n="legend_marked"></span></span>
+      <span><span class="ship-mark is-chosen legend-mark">Name</span> <span data-i18n="legend_chosen"></span></span>
+      <span><span class="icon--warn" data-icon="warn"></span> <span data-i18n="legend_warn"></span></span>
+      <span><span class="icon--hangar" data-icon="hangar"></span> <span data-i18n="legend_hangar"></span></span>
+    </div>
   </div>
 
   </details>
@@ -172,28 +181,27 @@
 
   <!-- Loop bars (quick navigation), one per tab; main.js → showView() shows the one of the open tab -->
   <div class="fm-bar" id="loopBar" data-bar-for="loops"></div>
-  <div class="fm-bar" id="matrixBar" data-bar-for="matrix" hidden></div>
   <div class="fm-bar" id="listBar" data-bar-for="list" hidden></div>
   <div class="fm-bar" id="overlapBar" data-bar-for="overlaps" hidden></div>
   <div class="fm-bar" id="plannerBar" data-bar-for="planner" hidden></div>
   </div>
 
   <!-- Views -->
-  <section id="view-loops"><div class="kpi-note"><button type="button" class="chip" data-kpi-clear aria-pressed="true" hidden></button></div><div class="loop-grid" id="loopCards"></div></section>
-
-  <section id="view-matrix" hidden>
-    <div class="kpi-note"><button type="button" class="chip" data-kpi-clear aria-pressed="true" hidden></button></div>
-    <div class="box"><div class="table-wrap"><table class="matrix" id="matrixTable"></table></div></div>
-  </section>
+  <section id="view-loops"><div class="kpi-note"><button type="button" class="chip" data-kpi-clear aria-pressed="true" hidden></button><button type="button" class="chip" data-group-clear aria-pressed="true" hidden></button></div><div class="loop-grid" id="loopCards"></div></section>
 
   <section id="view-list" hidden>
     <div class="filters">
+      <div class="seg" role="group" id="listMode">
+        <button type="button" class="seg-btn" data-list-mode="list" aria-pressed="true" data-i18n="list_mode_list"></button>
+        <button type="button" class="seg-btn" data-list-mode="matrix" aria-pressed="false" data-i18n="list_mode_matrix"></button>
+      </div>
       <label for="filterLoop" data-i18n="filter_loop"></label>
       <select id="filterLoop"></select>
       <label for="filterSize" data-i18n="filter_size"></label>
       <select id="filterSize"></select>
       <input id="filterText" type="search">
       <button type="button" class="chip" data-kpi-clear aria-pressed="true" hidden></button>
+      <button type="button" class="chip" data-group-clear aria-pressed="true" hidden></button>
     </div>
     <!-- Editor bar: number of local edits, export as ships.json, discard (js/views/editor.js) -->
     <div class="edit-bar" id="editBar">
@@ -202,10 +210,11 @@
       <button type="button" class="btn" id="editDiscard" data-i18n="edit_discard"></button>
       <span class="muted" data-i18n="edit_bar_hint"></span>
     </div>
-    <div class="box"><div class="table-wrap"><table id="shipTable"></table></div></div>
+    <div class="box" id="shipBox"><div class="table-wrap"><table id="shipTable"></table></div></div>
+    <div class="box" id="matrixBox" hidden><div class="table-wrap"><table class="matrix" id="matrixTable"></table></div></div>
   </section>
 
-  <section id="view-overlaps" hidden><div class="cards" id="overlapCards"></div></section>
+  <section id="view-overlaps" hidden><div class="kpi-note"><button type="button" class="chip" data-group-clear aria-pressed="true" hidden></button></div><div class="cards" id="overlapCards"></div></section>
 
   <section id="view-compare" hidden>
     <div class="filters">

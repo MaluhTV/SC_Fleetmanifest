@@ -47,7 +47,7 @@ const SPECIAL = /wikelo|pyam exec|best in show|citizencon|\bedition\b|\bcolou?r\
 const NOT_OWNABLE = new Set(["F8A Lightning", "Mauler", "Mauler Destroyer", "Vanduul Scythe", "Scythe", "Command Module"].map(norm));
 // checked 2026-10-18: our values follow the RSI pledge store on purpose (Xi'an ships fly vertically, wide wings) –
 // the wiki API uses in-game axes, so the "other order" warning is expected for these
-const AXES_CHECKED = new Set(["Railen", "Tyilui", "Khartu-al", "Syulen", "Reliant Kore", "Reliant Mako", "Reliant Sen", "Reliant Tana", "Scorpius", "Ares Inferno", "Ares Ion", "Hawk", "Corsair", "S-65 Stingray", "ATLS", "San'tok.yāi"]);
+const AXES_CHECKED = new Set(["Railen", "Tyilui", "Khartu-al", "Syulen", "Reliant Kore", "Reliant Mako", "Reliant Sen", "Reliant Tana", "Scorpius", "Scorpius Antares", "Ares Inferno", "Ares Ion", "Hawk", "Corsair", "S-65 Stingray", "ATLS", "San'tok.yāi"]);
 // "MISC Freelancer" → "Freelancer": the wiki sometimes puts the manufacturer in front
 const withoutMaker = (name) => name.split(/\s+/).slice(1).join(" ");
 const findShip = (name) => byName.get(norm(name)) || byName.get(norm(withoutMaker(name)));

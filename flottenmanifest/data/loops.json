@@ -5,7 +5,7 @@
     { "id": "interdiction",      "de": "Abfangen / EW",                 "en": "Interdiction / EW",           "group": "combat" },
     { "id": "bomber",            "de": "Bomber",                        "en": "Bomber",                      "group": "combat" },
     { "id": "gunship",           "de": "Gunship",                       "en": "Gunship",                     "group": "combat" },
-    { "id": "capital",           "de": "Großkampfschiff (Capital)",     "en": "Capital ship",                "group": "combat" },
+    { "id": "capital",           "de": "Flottenkampf / Anti-Capital",   "en": "Fleet combat / Anti-capital", "group": "combat" },
     { "id": "dropship",          "de": "Dropship / Boarding / FPS",     "en": "Dropship / Boarding / FPS",   "group": "combat" },
     { "id": "cargo",             "de": "Fracht / Handel",               "en": "Cargo / Trading",             "group": "supply" },
     { "id": "vehicle-transport", "de": "Fahrzeug- & Schiffstransport",  "en": "Vehicle & ship transport",    "group": "supply" },

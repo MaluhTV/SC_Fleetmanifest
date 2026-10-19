@@ -75,7 +75,7 @@ The list lives in `data/loops.json`. Its order is also the order of the cards on
 | `interdiction` | Abfangen / EW | Interdiction / EW |
 | `bomber` | Bomber | Bomber |
 | `gunship` | Gunship | Gunship |
-| `capital` | Großkampfschiff (Capital) | Capital ship |
+| `capital` | Flottenkampf / Anti-Capital | Fleet combat / Anti-capital |
 | `dropship` | Dropship / Boarding / FPS | Dropship / Boarding / FPS |
 | `exploration` | Exploration | Exploration |
 | `recon` | Aufklärung / Datenkurier | Recon / Data running |

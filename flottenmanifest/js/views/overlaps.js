@@ -4,7 +4,7 @@ import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps, loopStats, isPending, isFlightReady, remainingAfter, ownedOnly } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
-import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopName, loopText, slotName, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** RSI's list of loaner ships for ships that are not flight-ready – linked from the "covered only by planned ships" card. */
 const LOANER_MATRIX_URL = "https://support.robertsspaceindustries.com/hc/en-us/articles/360003093114-Loaner-Ship-Matrix";
@@ -76,7 +76,7 @@ function analyse({ db, fleet, state }) {
   const inFleet = (n) => fleet.ships.some((s) => s.name === n);
   const marked = state.marked.filter(inFleet);
   const chosen = Object.fromEntries(Object.entries(state.chosen).filter(([a, b]) => inFleet(a) && inFleet(b)));
-  return { marked, chosen, result: analyseOverlaps(fleet.ships, db.loops, marked, chosen, { readyFirst: state.ovReadyFirst }) };
+  return { marked, chosen, result: analyseOverlaps(fleet.ships, db.slots, marked, chosen, { readyFirst: state.ovReadyFirst }) };
 }
 
 /**
@@ -86,17 +86,19 @@ function analyse({ db, fleet, state }) {
 export function renderOverlapBar(el, ctx) {
   const { db, fleet } = ctx;
   const { marked, result } = analyse(ctx);
-  const overlap = new Map(result.overlaps.map((o) => [o.loopId, o]));
+  const overlap = new Map(result.overlaps.map((o) => [o.key, o]));
   const remaining = fleet.ships.filter((s) => !marked.includes(s.name));
   const cells = {};
-  for (const { id } of db.loops) {
-    const name = loopText(db, id);
-    const primary = remaining.filter((s) => s.loops[id] === "primary" || s.loops[id] === "planned").length;
-    const po = result.plannedOnly.find((x) => x.loopId === id);
-    if (overlap.has(id)) cells[id] = { n: overlap.get(id).primary.length, level: "full", text: `${name}: ${t("ovbar_overlap", { n: overlap.get(id).primary.length })}` };
-    else if (result.gaps.includes(id)) cells[id] = { n: 0, level: "gap", text: `${name}: ${t("ovbar_gap")}` };
-    else if (po) cells[id] = { n: po.ships.length, level: "planned", text: `${name}: ${t("ovbar_planned", { n: po.ships.length })}` };
-    else cells[id] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
+  for (const slot of db.slots) {
+    const key = slot.key, id = slot.id;
+    const name = slotText(db, key);
+    const primary = remaining.filter((s) => slot.has(s) && (s.loops[id] === "primary" || s.loops[id] === "planned")).length;
+    const po = result.plannedOnly.find((x) => x.key === key);
+    if (overlap.has(key)) cells[key] = { n: overlap.get(key).primary.length, level: "full", text: `${name}: ${t("ovbar_overlap", { n: overlap.get(key).primary.length })}` };
+    else if (result.gaps.includes(key)) cells[key] = { n: 0, level: "gap", text: `${name}: ${t("ovbar_gap")}` };
+    else if (po) cells[key] = { n: po.ships.length, level: "planned", text: `${name}: ${t("ovbar_planned", { n: po.ships.length })}` };
+    else if (slot.multi && !primary) cells[key] = { n: 0, level: "", text: `${name}: ${t("loop_empty")}` }; // no snub of this archetype – not a gap
+    else cells[key] = { n: primary, level: "plain", text: `${name}: ${t("ovbar_ok", { n: primary })}` };
   }
   el.innerHTML = loopBar(db, cells, { attr: "ov-jump", label: t("loopbar_title"),
     summary: t("ovbar_sum", { o: result.overlaps.length, g: result.gaps.length, p: result.plannedOnly.length }) });
@@ -116,29 +118,31 @@ function resultCard({ db, fleet }, marked, chosen, result, mark) {
   const exchange = gone.filter((s) => s.melt === "meltable" || s.melt === "meltOnly").length;
   const ccuOnly = gone.filter((s) => s.melt === "upgrade" || s.melt === "locked").length;
   const unknown = gone.length - exchange - ccuOnly;
-  const gapsBefore = analyseOverlaps(fleet.ships, db.loops, [], {}).gaps;
-  const newGaps = result.gaps.filter((id) => !gapsBefore.includes(id));
-  const overlapBefore = new Set(analyseOverlaps(fleet.ships, db.loops, [], {}).overlaps.map((o) => o.loopId));
-  const overlapAfter = new Set(result.overlaps.map((o) => o.loopId));
+  const before = analyseOverlaps(fleet.ships, db.slots, [], {});
+  const gapsBefore = before.gaps;
+  const newGaps = result.gaps.filter((key) => !gapsBefore.includes(key));
+  const overlapBefore = new Set(before.overlaps.map((o) => o.key));
+  const overlapAfter = new Set(result.overlaps.map((o) => o.key));
 
-  // per loop: primary and secondary/planned before → after
-  const changes = db.loops.map(({ id }) => {
-    const a = loopStats(fleet.ships, id), b = loopStats(remaining, id);
-    const note = newGaps.includes(id) ? `<span class="bad">${t("res_new_gap")}</span>`
-      : overlapBefore.has(id) && !overlapAfter.has(id) ? `<span class="good">${t("res_overlap_solved")}</span>` : "";
-    return { id, p0: a.primary.length, p1: b.primary.length, o0: a.all.length - a.primary.length, o1: b.all.length - b.primary.length, note };
+  // per display slot: primary and secondary/planned before → after
+  const changes = db.slots.map((slot) => {
+    const key = slot.key;
+    const a = loopStats(fleet.ships.filter(slot.has), slot.id), b = loopStats(remaining.filter(slot.has), slot.id);
+    const note = newGaps.includes(key) ? `<span class="bad">${t("res_new_gap")}</span>`
+      : overlapBefore.has(key) && !overlapAfter.has(key) ? `<span class="good">${t("res_overlap_solved")}</span>` : "";
+    return { id: key, p0: a.primary.length, p1: b.primary.length, o0: a.all.length - a.primary.length, o1: b.all.length - b.primary.length, note };
   }).filter((c) => c.p0 !== c.p1 || c.o0 !== c.o1);
 
   // loop bar of the result; changed loops get a dot and "before → after" in the tooltip
   const cells = fleetLoopCells(db, { ships: remaining });
   for (const c of changes) {
     cells[c.id].changed = true;
-    cells[c.id].text = `${loopText(db, c.id)}: ${t("res_bar_change", { a: c.p0, b: c.p1 })}`;
+    cells[c.id].text = `${slotText(db, c.id)}: ${t("res_bar_change", { a: c.p0, b: c.p1 })}`;
   }
   for (const id of result.gaps) cells[id] = { ...cells[id], level: "gap" };
 
   const arrow = (a, b) => (a === b ? `${a}` : `${a} → <b class="${b < a ? "warn" : "good"}">${b}</b>`);
-  const rows = changes.map((c) => `<tr><td>${loopName(db, c.id)}</td><td class="num">${arrow(c.p0, c.p1)}</td><td class="num">${arrow(c.o0, c.o1)}</td><td>${c.note}</td></tr>`).join("");
+  const rows = changes.map((c) => `<tr><td>${slotName(db, c.id)}</td><td class="num">${arrow(c.p0, c.p1)}</td><td class="num">${arrow(c.o0, c.o1)}</td><td>${c.note}</td></tr>`).join("");
   const swaps = marked.map((n) => mark({ name: n }, esc(n)) + (chosen[n] ? ` → ${mark({ name: chosen[n] }, esc(chosen[n]))}` : ""));
   const meltLine = [exchange && t("res_exchange", { n: exchange }), ccuOnly && t("res_ccu", { n: ccuOnly }), unknown && t("res_unknown", { n: unknown })].filter(Boolean).join(", ");
 
@@ -237,9 +241,9 @@ export function renderOverlaps(el, ctx) {
       return `${who} → ${t(c.chosen ? "ov_replaced_by" : "ov_covered_by", { o: sub })}${lostHint(c, db)}` +
         (c.alternatives.length ? ` <span class="muted">(${t("ov_also", { x: alsoList(c.alternatives, (a) => choose(a, c.ship)) })})</span>` : "");
     });
-    const title = t("ov_overlap_title", { loop: loopName(db, o.loopId), n: o.primary.length }) +
+    const title = t("ov_overlap_title", { loop: slotName(db, o.key), n: o.primary.length }) +
       (o.markedCount ? ` <span class="muted">· ${t("ov_marked_count", { n: o.markedCount })}</span>` : "");
-    addCard(o.loopId, `<article id="ov-${esc(o.loopId)}">
+    addCard(o.key, `<article id="ov-${esc(o.key)}">
       <h3>${loopIconTitle(o.loopId)}${title}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(groups)}
       ${o.crewMax >= CREW_HINT_FROM ? `<p>${t("ov_crew", { n: o.crewMax })}</p>` : ""}
@@ -251,19 +255,19 @@ export function renderOverlaps(el, ctx) {
   // same card layout as an overlap (tiles by size, violet notes), without candidates
   for (const x of result.plannedOnly) {
     loopId = x.loopId;
-    addCard(x.loopId, `<article class="is-planned-only" id="ov-${esc(x.loopId)}">
-      <h3>${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: loopName(db, x.loopId), n: x.ships.length })}</h3>
+    addCard(x.key, `<article class="is-planned-only" id="ov-${esc(x.key)}">
+      <h3>${loopIconTitle(x.loopId)}${t("ov_planned_card_title", { loop: slotName(db, x.key), n: x.ships.length })}</h3>
       <p class="muted">${t("ov_by_size")}</p>${groupsHtml(sizeGroups(x.ships))}
       <p class="muted plan-note-planned">${t("ov_planned_text")} ${t("ov_loaner_hint", { link: `<a href="${LOANER_MATRIX_URL}" target="_blank" rel="noopener">RSI Loaner Ship Matrix</a>` })}</p>
     </article>`);
   }
 
-  for (const { id } of db.loops) parts.push(...(loopCards.get(id) || []));
+  for (const { key } of db.slots) parts.push(...(loopCards.get(key) || []));
 
   // Gaps and orphan snubs are computed without the marked ships
   let gaps = `<article class="is-gap" id="ov-gaps"><h3>${t("ov_gaps_title")}${marked.length ? ` <span class="muted">· ${t("ov_without_marked")}</span>` : ""}</h3>`;
   gaps += result.gaps.length
-    ? `<p>${t("ov_gaps_none")}</p>${list(result.gaps.map((id) => loopName(db, id)))}`
+    ? `<p>${t("ov_gaps_none")}</p>${list(result.gaps.map((key) => slotName(db, key)))}`
     : `<p>${t("ov_gaps_ok")}</p>`;
   parts.push(gaps + "</article>");
 

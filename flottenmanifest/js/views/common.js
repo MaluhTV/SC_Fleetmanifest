@@ -1,4 +1,5 @@
 /** Building blocks shared by several views. They return HTML strings. */
+import { ARCHETYPES } from "../shipdb.js";
 import { t, fmt, getLang } from "../i18n.js";
 import { esc } from "../util.js";
 
@@ -49,13 +50,26 @@ export const loopIconTitle = (loopId) => `<span class="card-loop-icon" aria-hidd
  */
 const BAR_LEVELS = { full: " is-filled", partial: " is-partial", plain: " is-plain", gap: " is-gap", planned: " is-planned-only" };
 export function loopBar(db, cells, { attr, label, summary, active = null }) {
-  const items = db.loops.map(({ id }) => id).map((id) => {
-    const c = cells[id] || { n: 0, level: "", text: loopText(db, id) };
-    return `<button type="button" class="cover-item${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === id ? " is-active" : ""}" data-${attr}="${esc(id)}" aria-pressed="${active === id}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
-      <span class="cover-icon">${loopIcon(id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
-  }).join("");
-  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${items}</div><span class="muted cover-sum">${summary}</span></div>`;
+  // cells and data attributes use the slot key (loop ID, or "snub--combat" for a multi loop inside an archetype)
+  const item = (slot) => {
+    const key = slot.key;
+    const c = cells[key] || { n: 0, level: "", text: slotText(db, key) };
+    return `<button type="button" class="cover-item g-${slot.group}${slot.multi ? " is-multi" : ""}${BAR_LEVELS[c.level] || ""}${c.changed ? " is-changed" : ""}${active === key ? " is-active" : ""}" data-${attr}="${esc(key)}" aria-pressed="${active === key}" title="${esc(c.text)}" aria-label="${esc(c.text)}">
+      <span class="cover-icon">${loopIcon(slot.id)}</span><span class="cover-cell">${c.n || ""}</span></button>`;
+  };
+  const groups = ARCHETYPES.map((g) => `<div class="cover-group g-${g}" role="group" aria-label="${esc(t("group_" + g))}"><span class="cover-group-label">${esc(t("group_" + g))}</span><div class="cover-group-cells">${db.slots.filter((s) => s.group === g).map(item).join("")}</div></div>`).join("");
+  return `<div class="cover-bar" role="group" aria-label="${esc(label)}"><div class="cover-cells">${groups}</div><span class="muted cover-sum">${summary}</span></div>`;
 }
+
+/** Name of a display slot as plain text: the loop, for a multi loop with its archetype ("Snub / Beiboot · Kampf"). */
+export function slotText(db, key) {
+  const slot = db.slot(key);
+  if (!slot) return loopText(db, key);
+  return loopText(db, slot.id) + (slot.multi ? " · " + t("group_" + slot.group) : "");
+}
+export const slotName = (db, key) => esc(slotText(db, key));
+/** Loop icon in front of a card title for a slot. */
+export const slotIconTitle = (db, key) => loopIconTitle((db.slot(key) || { id: key }).id);
 
 /** Loop name as plain text – for title/aria attributes (escape there with esc()) and the clipboard. */
 export function loopText(db, loopId) {

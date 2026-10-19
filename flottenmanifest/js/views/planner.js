@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, loopBar, loopIconTitle, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -53,19 +53,21 @@ export function renderPlanner(el, ctx, barEl = null) {
 }
 
 /**
- * One square per gameplay loop, always in the order of data/loops.json (fixed positions).
+ * One square per display slot (gameplay loop, snub / ground vehicle once per archetype), fixed positions.
  * Filled = at least one ship is selected for a wish of that loop; the number = distinct ships.
  * Clicking a square picks that loop in the form (main.js → data-cover-loop).
  */
 function coverageBar(rows, { db, state }) {
   const cells = {};
-  for (const { id } of db.loops) {
-    const n = new Set(rows.filter((r) => r.slot.loop === id).map((r) => r.ship.name)).size;
-    const name = loopText(db, id); // plain text – loopBar escapes the tooltip
-    cells[id] = { n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
+  for (const slot of db.slots) {
+    // a snub / ground vehicle square only counts the picked ships of its archetype
+    const n = new Set(rows.filter((r) => r.slot.loop === slot.id && slot.has(r.ship)).map((r) => r.ship.name)).size;
+    const name = slotText(db, slot.key); // plain text – loopBar escapes the tooltip
+    cells[slot.key] = { multi: slot.multi, n, level: n ? "full" : "", text: `${name}: ${n ? t(n === 1 ? "planner_cover_one" : "planner_cover_n", { n }) : t("planner_cover_none")}` };
   }
-  const covered = Object.values(cells).filter((c) => c.n).length;
-  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: db.loops.length }) });
+  const loops = Object.values(cells).filter((c) => !c.multi);
+  const covered = loops.filter((c) => c.n).length;
+  return loopBar(db, cells, { attr: "cover-loop", label: t("planner_cover_title"), summary: t("planner_cover_sum", { n: covered, total: loops.length }) });
 }
 
 /** Short name of a wish, e.g. "Bergung (Salvage) · 1–2": wishText = plain text, wishLabel = escaped for HTML. */

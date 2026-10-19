@@ -84,6 +84,19 @@ for (const s of ships) {
   for (const m of s.motherships || []) if (!names.has(m)) err(s.name, `mothership "${m}" does not exist in ships.json`);
 }
 
+// Archetypes: loops.json → group; a ship in a multi loop (snub, ground vehicle) needs an archetype – from its
+// other roles or set with "archetype" – otherwise it would not show up in any archetype
+const loopsDoc = JSON.parse(readFileSync(LOOPS_FILE, "utf8"));
+const groupOf = Object.fromEntries(loopsDoc.loops.map((l) => [l.id, l.group || "multi"]));
+const ARCHETYPES = ["combat", "supply", "explore"];
+for (const l of loopsDoc.loops) if (![...ARCHETYPES, "multi"].includes(l.group)) err(`loops.json "${l.id}"`, `invalid group "${l.group}" (combat, supply, explore or multi)`);
+for (const s of ships) {
+  if (s.archetype != null && !ARCHETYPES.includes(s.archetype)) err(s.name, `invalid archetype "${s.archetype}" (combat, supply or explore)`);
+  const inMulti = Object.keys(s.loops || {}).some((k) => groupOf[k] === "multi");
+  const derived = Object.keys(s.loops || {}).some((k) => groupOf[k] && groupOf[k] !== "multi");
+  if (inMulti && !s.archetype && !derived) warn(s.name, 'snub/ground vehicle without other roles – set "archetype" (combat, supply or explore)');
+}
+
 // data/included.json (RSI "Included Vessels"): every vessel must be a ship or alias in ships.json;
 // a parent that is unknown only warns (RSI may list variants the database does not have yet)
 const INCLUDED_FILE = join(ROOT, "data", "included.json");
@@ -130,6 +143,7 @@ function formatShipsFile(doc) {
       `      "loops": ${j(s.loops).replace(/,/g, ", ").replace(/":/g, '": ')},`,
       `      "note": { "de": ${j(s.note.de)}, "en": ${j(s.note.en)} },`,
       `      "motherships": ${j(s.motherships)},`,
+      ...(s.archetype ? [`      "archetype": ${j(s.archetype)},`] : []),
       `      "upgradeable": ${j(s.upgradeable !== false)},`,
       ...(s.fighterClass ? [`      "fighterClass": ${j(s.fighterClass)},`] : []),
       `      "image": ${j(s.image ?? null)}`,

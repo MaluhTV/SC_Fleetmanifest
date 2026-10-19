@@ -476,6 +476,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Flugabwehr", "en": "Anti-air" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/ballista.jpg"
     },
@@ -563,6 +564,7 @@
       "loops": {"snub": "primary", "cargo": "secondary"},
       "note": { "de": "", "en": "" },
       "motherships": ["Carrack Expedition w/C8X"],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/c8-pisces.jpg"
     },
@@ -633,6 +635,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Flugabwehr", "en": "Anti-air" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/centurion.jpg"
     },
@@ -872,6 +875,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/cyclone.jpg"
     },
@@ -886,6 +890,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Flugabwehr", "en": "Anti-air" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/cyclone-aa.jpg"
     },
@@ -900,6 +905,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Flugabwehr", "en": "Anti-air" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/cyclone-mt.jpg"
     },
@@ -942,6 +948,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/cyclone-tr.jpg"
     },
@@ -1333,6 +1340,7 @@
       "loops": {"ground": "planned"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/g12.jpg"
     },
@@ -1877,6 +1885,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Flugabwehr (Greycat)", "en": "Anti-air (Greycat)" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/mdc.jpg"
     },
@@ -2004,6 +2013,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "supply",
       "upgradeable": true,
       "image": "images/ships/mtc.jpg"
     },
@@ -2131,6 +2141,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Schwerer Panzer", "en": "Heavy tank" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/nova.jpg"
     },
@@ -2357,6 +2368,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": false,
       "image": "images/ships/ptv.jpg"
     },
@@ -2427,6 +2439,7 @@
       "loops": {"ground": "planned"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/ranger.jpg"
     },
@@ -2441,6 +2454,7 @@
       "loops": {"ground": "planned"},
       "note": { "de": "Technische Daten noch nicht veröffentlicht", "en": "Specs not published yet" },
       "motherships": [],
+      "archetype": "supply",
       "upgradeable": true,
       "image": null
     },
@@ -2886,6 +2900,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Leichter Panzer", "en": "Light tank" },
       "motherships": [],
+      "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/storm.jpg"
     },
@@ -2900,6 +2915,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/stv.jpg"
     },
@@ -3013,6 +3029,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "Sonderedition des Ursa", "en": "Special edition of the Ursa" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/ursa-fortuna.jpg"
     },
@@ -3041,6 +3058,7 @@
       "loops": {"ground": "primary"},
       "note": { "de": "", "en": "" },
       "motherships": [],
+      "archetype": "explore",
       "upgradeable": true,
       "image": "images/ships/utv.jpg"
     },

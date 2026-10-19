@@ -51,7 +51,7 @@ export function renderList(table, { db, fleet, state }, filter) {
   const q = filter.text.toLowerCase();
   const kpi = KPI_FILTERS[state.kpiFilter]; // tile filter from the KPI row (owned / flight-ready / included)
   const rows = fleet.ships.filter(
-    (s) => (!kpi || kpi(s)) && (!filter.loop || s.loops[filter.loop]) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
+    (s) => (!kpi || kpi(s)) && (!filter.loop || s.loops[filter.loop]) && (!filter.has || filter.has(s)) && (!filter.size || s.size === filter.size) && (!q || s.name.toLowerCase().includes(q)),
   );
   // the image column is left out if no fleet ship has an image
   // optional columns only appear when at least one fleet ship has a value

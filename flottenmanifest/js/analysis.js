@@ -214,9 +214,14 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { r
   // all ships count – also concepts and ships whose role is only planned (marked as pending in the view)
   const pool = remaining;
 
+  // loops may be plain loops ({ id }) or display slots (db.slots: { key, id, group, multi, has }) – a multi slot
+  // (snub / ground vehicle inside one archetype) only looks at the ships of that archetype
+  const slotOf = (l) => ({ key: l.key || l.id, id: l.id, group: l.group || null, multi: !!l.multi, has: l.has || (() => true) });
   const overlaps = loops
-    .map(({ id }) => {
-      const primary = fleetShips.filter((s) => coreRole(s, id));
+    .map(slotOf)
+    .map(({ key, id, group, multi, has }) => {
+      const primary = fleetShips.filter((s) => has(s) && coreRole(s, id));
+      const slotPool = pool.filter(has);
       // an overlap needs three ships – and at least one the user owns (included snubs alone cannot be given away)
       if (primary.length < OVERLAP_MIN_SHIPS || primary.every((s) => s.includedOnly)) return null;
       const candidates = primary
@@ -227,7 +232,7 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { r
           if (ship.includedBy?.length) return { ship, marked: isMarked, replacement: null, includedBy: ship.includedBy, chosen: false, alternatives: [], lost: [] };
           // ships owned more than once and ground vehicles are only listed if the user marked them
           if (!isMarked && (ship.qty !== 1 || sizeRank(ship.size) === 0)) return null;
-          const options = findReplacements(ship, id, pool, isMarked, readyFirst);
+          const options = findReplacements(ship, id, slotPool, isMarked, readyFirst);
           // the user's pick comes first if it is a valid substitute in this loop
           const pick = options.findIndex((o) => o.name === chosen[ship.name]);
           if (pick > 0) options.unshift(...options.splice(pick, 1));
@@ -243,18 +248,21 @@ export function analyseOverlaps(fleetShips, loops, marked = [], chosen = {}, { r
         })
         .filter(Boolean)
         .sort((a, b) => b.marked - a.marked); // marked ships first
-      return { loopId: id, primary, markedCount: primary.filter((s) => markedSet.has(s.name)).length, candidates, crewMax: sum(primary, (s) => s.crewMax * s.qty) };
+      return { loopId: id, key, group, multi, primary, markedCount: primary.filter((s) => markedSet.has(s.name)).length, candidates, crewMax: sum(primary, (s) => s.crewMax * s.qty) };
     })
     .filter(Boolean)
     .sort((a, b) => b.primary.length - a.primary.length);
 
+  // gaps: only gameplay loops – a multi slot (e.g. "no combat snub") is not a gap. Returns slot keys (= loop IDs).
   const gaps = loops
-    .map(({ id }) => id)
-    .filter((id) => !remaining.some((s) => s.loops[id] === ROLE.PRIMARY || s.loops[id] === ROLE.PLANNED));
+    .map(slotOf)
+    .filter((sl) => !sl.multi && !remaining.some((s) => sl.has(s) && (s.loops[sl.id] === ROLE.PRIMARY || s.loops[sl.id] === ROLE.PLANNED)))
+    .map((sl) => sl.key);
 
   // loops covered only by pending ships (planned role or not flight-ready) – e.g. support with a concept Vulcan
   const plannedOnly = loops
-    .map(({ id }) => ({ loopId: id, ships: remaining.filter((s) => coreRole(s, id)) }))
+    .map(slotOf)
+    .map((sl) => ({ loopId: sl.id, key: sl.key, group: sl.group, multi: sl.multi, ships: remaining.filter((s) => sl.has(s) && coreRole(s, sl.id)) }))
     .filter((x) => x.ships.length && x.ships.every((s) => isPending(s, x.loopId)));
 
   const owned = new Set(remaining.map((s) => s.name));

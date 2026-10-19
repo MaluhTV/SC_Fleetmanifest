@@ -97,7 +97,12 @@ const viewCtx = () => {
 };
 /** Views that follow the KPI filter; from any other tab a tile click opens the ship list. */
 const KPI_VIEWS = ["loops", "matrix", "list"];
-const listFilter = () => ({ loop: el.filterLoop.value, size: el.filterSize.value, text: el.filterText.value });
+// listSlot: bar square picked in the ship list (a multi slot like "snub--combat" also filters by archetype)
+let listSlot = null;
+const listFilter = () => {
+  const slot = listSlot && db.slot(listSlot);
+  return { loop: el.filterLoop.value, size: el.filterSize.value, text: el.filterText.value, has: slot && slot.id === el.filterLoop.value ? slot.has : null };
+};
 
 function renderHeader() {
   setLang(state.lang);
@@ -315,7 +320,7 @@ function renderAll() {
 let matrixHl = null;
 function renderMatrixArea() {
   renderLoopBar(el.matrixBar, viewCtx(), { attr: "matrix-hl", active: matrixHl });
-  renderMatrix(el.matrixTable, viewCtx(), matrixHl);
+  renderMatrix(el.matrixTable, viewCtx(), matrixHl ? (db.slot(matrixHl) || { id: matrixHl }).id : null); // column = loop of the picked square
 }
 function setKpiFilter(filter) {
   state.kpiFilter = filter;
@@ -338,7 +343,8 @@ function renderKpiChips() {
 }
 
 function renderListArea() {
-  renderLoopBar(el.listBar, viewCtx(), { attr: "list-filter", active: el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
+  const slot = listSlot && db.slot(listSlot);
+  renderLoopBar(el.listBar, viewCtx(), { attr: "list-filter", active: slot && slot.id === el.filterLoop.value ? listSlot : el.filterLoop.value || null, hint: " · " + t("listbar_hint") });
   renderList(el.shipTable, ctx(), listFilter());
 }
 
@@ -889,8 +895,9 @@ function wireEvents() {
   el.plannerBar.addEventListener("click", (e) => {
     const c = e.target.closest("[data-cover-loop]");
     if (!c) return;
-    el.plannerLoop.value = c.dataset.coverLoop;
-    const card = el.plannerSlots.querySelector(`.plan-card[data-loop="${CSS.escape(c.dataset.coverLoop)}"]`);
+    const loopId = (db.slot(c.dataset.coverLoop) || { id: c.dataset.coverLoop }).id; // "snub--combat" → snub
+    el.plannerLoop.value = loopId;
+    const card = el.plannerSlots.querySelector(`.plan-card[data-loop="${CSS.escape(loopId)}"]`);
     (card || el.plannerForm).scrollIntoView({ behavior: "smooth", block: "start" });
   });
   // tiles are checkboxes: Enter / Space toggle them
@@ -914,7 +921,7 @@ function wireEvents() {
   });
 
   // Ship list: filters and sorting via click/Enter on the column header
-  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", renderListArea));
+  [el.filterLoop, el.filterSize, el.filterText].forEach((f) => f.addEventListener("input", () => { if (f === el.filterLoop) listSlot = null; renderListArea(); }));
   // loop bars: matrix = highlight the column, ship list = filter (second click clears), overlaps = jump to the card
   el.matrixBar.addEventListener("click", (e) => {
     const b = e.target.closest("[data-matrix-hl]");
@@ -927,7 +934,9 @@ function wireEvents() {
   el.listBar.addEventListener("click", (e) => {
     const b = e.target.closest("[data-list-filter]");
     if (!b) return;
-    el.filterLoop.value = el.filterLoop.value === b.dataset.listFilter ? "" : b.dataset.listFilter;
+    const key = b.dataset.listFilter, slot = db.slot(key);
+    listSlot = listSlot === key ? null : key;
+    el.filterLoop.value = listSlot ? slot.id : "";
     renderListArea();
   });
   el.overlapBar.addEventListener("click", (e) => {

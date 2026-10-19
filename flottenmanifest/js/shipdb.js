@@ -122,8 +122,13 @@ export function applyOverrides(shipsDoc, overrides) {
   return doc;
 }
 
+/** Archetypes (loops.json → group): every loop belongs to one, "multi" loops (snub, ground vehicle) to all three. */
+export const ARCHETYPES = ["combat", "supply", "explore"];
+
 /** Builds the database from already loaded data (also usable in tests). */
 export function createShipDb(shipsDoc, loopsDoc, example) {
+  const loopIds = new Set(loopsDoc.loops.map((l) => l.id));
+  const groupOf = Object.fromEntries(loopsDoc.loops.map((l) => [l.id, l.group || "multi"]));
   const ships = shipsDoc.ships.map((s) => ({
     aliases: [],
     note: { de: "", en: "" },
@@ -133,8 +138,33 @@ export function createShipDb(shipsDoc, loopsDoc, example) {
     fighterClass: null,
     beam: null,
     height: null,
+    archetype: null,
     ...s,
   }));
+  // roles of loops that no longer exist (old edits, removed loops) are dropped
+  ships.forEach((s) => { s.loops = Object.fromEntries(Object.entries(s.loops || {}).filter(([k]) => loopIds.has(k))); });
+
+  /**
+   * Archetypes of a ship: the one set in ships.json ("archetype"), otherwise the groups of its primary/announced
+   * roles, otherwise of its secondary roles – multi loops (snub, ground) do not decide.
+   */
+  const archetypesOf = (s) => {
+    if (ARCHETYPES.includes(s.archetype)) return [s.archetype];
+    const groups = (roles) => [...new Set(Object.entries(s.loops).filter(([k, r]) => roles.includes(r) && groupOf[k] !== "multi").map(([k]) => groupOf[k]))];
+    const core = groups(["primary", "planned"]);
+    return core.length ? core : groups(["secondary"]);
+  };
+  /**
+   * Display slots in archetype order: every loop once, multi loops once per archetype (key "snub--combat").
+   * slot.has(ship) = the ship counts in this slot.
+   */
+  const slots = [];
+  for (const g of ARCHETYPES) {
+    for (const l of loopsDoc.loops.filter((x) => x.group === g)) slots.push({ key: l.id, id: l.id, group: g, multi: false, has: (s) => !!s.loops[l.id] });
+    for (const l of loopsDoc.loops.filter((x) => (x.group || "multi") === "multi")) {
+      slots.push({ key: `${l.id}--${g}`, id: l.id, group: g, multi: true, has: (s) => !!s.loops[l.id] && archetypesOf(s).includes(g) });
+    }
+  }
 
   // Index: normalized name or alias -> ship. The main name wins over aliases.
   const index = new Map();
@@ -150,6 +180,9 @@ export function createShipDb(shipsDoc, loopsDoc, example) {
     meta: shipsDoc.meta,
     ships,
     loops: loopsDoc.loops,
+    slots,
+    slot: (key) => slots.find((x) => x.key === key) || null,
+    archetypesOf,
     example,
 
     /** Ship by its exact name in ships.json (no alias). */

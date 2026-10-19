@@ -58,6 +58,17 @@ ok(!db.byName("Merchantman").loops.touring, "Merchantman not in touring");
 fleet = buildFleet(items(["Constellation Mk V Centaurus", "Ballista Snowblind", "Caterpillar Pirate Edition"]), db);
 ok(fleet.ships.some((s) => s.name === "Skylark" && s.includedOnly), "Constellation Mk V brings its Skylark");
 ok(fleet.unknown.length === 0 && fleet.ships.some((s) => s.name === "Ballista") && fleet.ships.some((s) => s.name === "Caterpillar"), "editions (Ballista Snowblind, Caterpillar Pirate) = base ship");
+const arche = (n) => db.archetypesOf(db.byName(n)).join(",");
+ok(arche("C8 Pisces") === "explore" && arche("C8R Pisces Rescue") === "supply" && arche("Ursa") === "explore" && arche("Ursa Medivac") === "supply" && arche("Ballista") === "combat",
+  "archetypes: Pisces/Ursa explore, Pisces Rescue/Ursa Medivac supply, Ballista combat");
+const noArche = db.ships.filter((s) => (s.loops.snub || s.loops.ground) && !db.archetypesOf(s).length).map((s) => s.name);
+ok(!noArche.length, "every snub / ground vehicle has an archetype" + (noArche.length ? ": " + noArche.join(", ") : ""));
+ok(db.slots.filter((s) => s.id === "snub").length === 3 && db.slots.some((s) => s.key === "ground--combat"), "snub and ground vehicle appear in all three archetypes");
+fleet = buildFleet(items(["Ballista", "Nova", "Storm", "Ursa Rover", "Cyclone", "STV"]), db);
+const res = analyseOverlaps(fleet.ships, db.slots);
+ok(res.overlaps.some((o) => o.key === "ground--combat") && res.overlaps.some((o) => o.key === "ground--explore") && !res.overlaps.some((o) => o.key === "ground"),
+  "ground vehicles overlap per archetype (combat vehicles vs. rovers separately)");
+ok(!res.gaps.some((k) => k.includes("--")), "an empty snub / ground slot is never a gap");
 const clip = db.byName("Clipper");
 ok(clip.length >= clip.beam, "Clipper: length is the longest axis (26.5 × 21 × 18)");
 

@@ -110,6 +110,12 @@
     <span id="unknownText"></span>
     <button class="btn" type="button" id="unknownMap" data-i18n="map_open"></button>
   </div>
+  <!-- Local edits made on an older database: they hide newer data (main.js → renderStaleNote) -->
+  <div class="fm-banner fm-banner--warn" id="staleNote" hidden>
+    <span id="staleText"></span>
+    <button class="btn" type="button" id="staleShow" data-i18n="stale_show"></button>
+    <button class="btn" type="button" id="staleDiscard" data-i18n="stale_discard"></button>
+  </div>
   <dialog class="fm-dialog fm-import" id="mapDialog" aria-labelledby="mapTitle">
     <h3 id="mapTitle" data-i18n="map_title"></h3>
     <p data-i18n="map_intro"></p>

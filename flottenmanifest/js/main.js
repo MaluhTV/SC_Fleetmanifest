@@ -127,6 +127,7 @@ function renderHeader() {
   $$("[data-icon]").forEach((x) => { x.innerHTML = ICONS[x.dataset.icon] || ""; });
   renderImageConsent();
   renderUnknownNote();
+  renderStaleNote();
   $("#appVersion").textContent = `Flottenmanifest ${VERSION}`;
   el.plannerAll.title = t("planner_all_title");
   $$("[data-melt-pair]").forEach((x) => { x.innerHTML = meltPair(x.dataset.meltPair); });
@@ -176,6 +177,14 @@ function renderImageConsent() {
 
 /* ---------- Unknown entries: own assignment to a database ship (state.aliases) ---------- */
 const unknownNames = () => [...new Set(fleet.unknown)];
+/** Local edits made on an older ships.json (or before 2.22, without a date): they replace the newer roles. */
+const staleEdits = () => Object.entries(state.overrides).filter(([name, o]) => db.byName(name) && (!o.base || o.base < db.meta.updated)).map(([name]) => name);
+function renderStaleNote() {
+  const names = staleEdits();
+  $("#staleNote").hidden = !names.length;
+  if (!names.length) return;
+  $("#staleText").textContent = t("stale_note", { n: names.length, list: names.slice(0, 5).join(", ") + (names.length > 5 ? " …" : "") });
+}
 function renderUnknownNote() {
   const names = unknownNames();
   $("#unknownNote").hidden = !names.length;
@@ -599,7 +608,7 @@ function originalShip(name) {
   return { note: { de: "", en: "" }, beam: null, height: null, length: null, ...raw };
 }
 function saveOverride(name, diff, message) {
-  if (Object.keys(diff).length) state.overrides[name] = diff;
+  if (Object.keys(diff).length) state.overrides[name] = { ...diff, base: db.meta.updated };
   else delete state.overrides[name];
   save.overrides(state);
   rebuildDb();
@@ -735,6 +744,21 @@ function wireEvents() {
     if (e.target.classList.contains("ed-role")) e.target.className = `ed-role ed-role--${e.target.value || "none"}`;
   });
   el.editExport.addEventListener("click", () => downloadShipsJson(db.source.rawShipsDoc, state.overrides));
+  // edits from an older database: show them in the ship list, or drop only those
+  $("#staleShow").addEventListener("click", () => {
+    state.listMode = "list";
+    showView("list");
+    renderListArea();
+    el.editBar.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  $("#staleDiscard").addEventListener("click", () => {
+    const names = staleEdits();
+    if (!names.length || !confirm(t("stale_discard_confirm", { n: names.length }))) return;
+    names.forEach((n) => delete state.overrides[n]);
+    save.overrides(state);
+    rebuildDb();
+    renderAll();
+  });
   el.editDiscard.addEventListener("click", () => {
     if (!confirm(t("edit_discard_confirm"))) return;
     state.overrides = {};

@@ -109,7 +109,10 @@ export function sanitizeOverride(o) {
   }
   if ("fighterClass" in o && (o.fighterClass === null || FIGHTER_CLASSES.includes(o.fighterClass))) out.fighterClass = o.fighterClass;
   if (o.note && typeof o.note.de === "string" && typeof o.note.en === "string") out.note = { de: o.note.de.slice(0, 300), en: o.note.en.slice(0, 300) };
-  return Object.keys(out).length ? out : null;
+  if (!Object.keys(out).length) return null;
+  // database date (ships.json → meta.updated) the edit was made on – newer data is not hidden silently
+  if (typeof o.base === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.base)) out.base = o.base;
+  return out;
 }
 
 /** Returns a copy of shipsDoc with the overrides applied (unknown ship names are ignored). */

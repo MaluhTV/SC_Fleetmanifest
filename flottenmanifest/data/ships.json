@@ -307,7 +307,7 @@
     },
     {
       "name": "ATLS",
-      "aliases": ["ATLS GEO","ATLS IKTI","ATLS IKTI Akuma"],
+      "aliases": [],
       "size": "Ground vehicle",
       "length": 1.8, "beam": 2, "height": 2.8,
       "crewMin": 1, "crewMax": 1,
@@ -318,6 +318,35 @@
       "motherships": [],
       "upgradeable": true,
       "image": "images/ships/atls.jpg"
+    },
+    {
+      "name": "ATLS GEO",
+      "aliases": [],
+      "size": "Ground vehicle",
+      "length": 1.8, "beam": 2, "height": 2.8,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"mining": "primary", "ground": "secondary"},
+      "note": { "de": "Bergbau-Variante", "en": "Mining variant" },
+      "motherships": [],
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/rbkutfuffvdy7/store_small.jpg"
+    },
+    {
+      "name": "ATLS IKTI",
+      "aliases": ["ATLS IKTI Akuma"],
+      "size": "Ground vehicle",
+      "length": 1.8, "beam": 2, "height": 2.8,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"ground": "primary"},
+      "note": { "de": "Kampf-Exoskelett", "en": "Combat power suit" },
+      "motherships": [],
+      "archetype": "combat",
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/igpdt73syt7fi/store_small.jpg"
     },
     {
       "name": "Aurora Mk I CL",
@@ -1302,7 +1331,7 @@
     },
     {
       "name": "Fury",
-      "aliases": ["Fury MX"],
+      "aliases": [],
       "size": "S1 Snub",
       "length": 8, "beam": 5.4, "height": 2.6,
       "crewMin": 1, "crewMax": 1,
@@ -1328,6 +1357,21 @@
       "motherships": ["Starlancer TAC"],
       "upgradeable": true,
       "image": "images/ships/fury-lx.jpg"
+    },
+    {
+      "name": "Fury MX",
+      "aliases": [],
+      "size": "S1 Snub",
+      "length": 8, "beam": 5.4, "height": 2.6,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"snub": "primary", "fighter": "secondary"},
+      "note": { "de": "Variante mit ballistischer Bewaffnung", "en": "Variant with ballistic weapons" },
+      "motherships": ["Starlancer TAC"],
+      "upgradeable": true,
+      "fighterClass": "snub",
+      "image": "https://media.robertsspaceindustries.com/afdx1cof4p8rb/store_small.jpg"
     },
     {
       "name": "G12",
@@ -1419,7 +1463,7 @@
     },
     {
       "name": "Gladius",
-      "aliases": ["Gladius Valiant","Pirate Gladius","Gladius Pirate","Gladius Dunlevy"],
+      "aliases": ["Gladius Dunlevy"],
       "size": "S2 Small",
       "length": 20, "beam": 17, "height": 5.5,
       "crewMin": 1, "crewMax": 1,
@@ -1431,6 +1475,36 @@
       "upgradeable": true,
       "fighterClass": "light",
       "image": "images/ships/gladius.jpg"
+    },
+    {
+      "name": "Gladius Pirate",
+      "aliases": ["Pirate Gladius","Gladius Pirate Edition"],
+      "size": "S2 Small",
+      "length": 20, "beam": 17, "height": 5.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"fighter": "primary"},
+      "note": { "de": "Piraten-Variante mit eigener Bewaffnung", "en": "Pirate variant with its own weapons" },
+      "motherships": [],
+      "upgradeable": true,
+      "fighterClass": "light",
+      "image": "https://media.robertsspaceindustries.com/9cwz2utclixvt/store_small.jpg"
+    },
+    {
+      "name": "Gladius Valiant",
+      "aliases": [],
+      "size": "S2 Small",
+      "length": 20, "beam": 17, "height": 5.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"fighter": "primary"},
+      "note": { "de": "Sonderedition mit eigener Ausrüstung", "en": "Special edition with its own loadout" },
+      "motherships": [],
+      "upgradeable": true,
+      "fighterClass": "light",
+      "image": "https://media.robertsspaceindustries.com/hubxawbeqj9u7/store_small.jpg"
     },
     {
       "name": "Glaive",
@@ -1477,7 +1551,7 @@
     },
     {
       "name": "Guardian",
-      "aliases": ["Guardian MX"],
+      "aliases": [],
       "size": "S2 Small",
       "length": 25, "beam": 16.5, "height": 9,
       "crewMin": 1, "crewMax": 1,
@@ -1489,6 +1563,21 @@
       "upgradeable": true,
       "fighterClass": "heavy",
       "image": "images/ships/guardian.jpg"
+    },
+    {
+      "name": "Guardian MX",
+      "aliases": [],
+      "size": "S2 Small",
+      "length": 25, "beam": 16.5, "height": 9,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"fighter": "primary"},
+      "note": { "de": "Variante mit Raketenbewaffnung", "en": "Missile variant" },
+      "motherships": [],
+      "upgradeable": true,
+      "fighterClass": "heavy",
+      "image": "https://media.robertsspaceindustries.com/e92jsru2uvimx/store_small.jpg"
     },
     {
       "name": "Guardian QI",
@@ -1662,8 +1751,22 @@
       "image": "images/ships/hurricane.jpg"
     },
     {
+      "name": "Idris-M",
+      "aliases": [],
+      "size": "S6 Capital",
+      "length": 243, "beam": 127, "height": 57.5,
+      "crewMin": 8, "crewMax": 28,
+      "scu": 1374,
+      "status": "flight-ready",
+      "loops": {"capital": "primary", "vehicle-transport": "secondary", "cargo": "secondary", "medical": "secondary"},
+      "note": { "de": "Militärische Variante mit Bug-Geschütz", "en": "Military variant with spinal gun" },
+      "motherships": [],
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/59wd4xwt2qms4/store_small.jpeg"
+    },
+    {
       "name": "Idris-P",
-      "aliases": ["Idris-M","Idris-K","Idris"],
+      "aliases": ["Idris-K","Idris"],
       "size": "S6 Capital",
       "length": 243, "beam": 127, "height": 57.5,
       "crewMin": 8, "crewMax": 28,
@@ -2177,7 +2280,7 @@
     },
     {
       "name": "Nox",
-      "aliases": ["Nox Kue"],
+      "aliases": [],
       "size": "Ground vehicle",
       "length": 5.15, "beam": 1.5, "height": 1.5,
       "crewMin": 1, "crewMax": 1,
@@ -2188,6 +2291,20 @@
       "motherships": [],
       "upgradeable": true,
       "image": "images/ships/nox.jpg"
+    },
+    {
+      "name": "Nox Kue",
+      "aliases": [],
+      "size": "Ground vehicle",
+      "length": 5.15, "beam": 1.5, "height": 1.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"ground": "primary", "racing": "secondary"},
+      "note": { "de": "Variante der Nox", "en": "Variant of the Nox" },
+      "motherships": [],
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/wluwxxxf8vyel/store_small.jpeg"
     },
     {
       "name": "Odin",
@@ -2506,7 +2623,7 @@
     },
     {
       "name": "Razor",
-      "aliases": ["Razor LX"],
+      "aliases": [],
       "size": "S1 Small",
       "length": 11.5, "beam": 8.2, "height": 2.7,
       "crewMin": 1, "crewMax": 1,
@@ -2532,6 +2649,20 @@
       "upgradeable": true,
       "fighterClass": "stealth",
       "image": "images/ships/razor-ex.jpg"
+    },
+    {
+      "name": "Razor LX",
+      "aliases": [],
+      "size": "S1 Small",
+      "length": 11.5, "beam": 8.2, "height": 2.7,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"racing": "primary"},
+      "note": { "de": "Langstrecken-Rennvariante", "en": "Long-range racing variant" },
+      "motherships": [],
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/k8vf8c6y16gcp/store_small.jpg"
     },
     {
       "name": "Reclaimer",
@@ -2677,7 +2808,7 @@
     },
     {
       "name": "Sabre",
-      "aliases": ["Sabre Comet"],
+      "aliases": [],
       "size": "S2 Small",
       "length": 24, "beam": 26, "height": 5,
       "crewMin": 1, "crewMax": 1,
@@ -2689,6 +2820,21 @@
       "upgradeable": true,
       "fighterClass": "stealth",
       "image": "images/ships/sabre.jpg"
+    },
+    {
+      "name": "Sabre Comet",
+      "aliases": [],
+      "size": "S2 Small",
+      "length": 24, "beam": 26, "height": 5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"fighter": "primary"},
+      "note": { "de": "Sonderedition mit eigener Ausrüstung", "en": "Special edition with its own loadout" },
+      "motherships": [],
+      "upgradeable": true,
+      "fighterClass": "stealth",
+      "image": "https://media.robertsspaceindustries.com/6uravr46xw6qf/store_small.jpg"
     },
     {
       "name": "Sabre Firebird",
@@ -2968,7 +3114,7 @@
     },
     {
       "name": "Storm",
-      "aliases": ["Storm AA"],
+      "aliases": [],
       "size": "Ground vehicle",
       "length": 10.5, "beam": 7.5, "height": 3.6,
       "crewMin": 1, "crewMax": 1,
@@ -2980,6 +3126,21 @@
       "archetype": "combat",
       "upgradeable": true,
       "image": "images/ships/storm.jpg"
+    },
+    {
+      "name": "Storm AA",
+      "aliases": [],
+      "size": "Ground vehicle",
+      "length": 10.5, "beam": 7.5, "height": 3.6,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"ground": "primary"},
+      "note": { "de": "Flugabwehr-Variante", "en": "Anti-air variant" },
+      "motherships": [],
+      "archetype": "combat",
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/x42epibkm0264/store_small.jpg"
     },
     {
       "name": "STV",
@@ -3012,7 +3173,7 @@
     },
     {
       "name": "Talon",
-      "aliases": ["Talon Shrike"],
+      "aliases": [],
       "size": "S1 Small",
       "length": 26, "beam": 23.3, "height": 8.6,
       "crewMin": 1, "crewMax": 1,
@@ -3024,6 +3185,21 @@
       "upgradeable": true,
       "fighterClass": "light",
       "image": "images/ships/talon.jpg"
+    },
+    {
+      "name": "Talon Shrike",
+      "aliases": [],
+      "size": "S1 Small",
+      "length": 26, "beam": 23.3, "height": 8.6,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"fighter": "primary"},
+      "note": { "de": "Raketen-Variante", "en": "Missile variant" },
+      "motherships": [],
+      "upgradeable": true,
+      "fighterClass": "light",
+      "image": "https://media.robertsspaceindustries.com/tfej2rg70irt2/store_small.jpg"
     },
     {
       "name": "Terrapin",
@@ -3242,7 +3418,7 @@
     },
     {
       "name": "X1",
-      "aliases": ["X1 Base","X1 Velocity","X1 Force"],
+      "aliases": ["X1 Base"],
       "size": "Ground vehicle",
       "length": 5.5, "beam": 1.3, "height": 1.5,
       "crewMin": 1, "crewMax": 1,
@@ -3253,6 +3429,35 @@
       "motherships": [],
       "upgradeable": true,
       "image": "images/ships/x1.jpg"
+    },
+    {
+      "name": "X1 Force",
+      "aliases": [],
+      "size": "Ground vehicle",
+      "length": 5.5, "beam": 1.3, "height": 1.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"ground": "primary"},
+      "note": { "de": "Kampf-Variante", "en": "Combat variant" },
+      "motherships": [],
+      "archetype": "combat",
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/8gw5uoifiylxq/store_small.jpg"
+    },
+    {
+      "name": "X1 Velocity",
+      "aliases": [],
+      "size": "Ground vehicle",
+      "length": 5.5, "beam": 1.3, "height": 1.5,
+      "crewMin": 1, "crewMax": 1,
+      "scu": 0,
+      "status": "flight-ready",
+      "loops": {"ground": "primary", "racing": "primary"},
+      "note": { "de": "Renn-Variante", "en": "Racing variant" },
+      "motherships": [],
+      "upgradeable": true,
+      "image": "https://media.robertsspaceindustries.com/cz8otyln1w1tp/store_small.jpg"
     },
     {
       "name": "Zeus Mk II CL",

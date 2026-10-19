@@ -20,6 +20,7 @@
 - Ironclad (not the Assault): cargo with vehicle transport, no longer dropship.
 - Ground vehicles as their own entries instead of aliases: **G12a** (combat), **G12r** (racing), **Ranger CV** (exploration, also matches "Ranger"), **Ranger RC** (racing), **Ranger TR** (combat) – all concepts, with RSI image links. The 600i still includes the plain G12.
 - Notes: Perseus "anti-capital gunship", Hammerhead "anti-fighter gunship". Wiki names recognised on import: "Scythe / Blade / Glaive / Stinger (replica)", "Hammerhead / Reclaimer Best In Show Edition", "Valkyrie Liberator", "Gladius Dunlevy" (checked against the complete starcitizen.tools pledge list – no other vehicle is missing).
+- Variants with their own loadout as separate ships instead of aliases (with RSI image links): Gladius Valiant, Gladius Pirate, Sabre Comet, Fury MX, Storm AA, Guardian MX, Talon Shrike, Razor LX, Nox Kue, X1 Velocity (racing), X1 Force (combat), Idris-M, ATLS GEO (mining), ATLS IKTI (combat). Purely cosmetic editions stay aliases.
 - Skylark: ship image (RSI store link in ships.json, the ship matrix has none).
 - **Outdated local edits:** an edit from the ship editor replaces the whole role list of a ship, so edits made on an older database hid newer data (e.g. a Constellation Phoenix without the new passenger loop, a Carrack still in the snub category). Edits now remember the database date (`base`); edits from an older date – and all edits made before 2.22 – show a notice at the top with "Show edits" and "Discard outdated".
 

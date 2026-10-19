@@ -12,6 +12,7 @@ export const LOOP_ICONS = {
   cargo: loopSvg('<path d="M2 5l6-3 6 3v6l-6 3-6-3z M2 5l6 3 6-3 M8 8v6"/>'),
   "vehicle-transport": loopSvg('<path d="M1 4h9v7H1z M10 7h3l2 2v2h-5"/><circle cx="4" cy="12.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/>'),
   mining: loopSvg('<path d="M4.5 2h7L15 6l-7 8-7-8z M1 6h14 M6 2 5 6l3 8 3-8-1-4"/>'),
+  refining: loopSvg('<path d="M6 1.5h4 M7 1.5v5L3 13.5c-.4.7.1 1.5.9 1.5h8.2c.8 0 1.3-.8.9-1.5L9 6.5v-5 M4.6 11h6.8"/>'),
   salvage: loopSvg('<path d="M3 2v6a5 5 0 0 0 10 0V2 M6 2v6a2 2 0 0 0 4 0V2 M3 5h3 M10 5h3"/>'),
   medical: loopSvg('<path d="M6 2h4v4h4v4h-4v4H6v-4H2V6h4z"/>'),
   fighter: loopSvg('<circle cx="8" cy="8" r="5"/><path d="M8 1v4 M8 11v4 M1 8h4 M11 8h4"/>'),

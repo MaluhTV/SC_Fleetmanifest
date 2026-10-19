@@ -63,7 +63,8 @@ The list lives in `data/loops.json`. Its order is also the order of the cards on
 |---|---|---|
 | `cargo` | Fracht / Handel | Cargo / Trading |
 | `vehicle-transport` | Fahrzeug- & Schiffstransport | Vehicle & ship transport |
-| `mining` | Bergbau / Raffinerie | Mining / Refining |
+| `mining` | Bergbau (Mining) | Mining |
+| `refining` | Raffinerie (Refining) | Refining |
 | `salvage` | Bergung (Salvage) | Salvage |
 | `medical` | Medizin / Rettung | Medical / Rescue |
 | `fighter` | Jäger (Dogfight) | Fighters (dogfight) |

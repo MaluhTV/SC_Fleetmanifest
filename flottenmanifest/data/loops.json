@@ -3,7 +3,8 @@
   "loops": [
     { "id": "cargo",             "de": "Fracht / Handel",              "en": "Cargo / Trading" },
     { "id": "vehicle-transport", "de": "Fahrzeug- & Schiffstransport", "en": "Vehicle & ship transport" },
-    { "id": "mining",            "de": "Bergbau / Raffinerie",         "en": "Mining / Refining" },
+    { "id": "mining",            "de": "Bergbau (Mining)",             "en": "Mining" },
+    { "id": "refining",          "de": "Raffinerie (Refining)",        "en": "Refining" },
     { "id": "salvage",           "de": "Bergung (Salvage)",            "en": "Salvage" },
     { "id": "medical",           "de": "Medizin / Rettung",            "en": "Medical / Rescue" },
     { "id": "fighter",           "de": "Jäger (Dogfight)",             "en": "Fighters (dogfight)" },

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.21.0 – 2026-10-19
+- Gameplay loops: "Mining / Refining" split into **Mining** and **Refining** (new loop `refining`, flask icon) – both have dedicated ships. Refining: Expanse (refining only), Galaxy (refinery module), Orion and Arrastra (mining with onboard refinery) – all announced. The phone loop bar shows two rows of 8.
+
 ## 2.20.0 – 2026-10-17
 - Fix (standalone build on Windows): Git checks files out with CRLF line endings, browsers hash inline scripts/styles after turning CRLF into LF – the CSP hashes did not match and the page stayed empty. `tools/build-standalone.mjs` now writes LF throughout; `.gitattributes` keeps LF in the working copy; `tests/run.mjs` builds from a CRLF copy and checks that page too.
 - Data check against the wiki: dimensions follow the RSI pledge store. Ships that are taller or wider than long were checked against starcitizen.tools: Xi'an ships fly vertically (Railen, Tyilui, Khartu-al, Syulen), the Reliant has a vertical flight mode, Scorpius/Ares/Hawk/Corsair/S-65 have wings wider than the hull – kept. Fixed: Clipper 26.5 × 50 × 13 → 26.5 × 21 × 18 (in-game; 50 m beam is implausible for an S2). New: Skylark (RSI snub, docked to the Constellation Mk V Centaurus, counted as included). Editions as aliases: Ballista Dunestalker / Snowblind, Caterpillar Pirate (Edition), MOLE / Golem / Prospector Alliance. `tools/check-wiki.mjs` skips ships nobody can own (F8A, Mauler, Scythe, Command Module) and the checked axis orders.

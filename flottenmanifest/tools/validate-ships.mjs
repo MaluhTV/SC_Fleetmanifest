@@ -95,6 +95,8 @@ for (const s of ships) {
   const inMulti = Object.keys(s.loops || {}).some((k) => groupOf[k] === "multi");
   const derived = Object.keys(s.loops || {}).some((k) => groupOf[k] && groupOf[k] !== "multi");
   if (inMulti && !s.archetype && !derived) warn(s.name, 'snub/ground vehicle without other roles – set "archetype" (combat, supply or explore)');
+  // the snub loop is the small craft itself – a mothership that carries one gets it via data/included.json
+  if (s.loops?.snub && !/Snub/.test(s.size)) err(s.name, 'loop "snub" only for snub-sized craft – a mothership carries its snub via data/included.json');
 }
 
 // data/included.json (RSI "Included Vessels"): every vessel must be a ship or alias in ships.json;

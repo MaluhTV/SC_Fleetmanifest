@@ -80,7 +80,7 @@ The list lives in `data/loops.json`. Its order is also the order of the cards on
 | `exploration` | Exploration | Exploration |
 | `recon` | Aufklärung / Datenkurier | Recon / Data running |
 | `touring` | Touring / Wohnen | Touring / Living |
-| `snub` | Snub / Beiboot | Snub / Parasite craft |
+| `snub` | Snub / Beiboot | Snub / Parasite craft (only the small craft itself, size "S… Snub"; a mothership gets its snub via `data/included.json`) |
 | `ground` | Bodenfahrzeug | Ground vehicle |
 | `racing` | Racing | Racing |
 

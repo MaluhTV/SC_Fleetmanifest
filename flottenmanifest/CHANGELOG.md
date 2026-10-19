@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.22.1 – 2026-10-19
+- Snub category: only the small craft itself counts. Motherships (Carrack, Constellation Mk IV / Mk V, 890 Jump, Idris-P, Polaris, Starlancer TAC, Tyilui) no longer carry the "snub" role – their snub (C8X Pisces, Skylark, …) comes along as an included vessel. The validator rejects the snub role on ships that are not snub-sized.
+- Skylark: archetype Combat (snub fighter of the Constellation Mk V).
+- Constellation Mk IV Phoenix (and Phoenix Emerald): also **passenger transport** (luxury) as a primary role.
+
 ## 2.22.0 – 2026-10-19
 - **Tabs in workflow order with clearer names:** Coverage (was "By gameplay loop") → Optimise (was "Overlaps") → Plan (was "Fleet planner") → Compare → Ship list. The loop matrix is no longer a tab of its own: the ship list has a **List | Matrix** toggle (`fm_listmode`); filters, loop bar, KPI and archetype filters apply to both, the bar square highlights its matrix column. Matrix columns are grouped by archetype (heading row, coloured lines), without the image column. Saved tab / `#matrix` links open the ship list in matrix mode.
 - **Short summary** under the KPI tiles: focus archetype, gaps, number of overlaps and how many of them have a substitute; the gaps and overlaps parts open the Optimise tab.

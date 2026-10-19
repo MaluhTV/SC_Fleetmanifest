@@ -98,13 +98,13 @@ html = html.replace(/<script src="js\/file-hint\.js"><\/script>\s*/, ""); // hin
 html = html.replace(/\r\n?/g, "\n");
 
 // Content Security Policy for the single file: only its own inline script/style blocks may run (sha256 hashes),
-// images only embedded (data:) or from the RSI media server, nothing else is loaded or sent anywhere.
+// images only embedded (data:) or from RSI (media server, a few images on the main site), nothing else is loaded or sent anywhere.
 const hash = (text) => `'sha256-${createHash("sha256").update(text, "utf8").digest("base64")}'`;
 const scriptHashes = [...html.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/g)].map((m) => hash(m[1]));
 const styleHashes = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => hash(m[1]));
 const csp = [
   "default-src 'none'", `script-src ${scriptHashes.join(" ")}`, `style-src ${styleHashes.join(" ")}`,
-  "img-src data: https://media.robertsspaceindustries.com", "font-src data:", "connect-src 'none'",
+  "img-src data: https://media.robertsspaceindustries.com https://robertsspaceindustries.com", "font-src data:", "connect-src 'none'",
   "object-src 'none'", "base-uri 'none'", "form-action 'none'",
 ].join("; ");
 const cspTag = /<meta http-equiv="Content-Security-Policy" content="[^"]*">/;

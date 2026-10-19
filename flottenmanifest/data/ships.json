@@ -1139,7 +1139,7 @@
       "motherships": [],
       "upgradeable": true,
       "fighterClass": "medium",
-      "image": null
+      "image": "https://robertsspaceindustries.com/i/9371eee5409dd57ec01fe8bebec7217706113b72/resize(3000,1286,cover,crop(3840,1645,0,0,W5LtFUPm6g76fxrsvUoDVGMMS2EVvzV1HK6QjmNBBWpoLdWSachjaEXj7TeC6kRpwy6exdWCR995qUYMGUErTxiccEH5JBifhGzAFjbRbEnotK3qPEYHTs1sMPJV5Ct21J59JbM3mnsmLQLMugnooeM7NdULW))/85/star-citizen-anvl-f7cm-hornet-mk2-heartseeker-4k.webp"
     },
     {
       "name": "F7C-M Super Hornet Heartseeker Mk I",
@@ -2619,7 +2619,7 @@
       "motherships": [],
       "archetype": "supply",
       "upgradeable": true,
-      "image": null
+      "image": "https://robertsspaceindustries.com/media/4njlxu6dalud3r/source/StarCitizen_Triggerfish_MISC_RAPTOR_SKU.jpg"
     },
     {
       "name": "Razor",

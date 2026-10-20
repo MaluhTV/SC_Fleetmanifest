@@ -1,9 +1,8 @@
-/** "By gameplay loop" tab: one card per loop with every fleet ship in it. */
+/** Tab "Abdeckung / Coverage" (view id "loops"): per archetype one card per gameplay loop with every fleet ship in it. */
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
-import { ROLE_ORDER, ARCHETYPES } from "../shipdb.js";
+import { ROLE, ROLE_ORDER, ARCHETYPES } from "../shipdb.js";
 import { loopStats, isPending } from "../analysis.js";
-import { ROLE } from "../shipdb.js";
 import { slotName, slotText, loopText, loopBar, loopIconTitle, sizeLabel, roleMark, shipLabel, compareToggle, crew, markable, thumb, fighterClass } from "./common.js";
 
 export function renderLoops(el, { db, fleet, state }) {
@@ -70,8 +69,8 @@ function loopCard(slot, db, ships, state, thumbs) {
 }
 
 /**
- * Fleet coverage per loop for the loop bar (loopBar() in common.js), shared by the loop tab, matrix and ship list.
- * Same meaning as in the overlaps tab: filled = ships in a primary or announced role (number = how many),
+ * Fleet coverage per loop for the loop bar (loopBar() in common.js), shared by Coverage and the ship list.
+ * Same meaning as in Optimise: filled = ships in a primary or announced role (number = how many),
  * violet dashed = only announced / not yet playable ships (isPending), dashed = secondary roles only, empty = none.
  */
 export function fleetLoopCells(db, fleet) {
@@ -98,7 +97,7 @@ export function fleetLoopCells(db, fleet) {
 
 /**
  * Fleet loop bar above a tab. attr = click attribute handled in main.js
- * (loop tab: jump to the card · matrix: highlight the column · ship list: filter), active = selected loop.
+ * (Coverage: jump to the card · ship list: filter, in matrix mode also highlight the column), active = selected slot.
  */
 export function renderLoopBar(el, { db, fleet }, { attr = "loop-jump", active = null, hint = "" } = {}) {
   const cells = fleetLoopCells(db, fleet);

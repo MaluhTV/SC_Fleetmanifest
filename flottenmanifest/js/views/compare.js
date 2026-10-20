@@ -1,9 +1,9 @@
-/** "Compare" tab: up to MAX_COMPARE ships side by side, plus a swap balance. */
+/** Tab "Vergleich / Compare" (view id "compare"): up to MAX_COMPARE ships side by side, plus a swap balance. */
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { swapBalance } from "../analysis.js";
 import { editButton } from "./list.js";
-import { loopName, sizeLabel, roleMark, statusPill, fighterClass, meltBadge, num, crew, insuranceText, note, thumb } from "./common.js";
+import { loopName, sizeLabel, roleMark, statusPill, fighterClass, meltIcon, num, crew, insuranceText, note, thumb } from "./common.js";
 
 /** Fills the "Add ship" dropdown with every ship in the database (✓ = in fleet). */
 export function renderCompareSelect(select, { db, fleet, state }) {
@@ -43,7 +43,7 @@ export function renderCompare(el, { db, fleet, state }) {
   ];
 
   const pics = ships.some((s) => s.image); // same header height for all columns
-  const head = ships.map((s) => `<th>${pics ? thumb(s, "m") : ""}${esc(s.name)}${meltBadge(s)}
+  const head = ships.map((s) => `<th>${pics ? thumb(s, "m") : ""}${esc(s.name)}${meltIcon(s)}
       <button type="button" class="remove" data-remove="${esc(s.name)}" aria-label="${esc(t("compare_remove") + ": " + s.name)}">×</button> ${editButton(s)}<br>
       <span class="pill ${owned(s) ? "pill--flight-ready" : "pill--in-production"}">${owned(s) ? t("compare_owned") : t("compare_not_owned")}</span></th>`).join("");
 

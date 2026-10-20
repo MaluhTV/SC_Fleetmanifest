@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Downloads a thumbnail for every ship into images/ships/ and points `image` in data/ships.json to it,
- * so the page shows the pictures without loading anything from RSI at runtime.
+ * Collects the RSI image link of every ship (data/image-urls.json) and, unless --urls-only, downloads a local copy
+ * into images/ships/ for your own offline builds.
+ *
+ * The images belong to Cloud Imperium Games: images/ships/ is in .gitignore and must never be committed or uploaded.
+ * Releases link the images instead (--urls-only, then build-standalone.mjs --remote-images; tools/build-release.*).
  *
  *   node tools/fetch-ship-images.mjs                    get the RSI ship matrix, download missing images
  *   node tools/fetch-ship-images.mjs ship-matrix.json   use a saved copy of the ship matrix instead
@@ -9,21 +12,22 @@
  *   ... --dry-run                                       only report, don't download or write
  *   ... --urls-only                                     don't download, only write data/image-urls.json
  *
- * Every run also writes data/image-urls.json ({ ship name: RSI image URL }). The page uses it to show
- * the image straight from RSI when there is no local file (e.g. a repository without images/), and
- * `node tools/build-standalone.mjs --remote-images` builds a file that links the images instead of embedding them.
+ * Every run writes data/image-urls.json ({ ship name: RSI image URL }). The page uses it to show the image straight
+ * from RSI when there is no local file (every fresh clone), and `node tools/build-standalone.mjs --remote-images`
+ * builds a file that links the images instead of embedding them. Links already in that file are kept when the
+ * ship matrix cannot be loaded or no longer lists a ship, so a failed download never empties the list.
  *
  * Where the image URLs come from:
  *   1. the RSI ship matrix  https://robertsspaceindustries.com/ship-matrix/index
  *      → { data: [ { name, media: [ { images: { store_small, … } } ] } ] }, names matched like a hangar import
  *   2. any https URL already set by hand in ships.json (e.g. for variants that are missing from the ship matrix)
- * Files are saved as images/ships/<ship-name-slug>.<ext>, `image` becomes "images/ships/<slug>.<ext>".
+ * Files are saved as images/ships/<ship-name-slug>.<ext> and `image` in ships.json becomes that local path; the RSI
+ * link stays in data/image-urls.json (also a link that was set by hand), and the page falls back to it when the
+ * local file is missing (thumb() → data-fallback).
  *
  * Afterwards: node tools/validate-ships.mjs --format && node tools/build-standalone.mjs
  * (tools/update-images.cmd / .sh run all three steps.)
  * Requires Node.js 18 or newer (built-in fetch), no packages.
- *
- * The images belong to Cloud Imperium Games – check CIG's fan content guidelines before publishing them.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -62,7 +66,7 @@ async function loadMatrix() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (e) {
-    console.log(`  Ship matrix not available (${e.message}). Only URLs already in ships.json are used.`);
+    console.log(`  Ship matrix not available (${e.message}). Links from ships.json and the last run (data/image-urls.json) are kept.`);
     console.log(`  Tip: open ${MATRIX_URL} in a browser, save it as ship-matrix.json and pass the file.`);
     return { data: [] };
   }
@@ -79,8 +83,10 @@ function imageOf(entry) {
 }
 
 const urls = new Map(); // ship name -> remote URL
-// a URL set by hand wins over the ship matrix
+// a URL set by hand in ships.json wins over the ship matrix
 for (const s of shipsDoc.ships) if (s.image && /^https:/.test(s.image)) urls.set(s.name, s.image);
+// links from the last run are the fallback (ship matrix not reachable, or a ship no longer listed there)
+const previous = existsSync(URLS_FILE) ? read(URLS_FILE).urls || {} : {};
 // best match first: the ship's own name, then an alias, then a prefix match ("Avenger Titan Renegade" → Avenger Titan).
 // Otherwise e.g. "Idris-M" (an alias of Idris-P) or "Carrack" would take the image of the exact variant.
 const mainNames = new Set(shipsDoc.ships.map((s) => normalizeName(s.name)));
@@ -94,6 +100,8 @@ for (const entry of sorted) {
   if (!hit) { unmatched.push(entry.name); continue; }
   if (url && !urls.has(hit.name)) urls.set(hit.name, url);
 }
+const known = new Set(shipsDoc.ships.map((s) => s.name));
+for (const [name, url] of Object.entries(previous)) if (known.has(name) && !urls.has(name)) urls.set(name, url);
 
 /* ---------- 2. Save the URL list (links only, no image data) ---------- */
 

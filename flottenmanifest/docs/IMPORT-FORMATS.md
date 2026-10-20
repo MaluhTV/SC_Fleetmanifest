@@ -18,7 +18,7 @@ Example of a simple JSON list:
 { "ships": [ { "name": "Caterpillar" }, { "name": "Golem", "qty": 2 }, "Starlancer MAX" ] }
 ```
 
-Ship names from the file are matched via `name` and `aliases` in `data/ships.json` (see [name matching](SHIP-DATABASE.md#name-matching-on-import)). Unknown names are listed in the "Overlaps" tab.
+Ship names from the file are matched via `name` and `aliases` in `data/ships.json` (see [name matching](SHIP-DATABASE.md#name-matching-on-import)). Unknown names trigger a notice "n entries not recognised … Assign" at the top of the page, where the user can map them to a database ship (stored as `fm_aliases`).
 
 ## Adding a format
 
@@ -47,7 +47,7 @@ Item fields:
 | `name` | string | ship name, ideally as in the database |
 | `qty` | number | quantity (default 1). Equal names are summed later. |
 | `insurance` | string | `"LTI"`, months as a number (`"120"`) or `""` |
-| `meltable` | `true`/`false`/`null` | `false` → lock icon "not meltable" and the "upgrade only" badge in the overlaps tab; `null` = unknown (no badge) |
+| `meltable` | `true`/`false`/`null` | melt status shown as the exchange / upgrade pair (Optimise, Compare, ship list); `false` = exchange struck through, `null` = unknown (grey "?" pair, can be set by click) |
 
 Helpers in the file:
 - `parseCSV(text)`

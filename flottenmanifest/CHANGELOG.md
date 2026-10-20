@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.23.0 – 2026-10-20
+- Interdiction / EW: Guardian QI and Avenger Warlock now primary (fighter secondary), Hawk secondary, Zeus Mk II MR announced. New: **Scorpius Antares** (EMP, quantum dampener, distortion) – before only an alias of the Scorpius.
+- Ironclad (not the Assault): cargo with vehicle transport, no longer dropship.
+- Ground vehicles as their own entries instead of aliases: **G12a** (combat), **G12r** (racing), **Ranger CV** (exploration, also matches "Ranger"), **Ranger RC** (racing), **Ranger TR** (combat) – all concepts, with RSI image links. The 600i still includes the plain G12.
+- Notes: Perseus "anti-capital gunship", Hammerhead "anti-fighter gunship". Wiki names recognised on import: "Scythe / Blade / Glaive / Stinger (replica)", "Hammerhead / Reclaimer Best In Show Edition", "Valkyrie Liberator", "Gladius Dunlevy" (checked against the complete starcitizen.tools pledge list – no other vehicle is missing).
+- Variants with their own loadout as separate ships instead of aliases (with RSI image links): Gladius Valiant, Gladius Pirate, Sabre Comet, Fury MX, Storm AA, Guardian MX, Talon Shrike, Razor LX, Nox Kue, X1 Velocity (racing), X1 Force (combat), Idris-M, ATLS GEO (mining), ATLS IKTI (combat). Purely cosmetic editions stay aliases.
+- Checked against the starcitizen.tools pledge list (dimensions, SCU, crew, status): crew and SCU agree almost everywhere. Changed: Idris-M 240 × 125 × 45 m and 1,326 SCU (was copied from the Idris-P), Javelin and G12 / G12a / G12r "in production" instead of concept.
+- Images for the F7C-M Hornet Heartseeker Mk II and the RAPTOR (RSI hosts them on robertsspaceindustries.com, not the media server – the Content Security Policy now allows both RSI hosts). Only the Starlancer BLD is still without an image.
+- Terrapin: recon / data running as primary role (military scout), exploration secondary.
+- **Code clean-up (no visible change):** `main.js` grouped into sections with one `wire…()` function per tab; introduction, tap tooltips and the sticky area / scroll spy moved to `js/ui/`. Removed dead code (old lock icons, unused helpers and texts, CSS rules for classes no longer used); melt icons are no longer rendered and then hidden by CSS, `shipLabel()` / `shipWithMelt()` decide it. The stylesheet is regrouped into its numbered sections with duplicate rules merged (checked pixel by pixel against the previous version). Fix: `data-theme="dark"` now also sets the dark archetype colours.
+- Docs: tab names ↔ view ids, current file structure, all stored keys, archetypes and included vessels in SHIP-DATABASE.md; the image docs now match the rule that RSI images are only linked, never stored (`images/` is in `.gitignore`).
+- `tools/fetch-ship-images.mjs`: links from the last run are kept when the RSI ship matrix cannot be loaded – before, a failed download left only the hand-set links in `data/image-urls.json`, and the next release would have shipped almost without images.
+
 ## 2.22.1 – 2026-10-19
 - Snub category: only the small craft itself counts. Motherships (Carrack, Constellation Mk IV / Mk V, 890 Jump, Idris-P, Polaris, Starlancer TAC, Tyilui) no longer carry the "snub" role – their snub (C8X Pisces, Skylark, …) comes along as an included vessel. The validator rejects the snub role on ships that are not snub-sized.
 - Skylark: archetype Combat (snub fighter of the Constellation Mk V).
@@ -16,14 +29,6 @@
 - Legend in sections: roles, melt / upgrade, loop bar, archetypes, markers.
 - 600i Explorer / Executive Edition: the included vehicle is the **G12** (concept, as RSI lists it), no longer the Cyclone RSI hands out as a loaner until then – loaners are not counted. The G12 note says so.
 - Loop `capital` renamed to **Fleet combat / Anti-capital** (DE "Flottenkampf / Anti-Capital"): it is a combat role (fighting capital ships and fleets – torpedoes, capital weapons, carriers), not the size class. A capital-sized ship such as the Reclaimer stays in its own role (salvage); the minelayer Nautilus (Large) belongs here. The id stays `capital`, so saved plans keep working.
-- Interdiction / EW: Guardian QI and Avenger Warlock now primary (fighter secondary), Hawk secondary, Zeus Mk II MR announced. New: **Scorpius Antares** (EMP, quantum dampener, distortion) – before only an alias of the Scorpius.
-- Ironclad (not the Assault): cargo with vehicle transport, no longer dropship.
-- Ground vehicles as their own entries instead of aliases: **G12a** (combat), **G12r** (racing), **Ranger CV** (exploration, also matches "Ranger"), **Ranger RC** (racing), **Ranger TR** (combat) – all concepts, with RSI image links. The 600i still includes the plain G12.
-- Notes: Perseus "anti-capital gunship", Hammerhead "anti-fighter gunship". Wiki names recognised on import: "Scythe / Blade / Glaive / Stinger (replica)", "Hammerhead / Reclaimer Best In Show Edition", "Valkyrie Liberator", "Gladius Dunlevy" (checked against the complete starcitizen.tools pledge list – no other vehicle is missing).
-- Variants with their own loadout as separate ships instead of aliases (with RSI image links): Gladius Valiant, Gladius Pirate, Sabre Comet, Fury MX, Storm AA, Guardian MX, Talon Shrike, Razor LX, Nox Kue, X1 Velocity (racing), X1 Force (combat), Idris-M, ATLS GEO (mining), ATLS IKTI (combat). Purely cosmetic editions stay aliases.
-- Checked against the starcitizen.tools pledge list (dimensions, SCU, crew, status): crew and SCU agree almost everywhere. Changed: Idris-M 240 × 125 × 45 m and 1,326 SCU (was copied from the Idris-P), Javelin and G12 / G12a / G12r "in production" instead of concept.
-- Images for the F7C-M Hornet Heartseeker Mk II and the RAPTOR (RSI hosts them on robertsspaceindustries.com, not the media server – the Content Security Policy now allows both RSI hosts). Only the Starlancer BLD is still without an image.
-- Terrapin: recon / data running as primary role (military scout), exploration secondary.
 - Skylark: ship image (RSI store link in ships.json, the ship matrix has none).
 - **Outdated local edits:** an edit from the ship editor replaces the whole role list of a ship, so edits made on an older database hid newer data (e.g. a Constellation Phoenix without the new passenger loop, a Carrack still in the snub category). Edits now remember the database date (`base`); edits from an older date – and all edits made before 2.22 – show a notice at the top with "Show edits" and "Discard outdated".
 

@@ -1,10 +1,10 @@
-/** "Overlaps" tab: rule-based analysis from js/analysis.js, with ships the user marked "to replace". */
+/** Tab "Optimieren / Optimise" (view id "overlaps"): rule-based analysis from js/analysis.js, with ships the user marked "to replace". */
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { sizeRank } from "../shipdb.js";
 import { analyseOverlaps, loopStats, isPending, isFlightReady, remainingAfter, ownedOnly } from "../analysis.js";
 import { fleetLoopCells } from "./loops.js";
-import { loopName, loopText, slotName, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
+import { loopText, slotName, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, shipWithMelt, markable, icon, ICONS, thumb, dims, crew, fighterClass } from "./common.js";
 
 /** RSI's list of loaner ships for ships that are not flight-ready – linked from the "covered only by planned ships" card. */
 const LOANER_MATRIX_URL = "https://support.robertsspaceindustries.com/hc/en-us/articles/360003093114-Loaner-Ship-Matrix";
@@ -39,14 +39,12 @@ export const OV_DETAILS = {
 const pendingParts = (s, loopId) =>
   !loopId || !isPending(s, loopId) ? []
     : [!isFlightReady(s) ? t("status_" + s.status) : t("ov_role_planned")];
-const pendingText = (s, loopId) => pendingParts(s, loopId).join(" · ");
 
 const detailsOf = (s, keys, loopId) => {
   const parts = keys.map((k) => OV_DETAILS[k] && OV_DETAILS[k].value(s)).filter(Boolean);
   // fighter card: the class is always shown, because the substitute rule depends on it
   if (loopId === "fighter" && s.fighterClass) parts.unshift(fighterClass(s));
-  // each value in its own span so it never breaks inside ("Crew 1–4"); tiles put them on separate lines
-  // one span per reason, so tiles show them on separate lines
+  // one span per value, so it never breaks inside ("Crew 1–4") and tiles can put each on its own line
   const html = [...pendingParts(s, loopId).map((p) => `<span class="ov-pending">${esc(p)}</span>`), ...parts.map((p) => `<span>${esc(p)}</span>`)];
   return html.length ? ` <span class="ship-meta">${html.join('<span class="sep"> · </span>')}</span>` : "";
 };
@@ -222,7 +220,7 @@ export function renderOverlaps(el, ctx) {
     // With images: one grid row per candidate – ship | arrow + label | substitute | further substitutes,
     // every ship as a tile (image above the name), so the columns line up across all rows.
     const subTile = (s, c, extra = "") =>
-      markable(s, `<span class="ship-tile">${thumb(s)}<span>${shipLabel(s, { lock: false })}${extra}</span>${meta(s)}</span>`, sel, c.ship.name);
+      markable(s, `<span class="ship-tile">${thumb(s)}<span>${shipLabel(s)}${extra}</span>${meta(s)}</span>`, sel, c.ship.name);
     const candidateRow = (c) => {
       const from = `<div class="cand-from">${tile(c.ship)}</div>`;
       // own copy of a vessel a parent ship already brings along
@@ -244,7 +242,7 @@ export function renderOverlaps(el, ctx) {
       if (c.includedBy) return `${who} → ${t("ov_included_by")} ${c.includedBy.map(esc).join(", ")} <span class="muted">(${t("ov_included_extra")})</span>`;
       if (!c.replacement) return `${who} → <span class="bad">${t("ov_no_substitute")}</span>`;
       // substitute and alternatives are clickable: picking one marks it green and the candidate red
-      const sub = markable(c.replacement, small(c.replacement) + shipLabel(c.replacement, { lock: false }) + meta(c.replacement), sel, c.ship.name);
+      const sub = markable(c.replacement, small(c.replacement) + shipLabel(c.replacement) + meta(c.replacement), sel, c.ship.name);
       return `${who} → ${t(c.chosen ? "ov_replaced_by" : "ov_covered_by", { o: sub })}${lostHint(c, db)}` +
         (c.alternatives.length ? ` <span class="muted">(${t("ov_also", { x: alsoList(c.alternatives, (a) => choose(a, c.ship)) })})</span>` : "");
     });

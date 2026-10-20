@@ -1,10 +1,12 @@
 # Star Citizen Fleet Manifest
 
-A static web page that reads a hangar export (CSV/JSON) or a pasted list of ships and analyses the fleet by gameplay loop. It covers:
+A static web page that reads a hangar export (CSV/JSON) or a pasted list of ships and analyses the fleet by gameplay loop. Its tabs follow the workflow:
 
-- size, cargo (SCU) and crew
-- overlaps and gaps between loops
-- a side-by-side comparison of up to four ships
+- **Abdeckung / Coverage:** which gameplay loops the fleet covers, grouped by archetype (combat, industry & supply, travel & exploration), with size, cargo (SCU) and crew
+- **Optimieren / Optimise:** overlaps (three or more ships for the same job), substitutes, gaps – mark ships to see what is left after a change
+- **Planen / Plan:** put together a wish fleet per loop and crew size
+- **Vergleich / Compare:** up to four ships side by side
+- **Schiffsliste / Ship list:** the whole fleet as a table or as a loop matrix, with an editor for the ship data
 
 The UI is bilingual (German/English). It needs no server-side code and no dependencies, and the only build step (a single offline file) is optional.
 
@@ -12,7 +14,7 @@ Imported data stays in the visitor's browser (`localStorage`). Only ship name, q
 
 ## Quick start
 
-**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts and ship data inlined) and works without a server. It works without a server; fonts are embedded. Ship images are either embedded (your local build) or loaded from RSI (release build, see below).
+**Just want to use the page?** Open `dist/flottenmanifest.html` with a double-click. It is a single self-contained file (styles, scripts, fonts and ship data inlined) and works without a server. Ship images are loaded from RSI (release build) or embedded (your own local build, see "Ship images").
 
 **Developing?** Run the source version through a local web server:
 
@@ -53,39 +55,44 @@ node run.mjs
 
 The same tests run on GitHub for every push (`.github/workflows/test.yml`). Merge to `main` only when they pass.
 
-`node tools/check-wiki.mjs` compares `data/ships.json` with the Star Citizen Wiki API and lists differences (it changes nothing; `--sample` shows the raw API format).
+`node tools/check-wiki.mjs` compares `data/ships.json` with the Star Citizen Wiki API and lists differences and ships missing here (it changes nothing; `--sample` shows the raw API format).
 
 ## Folder structure
 
 ```
-index.html                 page skeleton; all texts via data-i18n keys
-css/flottenmanifest.css    all styling, split into numbered sections (tokens → layout → views)
+index.html                  page skeleton; all texts via data-i18n keys
+css/flottenmanifest.css     all styling, in numbered sections (tokens → layout → shared blocks → views → phones)
 data/
-  ships.json               ★ ship database – this is where ships are maintained
-  loops.json               list of gameplay loops (IDs + German/English names)
-  included.json            vessels RSI includes with a parent ship (Carrack → C8 Pisces + Ursa …), per the RSI support article
-  example-fleet.json       example fleet for first-time visitors (username "Citizen")
+  ships.json                ★ ship database – this is where ships are maintained
+  loops.json                gameplay loops (IDs, German/English names, archetype)
+  included.json             vessels RSI includes with a parent ship (Carrack → C8 Pisces + Ursa …)
+  image-urls.json           links to the RSI ship images (links only, written by tools/fetch-ship-images.mjs)
+  example-fleet.json        example fleet for first-time visitors (username "Citizen")
 js/
-  main.js                  entry point: load data, wire events, render everything
-  i18n.js                  all UI texts in German/English + t() function
-  shipdb.js                loads ships.json/loops.json, name matching incl. aliases
-  importers.js             file formats (Hangar.link CSV, Hangar XPLORer CSV, STARJUMP Fleetviewer JSON, generic JSON)
-  analysis.js              analysis: build fleet, loop stats, overlaps, swap balance
-  state.js                 page state and persistence in localStorage
-  util.js                  small helpers ($, esc, normalizeName, storage)
-  views/                   one file per tab, each with a render…() function
-    common.js              shared building blocks (role marks, status pills, lock icon …)
-    kpis.js loops.js matrix.js list.js overlaps.js compare.js
-tools/validate-ships.mjs   checks and formats data/ships.json (Node ≥ 18)
-tools/build-standalone.mjs builds dist/flottenmanifest.html (one file, works offline)
-tools/fetch-ship-images.mjs downloads ship images to images/ships/ (RSI ship matrix)
-tools/update-images.cmd/.sh  one-click: fetch images, validate, build
-images/ships/              local ship thumbnails (included; the script adds new ones)
-dist/flottenmanifest.html  generated – do not edit by hand
+  main.js                   entry point: state, rendering, actions, event wiring
+  state.js                  page state and its validated storage in localStorage
+  shipdb.js                 loads data/*.json, name matching incl. aliases, archetypes, display slots
+  analysis.js               all rules: fleet, loop stats, overlaps, gaps, substitutes, planner
+  importers.js              file formats (Hangar XPLORer CSV, Hangar.link CSV, STARJUMP Fleetviewer JSON, generic JSON)
+  i18n.js                   all UI texts in German/English + t()
+  util.js                   small helpers ($, esc, normalizeName, storage)
+  version.js                version number (= top entry of CHANGELOG.md)
+  views/                    one renderer per tab: loops.js (Coverage), overlaps.js (Optimise), planner.js (Plan),
+                            compare.js, list.js + matrix.js (ship list); kpis.js, editor.js, common.js (shared blocks)
+  ui/                       page helpers: tour.js (introduction), tap-tips.js, sticky.js (sticky area + scroll spy)
+tests/run.mjs               data, analysis and browser tests (Playwright)
+tools/
+  validate-ships.mjs        checks and formats data/ships.json (Node ≥ 18)
+  build-standalone.mjs      builds dist/flottenmanifest.html (one file, works offline)
+  build-release.cmd/.sh     release build: refresh image links, build with --remote-images
+  fetch-ship-images.mjs     image links (+ optional local download to images/ships/, never committed)
+  update-images.cmd/.sh     own offline copy: download images, validate, build
+  check-wiki.mjs            compares the data with the Star Citizen Wiki API
+dist/flottenmanifest.html   generated – do not edit by hand, not committed
 docs/
-  SHIP-DATABASE.md         field reference and "how to add a ship"
-  IMPORT-FORMATS.md        supported exports and how to add a format
-  ARCHITECTURE.md          data flow and where to change what
+  ARCHITECTURE.md           tabs and ids, data flow, where to change what, stored data
+  SHIP-DATABASE.md          field reference, "how to add a ship", gameplay loops, ship images
+  IMPORT-FORMATS.md         supported exports and how to add a format
 ```
 
 ## Common tasks
@@ -93,8 +100,8 @@ docs/
 | Task | Where | Docs |
 |---|---|---|
 | Add a ship / fix values | `data/ships.json`, then `node tools/validate-ships.mjs --format` and `node tools/build-standalone.mjs` | [SHIP-DATABASE.md](docs/SHIP-DATABASE.md) |
-| Add / update ship images | double-click `tools/update-images.cmd` (Windows) or `sh tools/update-images.sh` | [SHIP-DATABASE.md](docs/SHIP-DATABASE.md#ship-images) |
-| Add a gameplay loop | `data/loops.json` (+ roles in `ships.json`) | [SHIP-DATABASE.md](docs/SHIP-DATABASE.md#gameplay-loops) |
+| Add / update ship image links | `tools/build-release.cmd` / `.sh` (or an RSI URL in `image` for ships the ship matrix lacks) | [SHIP-DATABASE.md](docs/SHIP-DATABASE.md#ship-images) |
+| Add a gameplay loop / change its archetype | `data/loops.json` (+ roles in `ships.json`, icon in `js/views/common.js`) | [SHIP-DATABASE.md](docs/SHIP-DATABASE.md#gameplay-loops) |
 | Add an import format | `js/importers.js` → object in `IMPORTERS` | [IMPORT-FORMATS.md](docs/IMPORT-FORMATS.md) |
 | Change or translate a text | `js/i18n.js` | [ARCHITECTURE.md](docs/ARCHITECTURE.md#texts-and-languages) |
 | Add a column to the ship list | `COLUMNS` in `js/views/list.js` | [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
@@ -111,9 +118,9 @@ docs/
 
 ## Data source
 
-Dimensions, SCU, crew and status come from the [Star Citizen Wiki (starcitizen.tools)](https://starcitizen.tools). The loop assignment is an editorial assessment. Star Citizen® is a trademark of Cloud Imperium Games. This is a fan project and is not affiliated with CIG.
+Dimensions, SCU, crew and status follow the RSI pledge store and ship pages, checked against the [Star Citizen Wiki (starcitizen.tools)](https://starcitizen.tools). The loop and archetype assignment is an editorial assessment. Star Citizen® is a trademark of Cloud Imperium Games. This is a fan project and is not affiliated with CIG.
 
-Die Dateien in data/ (ships.json, loops.json) stehen unter CC BY 4.0.
+The files in `data/` (ships.json, loops.json, included.json) are licensed under CC BY 4.0.
 
 ## Legal
 
@@ -121,7 +128,7 @@ This is an unofficial Star Citizen fan site, not affiliated with the Cloud Imper
 
 Star Citizen®, Squadron 42®, Roberts Space Industries® and Cloud Imperium® are registered trademarks of Cloud Imperium Rights LLC. Official site: https://robertsspaceindustries.com
 
-Ship images are **not** part of this repository. `tools/update-images.cmd` / `.sh` downloads them from the RSI ship matrix to your own computer; do not commit them (RSI does not allow re-uploading its content).
+Ship images are **not** part of this repository and must not be committed or uploaded (RSI does not allow re-uploading its content; `images/` is in `.gitignore`). The page only links them. `tools/update-images.cmd` / `.sh` can download them for your own offline copy.
 
 ### Building a release
 

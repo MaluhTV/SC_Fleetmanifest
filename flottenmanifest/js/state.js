@@ -7,6 +7,11 @@ import { sanitizeOverride } from "./shipdb.js";
 import { MELT_STATES } from "./analysis.js";
 
 export const MAX_COMPARE = 4;
+/**
+ * Tabs in display order. The ids are older than the tab names and stay as they are (saved state, #links):
+ *   loops = Abdeckung / Coverage · overlaps = Optimieren / Optimise · planner = Planen / Plan
+ *   compare = Vergleich / Compare · list = Schiffsliste / Ship list (incl. the matrix mode)
+ */
 export const VIEWS = ["loops", "overlaps", "planner", "compare", "list"];
 /** Fleet planner: at most this many wishes, crew numbers between 1 and PLANNER_CREW_LIMIT. */
 export const PLANNER_MAX_SLOTS = 20;
@@ -48,18 +53,20 @@ export function loadState(example) {
     compare: Array.isArray(compare) ? strList(compare).slice(0, MAX_COMPARE) : [...example.compare],
     view: VIEWS.includes(view) ? view : "loops",
     listMode: listMode === "matrix" ? "matrix" : "list", // ship list tab: table or loop matrix
-    marked: strList(marked), // ships marked "to replace" in the overlaps tab (red)
+    marked: strList(marked), // ships marked "to replace" in Optimise / Coverage (red)
     chosen: strMap(chosen, isStr), // { shipToReplace: substitute } (green)
     overrides: Object.fromEntries(Object.entries(strMap(overrides, isObj)).map(([k, o]) => [k, sanitizeOverride(o)]).filter(([, o]) => o)), // edits from the in-page editor
-    ovDetails: strList(ovDetails),
-    ovReadyFirst: ovReadyFirst === true, // overlaps option: ships usable today first (off by default) // extra data shown in the overlaps tab, e.g. ["scu"]
-    melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: "meltable"|"upgrade"|"locked" }
+    ovDetails: strList(ovDetails), // extra data shown in Optimise (view "overlaps"), e.g. ["scu"]
+    ovReadyFirst: ovReadyFirst === true, // Optimise option: ships usable today first (off by default)
+    melt: strMap(melt, (x) => MELT_STATES.includes(x)), // melt status chosen by click: { ship: one of MELT_STATES }
     aliases: strMap(aliases, isStr), // own name → database ship for entries the import did not recognise
     rsiImages: rsiImages === true || rsiImages === false ? rsiImages : null, // RSI ship images: false = off; true = on (notice acknowledged); null = on, notice not acknowledged yet
-    planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // fleet planner wishes
+    planner: Array.isArray(planner) ? planner.map(sanitizeSlot).filter(Boolean).slice(0, PLANNER_MAX_SLOTS) : [], // wishes in Plan (view "planner")
     list: { sortKey: "name", sortDir: 1 },
     groupFilter: null, // archetype filter ("combat" | "supply" | "explore", not stored)
-    kpiFilter: null, // KPI tile filter for the ship list: "owned" | "ready" | "included" (not stored)
+    kpiFilter: null, // KPI tile filter (Coverage + ship list): "owned" | "ready" | "included" (not stored)
+    loopExpanded: new Set(), // Coverage cards showing their secondary roles (not stored)
+    ovOpen: new Map(), // Optimise cards the user opened / closed: key → true/false (not stored)
   };
 }
 

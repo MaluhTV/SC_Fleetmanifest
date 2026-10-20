@@ -1,10 +1,10 @@
-/** "Ship list" tab: filterable, sortable table of the fleet. */
+/** Tab "Schiffsliste / Ship list" (view id "list"), mode "Liste": filterable, sortable table of the fleet. Mode "Matrix": views/matrix.js. */
 import { t, fmt } from "../i18n.js";
 import { esc, sum } from "../util.js";
 import { ROLE_ORDER } from "../shipdb.js";
 import { ownedOnly } from "../analysis.js";
 import { KPI_FILTERS } from "./kpis.js";
-import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insuranceText, note, thumb, meltIcon, fighterClass } from "./common.js";
+import { loopName, sizeLabel, roleMark, statusPill, dims, crew, insuranceText, note, thumb, shipWithMelt, fighterClass } from "./common.js";
 
 /**
  * Table columns. No sortValue = column is not sortable.
@@ -12,7 +12,7 @@ import { loopName, sizeLabel, roleMark, statusPill, shipLabel, dims, crew, insur
  */
 const COLUMNS = [
   { key: "image", label: "col_image", cell: (s) => thumb(s) },
-  { key: "name", label: "col_ship", cell: (s, db, state) => shipLabel(s, { lock: false }) + meltIcon(s, true) + editedTag(s, state), sortValue: (s) => s.name }, // shows all three melt states, so every ship can be changed here
+  { key: "name", label: "col_ship", cell: (s, db, state) => shipWithMelt(s) + editedTag(s, state), sortValue: (s) => s.name }, // shows all three melt states, so every ship can be changed here
   { key: "size", label: "col_size", cell: (s) => sizeLabel(s.size), sortValue: (s) => s.size },
   { key: "fighterClass", label: "col_fighter_class", cell: (s) => fighterClass(s), sortValue: (s) => fighterClass(s) || "~" },
   { key: "dims", label: "col_dims", numeric: true, cell: (s) => dims(s), sortValue: (s) => s.length ?? -1 },

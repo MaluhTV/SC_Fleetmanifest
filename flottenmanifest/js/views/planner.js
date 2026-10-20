@@ -1,5 +1,5 @@
 /**
- * "Fleet planner" tab: the user lists what they want to play ("Salvage, crew 1–2", "Salvage, crew 2+"),
+ * Tab "Planen / Plan" (view id "planner"): the user lists what they want to play ("Salvage, crew 1–2", "Salvage, crew 2+"),
  * and each wish gets a card with matching ships from the whole database – owned ships first.
  * Clicking a tile picks the ship for that wish; "My plan" at the top lists all picks with totals
  * and can be copied as text.
@@ -9,7 +9,7 @@
 import { t, fmt } from "../i18n.js";
 import { esc } from "../util.js";
 import { plannerSuggestions, effectiveCrew } from "../analysis.js";
-import { loopName, loopText, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, meltBadge, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
+import { loopName, loopText, slotText, loopBar, loopIconTitle, sizeLabel, shipLabel, statusPill, compareToggle, crew, thumb, fighterClass, icon, ICONS } from "./common.js";
 
 /** Tiles shown per wish before the rest is folded away (picked ships are always visible). */
 const PLAN_VISIBLE = 12;
@@ -111,7 +111,7 @@ function planOverview(byShip, owned, { db }) {
     const chips = wishes.map((w) =>
       `<span class="plan-wish">${wishLabel(db, w.slot)}<button type="button" data-plan-pick="${w.index}" data-ship="${esc(ship.name)}" title="${esc(t("planner_unpick"))}" aria-label="${esc(t("planner_unpick") + ": " + ship.name + " – " + wishText(db, w.slot))}">×</button></span>`).join("");
     return `<tr>
-      <td class="plan-ov-ship">${thumb(ship, "xs")}${shipLabel(ship, { lock: false })}${isOwned ? hangarIcon() : ""}</td>
+      <td class="plan-ov-ship">${thumb(ship, "xs")}${shipLabel(ship)}${isOwned ? hangarIcon() : ""}</td>
       <td><div class="plan-ov-wishes">${chips}</div></td>
       <td>${sizeLabel(ship.size)}</td>
       <td class="num">${fmt(ship.scu)}</td>
@@ -180,7 +180,7 @@ function planTile(s, { index, isOwned, isPicked, elsewhere, inCompare, loopId })
       data-plan-pick="${index}" data-ship="${esc(s.name)}" title="${esc(label)}" aria-label="${esc(label)}">
     <span class="plan-check" aria-hidden="true">${ICONS.check}</span>
     ${thumb(s)}
-    <div class="plan-name">${shipLabel(s, { lock: false })}${isOwned ? hangarIcon() + meltBadge(s) : ""}</div>
+    <div class="plan-name">${shipLabel(s)}${isOwned ? hangarIcon() : ""}</div>
     <dl class="plan-metrics">
       <div><dt>${t("filter_size")}</dt><dd>${sizeLabel(s.size)}</dd></div>
       <div><dt>SCU</dt><dd>${fmt(s.scu)}</dd></div>

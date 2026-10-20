@@ -1,1 +1,4 @@
 flottenmanifest/tests/node_modules
+
+# RSI ship images – downloaded locally by tools/fetch-ship-images.mjs, never commit them (RSI does not allow re-uploading)
+flottenmanifest/images/

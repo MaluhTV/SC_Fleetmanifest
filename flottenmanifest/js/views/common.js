@@ -3,7 +3,6 @@ import { ARCHETYPES } from "../shipdb.js";
 import { t, fmt, getLang } from "../i18n.js";
 import { esc } from "../util.js";
 
-/** Loop name in the current language (falls back to German). */
 /**
  * One small line icon per gameplay loop (16×16, stroke = currentColor), keyed by the loop ID in data/loops.json.
  * New loop: add an entry here, otherwise LOOP_ICON_FALLBACK (a dot) is shown.
@@ -46,7 +45,7 @@ export const loopIconTitle = (loopId) => `<span class="card-loop-icon" aria-hidd
  * attr = data attribute name for the click (main.js), label = aria label, summary = text next to the bar (HTML),
  * active = loop ID shown as selected (e.g. the ship list filter).
  * The square of the card currently in view is framed while scrolling (main.js → .is-current). cells[id].changed = true adds a dot (something changes there).
- * Used by the loop tab, matrix, ship list, overlaps (coverage of the fleet) and the fleet planner (coverage of the plan).
+ * Used by Coverage, the ship list (fleet coverage), Optimise (overlaps) and Plan (coverage of the plan).
  */
 const BAR_LEVELS = { full: " is-filled", partial: " is-partial", plain: " is-plain", gap: " is-gap", planned: " is-planned-only" };
 export function loopBar(db, cells, { attr, label, summary, active = null }) {
@@ -76,8 +75,6 @@ export function slotText(db, key) {
   return loopText(db, slot.id) + (slot.multi ? " · " + t("group_" + slot.group) : "");
 }
 export const slotName = (db, key) => esc(slotText(db, key));
-/** Loop icon in front of a card title for a slot. */
-export const slotIconTitle = (db, key) => loopIconTitle((db.slot(key) || { id: key }).id);
 
 /** Loop name as plain text – for title/aria attributes (escape there with esc()) and the clipboard. */
 export function loopText(db, loopId) {
@@ -107,38 +104,21 @@ export const dims = (s) => (s.length == null ? "–" : `${num(s.length)} × ${nu
 export const crew = (s) => `${s.crewMin}–${s.crewMax}`;
 
 /**
- * Lock icons (12×12, same body and shackle; colour comes from CSS via currentColor).
- *   lock          closed, red   – neither meltable nor upgradeable
- *   lockOpen      open, green   – meltable
- *   lockAlert     open with an exclamation mark, orange – meltable, but not upgradeable
- *   lockUpgrade   closed with an up arrow, yellow – not meltable, upgrade (CCU) only
- *   warn          exclamation mark in a yellow circle – a hint shown on hover
- * In index.html, <span data-icon="lock|lockOpen|lockUpgrade"> is filled by main.js.
+ * Small icons (12×12, colour from CSS via currentColor). In index.html, <span data-icon="name"> is filled by main.js.
+ *   warn      exclamation mark in a circle – a hint shown on hover (substitute loses loops, multicrew ship)
+ *   hangar    rounded hall with an open gate – "in your fleet" (Plan)
+ *   check     check mark – "selected" (Plan)
+ *   exchange  two circular arrows – "Exchange" (melt for store credit) possible   } melt / upgrade pair: active = coloured,
+ *   upgrade   arrow up – CCU upgrade possible                                      } not possible = grey + struck (.mp--off)
  */
 const svg = (inner) => `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">${inner}</svg>`;
-const LOCK_BODY = '<rect x="2" y="5.5" width="8" height="5.5" rx="1" fill="currentColor"/>';
 export const ICONS = {
-  lock: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
-  lockOpen: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
   warn: svg('<circle cx="6" cy="6" r="5.6" fill="currentColor"/>' +
     '<path d="M6 3.1v3.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/>' +
     '<circle cx="6" cy="8.9" r="0.9" class="ic-dot"/>'),
-  lockAlert: svg(LOCK_BODY + '<path d="M4 5.5V3.2a2 2 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 6.8v2" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="10" r=".75" class="ic-dot"/>'),
-  lockUpgrade: svg(LOCK_BODY + '<path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>' +
-    '<path d="M6 10.1V7M4.3 8.7 6 7l1.7 1.7" fill="none" class="ic-cut" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'),
+  hangar: svg('<path d="M.8 11.2V6.6a5.2 5.2 0 0 1 10.4 0v4.6H8.4V7.6H3.6v3.6Z" fill="currentColor"/>'),
+  check: svg('<path d="M2.2 6.3 4.9 9l5-5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'),
 };
-export const LOCK_ICON = ICONS.lock;
-/** Hangar (rounded hall with an open gate) – "in your fleet"; check mark – "selected" (fleet planner). */
-ICONS.hangar = svg('<path d="M.8 11.2V6.6a5.2 5.2 0 0 1 10.4 0v4.6H8.4V7.6H3.6v3.6Z" fill="currentColor"/>');
-ICONS.check = svg('<path d="M2.2 6.3 4.9 9l5-5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>');
-
-/**
- * Melt / upgrade pair (two independent yes/no marks):
- *   exchange  two circular arrows – "Exchange" (melt for store credit) possible
- *   upgrade   arrow up            – CCU upgrade possible
- * Active = coloured (green / blue), not possible = grey and struck through (CSS .mp--off).
- */
 ICONS.exchange = svg('<path d="M2.4 5.2A3.7 3.7 0 0 1 9 3.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
   '<path d="M9.4 1.6v2.3H7.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
   '<path d="M9.6 6.8A3.7 3.7 0 0 1 3 8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
@@ -153,40 +133,31 @@ export const meltPair = (state) => {
   return `<span class="mp mp--x${x ? "" : " mp--off"}">${ICONS.exchange}</span><span class="mp mp--u${u ? "" : " mp--off"}">${ICONS.upgrade}</span>`;
 };
 
-
 /** Icon only; the meaning is in the legend, the text appears as tooltip and for screen readers. */
 export const icon = (cls, svgIcon, text) => ` <span class="${cls}" title="${esc(text)}" role="img" aria-label="${esc(text)}">${svgIcon}</span>`;
 
 /**
- * Melt status icon (ship.melt from buildFleet): clickable, main.js opens the choice menu via data-melt.
- *   shown as a pair: exchange mark + upgrade mark, each active or struck through (meltPair)
- * showMeltable: false in the general lists (only problems are shown), true in the overlaps tab.
+ * Melt status (ship.melt from buildFleet) as the exchange + upgrade pair (meltPair); clickable, main.js opens
+ * the choice menu via data-melt. Shown where melting matters: Optimise, Compare and the ship list.
  */
 const MELT_TEXT = { meltable: "melt_ok", meltOnly: "melt_only", upgrade: "melt_upgrade_only", locked: "melt_locked" };
-export function meltIcon(ship, showMeltable = false) {
+export function meltIcon(ship) {
   if (ship.includedOnly) return ""; // comes with its parent ship – cannot be melted on its own
-  // unknown (import without melt data): grey "?" pair, so the status can still be set by click –
-  // only for fleet ships (they have qty) and only where all states are shown
+  // unknown (import without melt data): grey "?" pair, so the status can still be set by click (fleet ships only)
   if (!ship.melt) {
-    if (!showMeltable || !ship.qty) return "";
+    if (!ship.qty) return "";
     const text = t("melt_unknown") + " – " + t("melt_click");
     return ` <span class="melt-icon melt-pair melt-pair--unknown" role="button" tabindex="0" data-melt="${esc(ship.name)}" title="${esc(text)}" aria-label="${esc(text)}"><span class="mp">${ICONS.exchange}</span><span class="mp">${ICONS.upgrade}</span><span class="mp-q">?</span></span>`;
   }
-  if (ship.melt === "meltable" && !showMeltable) return "";
   let text = t(MELT_TEXT[ship.melt]);
   if (ship.notMeltable && ship.notMeltable < ship.qty) text += " · " + t("not_meltable_partial", { n: ship.notMeltable, q: ship.qty });
   if (ship.meltManual) text += " · " + t("melt_manual");
   text += " – " + t("melt_click");
   return ` <span class="melt-icon melt-pair${ship.meltManual ? " is-manual" : ""}" role="button" tabindex="0" data-melt="${esc(ship.name)}" title="${esc(text)}" aria-label="${esc(text)}">${meltPair(ship.melt)}</span>`;
 }
-/** Older names, kept for the views: lists show only problems, the overlaps tab shows all three states. */
-// All tabs show every melt state (incl. "exchange + upgrade possible"), so a ship looks the same everywhere.
-export const meltTag = (ship) => meltIcon(ship, true);
-export const meltBadge = (ship) => meltIcon(ship, true);
-
-/** Ship name with quantity (×2) and lock icon (lock: false when a meltBadge follows anyway). */
-export const shipLabel = (ship, { lock = true } = {}) =>
-  esc(ship.name) + (ship.qty > 1 ? ` <span class="qty">×${ship.qty}</span>` : "") + includedTag(ship) + (lock ? meltTag(ship) : "");
+/** Ship name with quantity (×2) and the "incl." pill; shipWithMelt() adds the melt status. */
+export const shipLabel = (ship) =>
+  esc(ship.name) + (ship.qty > 1 ? ` <span class="qty">×${ship.qty}</span>` : "") + includedTag(ship);
 
 /**
  * "incl." pill for vessels that come with a parent ship (buildFleet → includedBy / includedOnly):
@@ -210,7 +181,7 @@ export const thumb = (ship, size = "s") =>
     : `<span class="thumb thumb--${size} thumb--empty" aria-hidden="true"></span>`;
 
 /**
- * Clickable ship name for the replacement planning (overlaps tab and loop cards; main.js handles the clicks).
+ * Clickable ship name for the replacement planning (Optimise and Coverage cards; main.js handles the clicks).
  *   red hatched   = marked "to replace"      (state.marked)
  *   green hatched = chosen as a substitute   (values of state.chosen)
  * Without `choose` the click toggles the red mark (data-mark).
@@ -230,8 +201,8 @@ export function markable(ship, html, { marked, chosen }, choose = null) {
   return `<button type="button" class="${cls}" ${action}>${html}</button>`;
 }
 
-/** Ship name followed by its melt badge; falls back to the lock icon if meltability is unknown. */
-export const shipWithMelt = (ship) => shipLabel(ship, { lock: false }) + meltBadge(ship);
+/** Ship name followed by its melt status (grey "?" pair if the import had no melt data). */
+export const shipWithMelt = (ship) => shipLabel(ship) + meltIcon(ship);
 
 /** Insurance as text: LTI first, then the longest term. */
 export function insuranceText(ship) {

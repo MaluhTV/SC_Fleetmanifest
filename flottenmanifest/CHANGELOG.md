@@ -23,6 +23,7 @@
 - Variants with their own loadout as separate ships instead of aliases (with RSI image links): Gladius Valiant, Gladius Pirate, Sabre Comet, Fury MX, Storm AA, Guardian MX, Talon Shrike, Razor LX, Nox Kue, X1 Velocity (racing), X1 Force (combat), Idris-M, ATLS GEO (mining), ATLS IKTI (combat). Purely cosmetic editions stay aliases.
 - Checked against the starcitizen.tools pledge list (dimensions, SCU, crew, status): crew and SCU agree almost everywhere. Changed: Idris-M 240 × 125 × 45 m and 1,326 SCU (was copied from the Idris-P), Javelin and G12 / G12a / G12r "in production" instead of concept.
 - Images for the F7C-M Hornet Heartseeker Mk II and the RAPTOR (RSI hosts them on robertsspaceindustries.com, not the media server – the Content Security Policy now allows both RSI hosts). Only the Starlancer BLD is still without an image.
+- Terrapin: recon / data running as primary role (military scout), exploration secondary.
 - Skylark: ship image (RSI store link in ships.json, the ship matrix has none).
 - **Outdated local edits:** an edit from the ship editor replaces the whole role list of a ship, so edits made on an older database hid newer data (e.g. a Constellation Phoenix without the new passenger loop, a Carrack still in the snub category). Edits now remember the database date (`base`); edits from an older date – and all edits made before 2.22 – show a notice at the top with "Show edits" and "Discard outdated".
 
